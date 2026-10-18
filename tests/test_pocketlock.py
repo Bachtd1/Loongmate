@@ -35,14 +35,16 @@ class FakePad:
         self.closed = False
         self.events = []
         self.grab_calls = []
-        self.buzzes = []
-
-    def rumble(self, ms):
-        self.buzzes.append(ms)
+        self.order = []
 
     def grab(self, on):
         self.grab_calls.append(on)
+        self.order.append("grab" if on else "ungrab")
         self.grabbed = on
+
+    def release_stuck(self):                  # như EvdevPad: ghi lại "nhấn", nhả độc quyền, ghi "nhả"
+        self.order.append("release_stuck")
+        self.grab(False)
 
     def read(self, timeout):
         ev, self.events = self.events, []
@@ -71,7 +73,8 @@ class Base(unittest.TestCase):
         self.lock = PL.PocketLock(self.tmp, open_pad=open_pad, request=self.sent.append,
                                   clock=lambda: self.t[0], suspended_s=lambda: self.susp[0],
                                   log=self.logs.append, is_enabled=lambda: self.on)
-        self.lock.sleep = lambda s: None
+        self.haptics = []
+        self.lock.haptic = self.haptics.append
 
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
@@ -172,49 +175,93 @@ class Unlock(Base):
 
 
 class Feedback(Base):
-    """Khoá không có chữ trên màn (Leaf không cho app vẽ đè): rung là dấu hiệu duy nhất."""
+    """Khoá không có chữ trên màn (Leaf không cho app vẽ đè): rung giao diện của Leaf (IPC "rumble", theo cài đặt
+    "rung giao diện" của người dùng, chạy cả ngoài game) là dấu hiệu duy nhất."""
     def setUp(self):
         super().setUp()
         self.lock.step()
         self.wake()
 
     def test_locking_on_wake_does_not_buzz(self):
-        self.assertEqual(self.pad().buzzes, [])
+        self.assertEqual(self.haptics, [])
 
-    def test_press_while_locked_buzzes_rate_limited(self):
+    def test_press_while_locked_buzzes_blocked_rate_limited(self):
         self.key(304, 1)
-        self.assertEqual(len(self.pad().buzzes), 1)
+        self.assertEqual(self.haptics, ["blocked"])
         self.key(304, 0)
         self.key(305, 1)
-        self.assertEqual(len(self.pad().buzzes), 1)        # chưa đủ BUZZ_EVERY_S
+        self.assertEqual(self.haptics, ["blocked"])            # chưa đủ BUZZ_EVERY_S
         self.advance(PL.BUZZ_EVERY_S + 0.1)
         self.key(305, 1)
-        self.assertEqual(len(self.pad().buzzes), 2)
+        self.assertEqual(self.haptics, ["blocked", "blocked"])
 
     def test_releases_and_repeats_do_not_buzz(self):
         self.key(304, 0)
         self.key(304, 2)
-        self.assertEqual(self.pad().buzzes, [])
+        self.assertEqual(self.haptics, [])
 
-    def test_unlock_gives_a_longer_buzz_before_release(self):
-        pad = self.pad()
+    def test_hat_press_while_locked_also_buzzes(self):
+        self.pad().events.append((PL.EV_ABS, PL.ABS_HAT0Y, 1))
+        self.lock.step()
+        self.assertEqual(self.haptics, ["blocked"])
+
+    def test_unlock_confirms_with_commit(self):
         self.key(PL.BTN_SELECT, 1)
         self.key(PL.BTN_START, 1)
         self.advance(1.1)
         self.assertFalse(self.lock.locked)
-        self.assertEqual(pad.buzzes[-1], PL.UNLOCK_BUZZ_MS)
-        self.assertGreater(PL.UNLOCK_BUZZ_MS, PL.PRESS_BUZZ_MS)
+        self.assertEqual(self.haptics[-1], "commit")
 
-    def test_pad_without_rumble_still_works(self):
+
+class StuckInput(Base):
+    """D-pad bấm đúng lúc khoá bật: app đã nhận "nhấn" nhưng "nhả" bị khoá giữ lại -> sau khi mở khoá app tưởng nút
+    vẫn giữ và tự lướt liên tục (lỗi gặp trên máy thật). Mở khoá phải trả lại trạng thái nhả cho app."""
+    def test_unlock_releases_stuck_input_before_closing(self):
+        self.lock.step()
+        self.wake()
         pad = self.pad()
-        def no_ff(ms):
-            raise OSError("no FF")
-        pad.rumble = no_ff
-        self.key(304, 1)
         self.key(PL.BTN_SELECT, 1)
         self.key(PL.BTN_START, 1)
         self.advance(1.1)
-        self.assertFalse(self.lock.locked)
+        self.assertEqual(pad.order, ["grab", "release_stuck", "ungrab"])
+        self.assertTrue(pad.closed)
+
+
+class EvdevSequence(unittest.TestCase):
+    """Thứ tự ghi sự kiện của EvdevPad (không cần thiết bị thật): nút đang giữ lúc khoá được "nhấn" lại khi còn giữ độc
+    quyền (chỉ Agent nhận, để kernel coi là đang nhấn), rồi nhả độc quyền, rồi "nhả" (mọi app nhận)."""
+    class Pad(PL.EvdevPad):
+        def __init__(self, keys_down, hats):
+            self.fd = -1
+            self.effects = {}
+            self._keys_down, self._hats = keys_down, hats
+            self.log = []
+
+        def _query_state(self):
+            return set(self._keys_down), dict(self._hats)
+
+        def _ioctl_grab(self, on):
+            self.log.append(("grab", on))
+
+        def _write_events(self, evs):
+            self.log.append(("write", list(evs)))
+
+    def test_snapshot_at_grab_then_restore_release(self):
+        pad = self.Pad({PL.BTN_START}, {PL.ABS_HAT0Y: -1, PL.ABS_HAT0X: 0})
+        pad.grab(True)
+        pad.release_stuck()
+        self.assertEqual(pad.log[0], ("grab", True))
+        self.assertEqual(pad.log[1], ("write", [(PL.EV_KEY, PL.BTN_START, 1), (PL.EV_ABS, PL.ABS_HAT0Y, -1),
+                                                (PL.EV_SYN, 0, 0)]))
+        self.assertEqual(pad.log[2], ("grab", False))
+        self.assertEqual(pad.log[3], ("write", [(PL.EV_KEY, PL.BTN_START, 0), (PL.EV_ABS, PL.ABS_HAT0Y, 0),
+                                                (PL.EV_SYN, 0, 0)]))
+
+    def test_nothing_held_writes_nothing(self):
+        pad = self.Pad(set(), {PL.ABS_HAT0X: 0, PL.ABS_HAT0Y: 0})
+        pad.grab(True)
+        pad.release_stuck()
+        self.assertEqual(pad.log, [("grab", True), ("grab", False)])
 
 
 class Resleep(Base):

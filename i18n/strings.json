@@ -4980,7 +4980,7 @@
    "lm_hottabs.c"
   ]
  },
- "Bật: mỗi lần máy thức sau khi ngủ, mọi phím bị chặn. Màn vẫn sáng; bấm nút thì máy rung ngắn để báo đang khoá.": {
+ "Bật: mỗi lần máy thức sau khi ngủ, mọi phím bị chặn. Màn vẫn sáng; bấm nút thì máy rung báo đang khoá (theo cài đặt rung giao diện của Leaf).": {
   "kind": [
    "c"
   ],
@@ -12784,7 +12784,7 @@
    "lm_home.c"
   ]
  },
- "Mở khoá: giữ Select + Start 1 giây (rung dài một nhịp). Không mở trong 10 giây thì máy tự ngủ lại.": {
+ "Mở khoá: giữ Select + Start 1 giây (rung xác nhận). Không mở trong 10 giây thì máy tự ngủ lại.": {
   "kind": [
    "c"
   ],
@@ -15871,14 +15871,6 @@
   ],
   "files": [
    "lm_library.c"
-  ]
- },
- "Tiếng Việt": {
-  "kind": [
-   "c"
-  ],
-  "files": [
-   "lm_home.c"
   ]
  },
  "Tiếng Việt: Đặng Thị Bạch Dương, ắ ằ ẳ ẵ ặ ề ễ ộ ỡ ự ỹ": {

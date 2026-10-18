@@ -1,5 +1,12 @@
 # Thay đổi
 
+## 0.2.1-beta — 2026-10-18
+
+- **Sửa: điều hướng tự chạy loạn sau khi mở khoá.** Nút (D-pad) đang giữ đúng lúc khoá bật: app nhận "nhấn" nhưng
+  "nhả" bị khoá giữ lại nên tưởng nút vẫn giữ. Mở khoá giờ trả lại tín hiệu nhả cho app.
+- **Sửa: khoá không rung.** Rung qua tay cầm ảo chỉ được Leaf mở khi đang chạy game; giờ dùng rung giao diện của Leaf
+  (theo cài đặt rung giao diện, chạy cả ngoài game): bấm nút lúc khoá rung "chặn", mở khoá rung "xác nhận".
+
 ## 0.2.0-beta — 2026-10-18
 
 - **Giao diện tiếng Anh**: Máy > Ngôn ngữ / Language (hoặc dòng đầu màn Bắt đầu), đổi là có hiệu lực ngay. Dịch cả giao

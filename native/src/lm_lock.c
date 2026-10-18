@@ -20,8 +20,8 @@ static void build_lock(ui_screen *s) {
     ui_head(s, tr("Khoá"));
     ui_item *it = ui_add(s, tr("Khoá khi thức dậy"), on ? tr("Bật") : tr("Tắt"), on ? (agent ? ST_GREEN : ST_YELLOW) : ST_UNKNOWN);
     ui_exp(it, tr("Để trong túi, nút nguồn bị cấn là máy thức, rồi các nút khác bị đè làm máy lướt menu, mở game."));
-    ui_exp(it, tr("Bật: mỗi lần máy thức sau khi ngủ, mọi phím bị chặn. Màn vẫn sáng; bấm nút thì máy rung ngắn để báo đang khoá."));
-    ui_exp(it, tr("Mở khoá: giữ Select + Start 1 giây (rung dài một nhịp). Không mở trong 10 giây thì máy tự ngủ lại."));
+    ui_exp(it, tr("Bật: mỗi lần máy thức sau khi ngủ, mọi phím bị chặn. Màn vẫn sáng; bấm nút thì máy rung báo đang khoá (theo cài đặt rung giao diện của Leaf)."));
+    ui_exp(it, tr("Mở khoá: giữ Select + Start 1 giây (rung xác nhận). Không mở trong 10 giây thì máy tự ngủ lại."));
     ui_exp(it, tr("Nút nguồn vẫn dùng bình thường: bấm để ngủ, giữ 2 giây để tắt máy."));
     ui_exp(it, tr("Không sửa file nào của Leaf. Agent dừng hay lỗi thì phím tự được trả lại."));
     ui_exp(it, tr("Đang sạc: Leaf chỉ tắt màn chứ không ngủ; bấm nút bật màn cũng bị khoá như trên."));

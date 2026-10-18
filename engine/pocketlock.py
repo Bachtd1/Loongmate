@@ -32,11 +32,13 @@ UNLOCK_HOLD_S = 1.0
 RESLEEP_S = 10.0                 # thức mà không mở khoá trong ngần này giây thì ngủ lại
 WAKE_GAP_S = 1.0                 # tổng thời gian ngủ tăng ít nhất ngần này mới tính là vừa thức
 CONFIG_RECHECK_S = 5.0
+EV_SYN, EV_ABS = 0, 3
+ABS_HAT0X, ABS_HAT0Y = 16, 17    # D-pad của Loong Gamepad là trục hat, không phải phím (kiểm bitmap ABS trên máy)
+# Phím tay cầm ảo có (bitmap KEY đọc trên máy): A B X Y L1 R1 L2 R2 Select Start Menu L3, Volume -/+.
+PAD_KEYS = (304, 305, 307, 308, 310, 311, 312, 313, 314, 315, 316, 317, 114, 115)
 EVIOCGRAB = 0x40044590           # _IOW('E', 0x90, int)
-EVIOCSFF = 0x40304580            # _IOW('E', 0x80, struct ff_effect) — 48 byte trên aarch64
-EV_FF, FF_RUMBLE = 0x15, 0x50
-PRESS_BUZZ_MS = 60               # bấm nút lúc đang khoá: rung ngắn (dấu hiệu duy nhất, Leaf không cho app vẽ đè lên màn)
-UNLOCK_BUZZ_MS = 180             # mở khoá: rung dài hơn
+EVIOCGKEY_96 = 0x80604518        # _IOC(READ, 'E', 0x18, 96): trạng thái phím (768 bit)
+EVIOCGABS_0 = 0x80184540         # _IOR('E', 0x40 + abs, struct input_absinfo[24])
 BUZZ_EVERY_S = 3.0               # trong túi bị đè liên tục thì cũng chỉ rung thưa
 _EVENT = struct.Struct("llHHi")  # struct input_event (aarch64: 24 byte)
 _STANDBY_WAKE = "standby: wake on input"
@@ -76,7 +78,12 @@ def suspended_seconds() -> float:
 
 
 class EvdevPad:
-    """Tay cầm ảo thật trên máy. grab(True) = không app nào nhận phím."""
+    """Tay cầm ảo thật trên máy. grab(True) = không app nào nhận phím.
+
+    Nhả độc quyền đúng cách: evdev chỉ gửi cạnh nhấn/nhả. Nút đang giữ lúc khoá bật thì app đã nhận "nhấn" nhưng "nhả"
+    rơi vào Agent -> app tưởng vẫn giữ (D-pad: launcher tự lướt liên tục, đã gặp trên máy). Kernel bỏ qua "nhả" giả khi
+    nó đã ghi nhận nút nhả rồi, nên release_stuck(): khi còn giữ độc quyền ghi lại "nhấn" (chỉ Agent nhận, kernel coi là
+    đang nhấn), nhả độc quyền, rồi ghi "nhả" (mọi app nhận). Chỉ làm với nút giữ lúc khoá bật (ghi lúc grab(True))."""
 
     def __init__(self, path: Optional[str] = None):
         if path is None:
@@ -85,24 +92,47 @@ class EvdevPad:
             if path is None:
                 raise OSError("không thấy tay cầm ảo của Leaf (Loong Gamepad, /devices/virtual)")
         self.path = path
-        self.fd = os.open(path, os.O_RDWR | os.O_NONBLOCK)    # ghi: phát rung (EV_FF) qua jawakad tới motor
-        self.effects: Dict[int, int] = {}
+        self.fd = os.open(path, os.O_RDWR | os.O_NONBLOCK)    # ghi: trả lại sự kiện nhả cho app khi mở khoá
+        self._held_at_lock: Tuple[set, Dict[int, int]] = (set(), {})
 
-    def grab(self, on: bool) -> None:
+    def _ioctl_grab(self, on: bool) -> None:
         import fcntl                                  # chỉ có trên Linux; import ở đây để test chạy được trên PC
         fcntl.ioctl(self.fd, EVIOCGRAB, 1 if on else 0)
 
-    def rumble(self, ms: int) -> None:
-        """Rung ms mili giây. Hiệu ứng thuộc fd này nên đóng fd là tự xoá; mỗi độ dài tải lên một lần."""
-        if ms not in self.effects:
-            import fcntl
-            eff = bytearray(48)
-            struct.pack_into("HhH", eff, 0, FF_RUMBLE, -1, 0)
-            struct.pack_into("HH", eff, 10, ms, 0)              # replay.length, replay.delay
-            struct.pack_into("HH", eff, 16, 0xC000, 0xC000)     # strong, weak (Pocket 1 có một motor)
-            fcntl.ioctl(self.fd, EVIOCSFF, eff, True)
-            self.effects[ms] = struct.unpack_from("h", eff, 2)[0]
-        os.write(self.fd, _EVENT.pack(0, 0, EV_FF, self.effects[ms], 1))
+    def _query_state(self) -> Tuple[set, Dict[int, int]]:
+        import fcntl
+        buf = bytearray(96)
+        fcntl.ioctl(self.fd, EVIOCGKEY_96, buf, True)
+        keys = {k for k in PAD_KEYS if buf[k // 8] >> (k % 8) & 1}
+        hats = {}
+        for a in (ABS_HAT0X, ABS_HAT0Y):
+            info = bytearray(24)
+            fcntl.ioctl(self.fd, EVIOCGABS_0 + a, info, True)
+            hats[a] = struct.unpack_from("i", info, 0)[0]
+        return keys, hats
+
+    def _write_events(self, evs) -> None:
+        os.write(self.fd, b"".join(_EVENT.pack(0, 0, t, c, v) for t, c, v in evs))
+
+    def grab(self, on: bool) -> None:
+        if on:
+            try:
+                self._held_at_lock = self._query_state()
+            except OSError:
+                self._held_at_lock = (set(), {})
+        self._ioctl_grab(on)
+
+    def release_stuck(self) -> None:
+        keys, hats = self._held_at_lock
+        hats = {a: v for a, v in hats.items() if v}
+        if keys or hats:
+            self._write_events([(EV_KEY, k, 1) for k in sorted(keys)] +
+                               [(EV_ABS, a, v) for a, v in sorted(hats.items())] + [(EV_SYN, 0, 0)])
+        self._ioctl_grab(False)
+        if keys or hats:
+            self._write_events([(EV_KEY, k, 0) for k in sorted(keys)] +
+                               [(EV_ABS, a, 0) for a in sorted(hats)] + [(EV_SYN, 0, 0)])
+        self._held_at_lock = (set(), {})
 
     def read(self, timeout: float) -> List[Tuple[int, int, int]]:
         r, _, _ = select.select([self.fd], [], [], timeout)
@@ -120,10 +150,17 @@ class EvdevPad:
 
     def close(self) -> None:
         try:
-            self.grab(False)
+            self._ioctl_grab(False)
         except OSError:
             pass
         os.close(self.fd)
+
+
+def _haptic_async(event: str) -> None:
+    """Rung giao diện của Leaf (IPC "rumble": theo cài đặt rung giao diện, chạy cả ngoài game). Rung qua EV_FF của tay cầm
+    ảo thì Leaf chỉ mở khi đang chạy game (jw__rumble_publish_ff), nên ngoài launcher không rung (đã thử trên máy)."""
+    threading.Thread(target=autoresume.ipc_request, args=({"type": "rumble", "event": event},),
+                     kwargs={"timeout": 1.0}, daemon=True).start()
 
 
 def _sleep_async(req: Dict[str, Any]) -> None:
@@ -148,7 +185,7 @@ class PocketLock:
         self.both_since: Optional[float] = None
         self.next_config = 0.0
         self.next_buzz = 0.0
-        self.sleep = time.sleep
+        self.haptic: Callable[[str], Any] = _haptic_async
         self._standby_wake = threading.Event()
 
     @property
@@ -184,18 +221,17 @@ class PocketLock:
         self.next_buzz = 0.0
         self.deadline = now + RESLEEP_S
 
-    def _buzz(self, ms: int) -> bool:
+    def _buzz(self, event: str) -> None:
         try:
-            self.pad.rumble(ms)
-            return True
-        except (OSError, AttributeError):
-            return False                          # máy/tay cầm không rung được: khoá vẫn chạy bình thường
+            self.haptic(event)
+        except Exception:                         # noqa: BLE001 - không rung được thì khoá vẫn chạy bình thường
+            pass
 
     def _unlock(self, why: str, buzz: bool = False) -> None:
-        if self.pad is not None and buzz and self._buzz(UNLOCK_BUZZ_MS):
-            self.sleep(UNLOCK_BUZZ_MS / 1000.0)   # đóng fd là hiệu ứng rung bị xoá: chờ rung xong mới nhả
+        if self.pad is not None and buzz:
+            self._buzz("commit")
         if self.pad is not None:
-            for fn in (lambda: self.pad.grab(False), self.pad.close):
+            for fn in (self.pad.release_stuck, self.pad.close):
                 try:
                     fn()
                 except OSError:
@@ -227,9 +263,10 @@ class PocketLock:
         for typ, code, value in events:
             if typ == EV_KEY and code in (BTN_SELECT, BTN_START):
                 self.held[code] = value != 0          # 1 nhấn, 2 giữ (auto-repeat), 0 nhả
-            if typ == EV_KEY and value == 1 and now >= self.next_buzz:
+            pressed = (typ == EV_KEY and value == 1) or (typ == EV_ABS and code in (ABS_HAT0X, ABS_HAT0Y) and value)
+            if pressed and now >= self.next_buzz:
                 self.next_buzz = now + BUZZ_EVERY_S
-                self._buzz(PRESS_BUZZ_MS)
+                self._buzz("blocked")
         if self.held.get(BTN_SELECT) and self.held.get(BTN_START):
             if self.both_since is None:
                 self.both_since = now
