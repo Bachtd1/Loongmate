@@ -25,11 +25,12 @@ import hashlib
 import re
 import signal
 import sys
+import threading
 import time
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-from . import autoresume, leafconfig, telemetry
+from . import autoresume, leafconfig, pocketlock, telemetry
 from .autobackup import GAME_ACTIVE_MAX_S, AutoBackup, Event, LogWatcher, PidLock, ProcWatcher
 from .probe import PlatformProbe
 from .savevault import SaveVault
@@ -674,13 +675,22 @@ def cmd_run(args: argparse.Namespace, probe: PlatformProbe, app_data: Path, leaf
                                 "at": time.strftime("%Y-%m-%d %H:%M:%S"), "success": bool(r.get("success")),
                                 "id": r.get("snapshot_id"), "error": r.get("error")}})) if vault else None
         resumer = autoresume.AutoResume(app_data, log=log)
-        detector = Detector(leaf_log, on_line=resumer.feed_line)
+        # Khoa khi thuc day chay o luong rieng: phai giu tay cam trong ~0.1s sau khi may thuc, vong chinh poll 1-5s.
+        pocket = pocketlock.PocketLock(app_data, log=log)
+        pocket_stop = threading.Event()
+        threading.Thread(target=pocket.run, args=(pocket_stop,), name="pocketlock", daemon=True).start()
+
+        def on_leaf_line(line: str) -> None:
+            resumer.feed_line(line)
+            pocket.feed_line(line)
+        detector = Detector(leaf_log, on_line=on_leaf_line)
         game = GameState()
         ar_check = {"t": 0.0, "on": False}
 
         def resume_on() -> bool:            # doc co bat/tat toi da moi 30s (file nho tren the)
             if time.monotonic() - ar_check["t"] > 30:
-                ar_check.update(t=time.monotonic(), on=autoresume.enabled(app_data))
+                ar_check.update(t=time.monotonic(),
+                                on=autoresume.enabled(app_data) or pocketlock.enabled(app_data))
             return ar_check["on"]
 
         def game_busy() -> bool:
@@ -768,6 +778,8 @@ def cmd_run(args: argparse.Namespace, probe: PlatformProbe, app_data: Path, leaf
     except _Stop:
         log("Nhan tin hieu dung; thoat.")
     finally:
+        if "pocket_stop" in locals():
+            pocket_stop.set()           # luong khoa nha tay cam ao truoc khi Agent thoat
         lock.release()
     log("Agent da dung." if not reload_now else f"Agent thoat ma {EXIT_RELOAD} de nap lai sau cap nhat.")
     return EXIT_RELOAD if reload_now else 0

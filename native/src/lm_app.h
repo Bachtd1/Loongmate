@@ -60,6 +60,7 @@ void open_battery(ui_screen *s, ui_item *it);
 void open_update(ui_screen *s, ui_item *it);
 /* lm_hottabs.c */
 void open_hottabs(ui_screen *s, ui_item *it);
+void open_pocketlock(ui_screen *s, ui_item *it);
 /* lm_leafcfg.c */
 void open_leafcfg(ui_screen *s, ui_item *it);
 /* lm_roms.c, lm_web.c */

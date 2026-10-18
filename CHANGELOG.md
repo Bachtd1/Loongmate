@@ -1,5 +1,12 @@
 # Thay đổi
 
+## 0.1.2-beta — 2026-10-18
+
+- **Khoá khi thức dậy** (Máy → Khoá khi thức dậy, mặc định tắt): chống bấm nhầm khi để máy trong túi. Mỗi lần máy thức
+  sau khi ngủ, LoongMate Agent chặn mọi phím tới khi giữ **Select + Start 1 giây**; không mở khoá trong 10 giây thì máy
+  ngủ lại. Nút nguồn vẫn dùng bình thường (bấm để ngủ, giữ 2 giây để tắt máy). Không sửa file nào của Leaf; Agent dừng
+  hay lỗi thì phím tự được trả lại. Lệnh: `pocketlock status | on | off`.
+
 ## 0.1.1-beta — 2026-10-18
 
 - **Sửa: tự tiếp tục qua Agent bỏ qua mọi game trên thẻ Leaf (SD1).** Leaf ghi đường dẫn game SD1 dạng tương đối

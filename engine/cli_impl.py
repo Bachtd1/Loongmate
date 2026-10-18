@@ -35,6 +35,7 @@ Implements:
   loongmate patch list | info ID | candidates ID [--system S] | apply ID --rom PATH [--name NAME] [--header-skipped] --yes | delete ID --yes | store PATH
             (Patch ROM .ips/.bps/.ups: tạo file ROM MỚI cạnh bản gốc, bản gốc không bị sửa; ID = s:<tên> (kho) hoặc i:<thẻ>:<tên> (Import/))
   loongmate hottabs status | on | off | install [--yes] | uninstall [--yes]   (Leaf Hot Tabs; install/uninstall chỉ xem trước nếu thiếu --yes)
+  loongmate autoresume status|on|off | pocketlock status|on|off   (tự tiếp tục qua Agent; khoá khi thức dậy: giữ Select + Start 1 giây để mở)
   loongmate bios | history [--days N] | agent status | rescan
   loongmate battery [--days N] | update status|list [--verify]|verify|apply|rollback [--apps-dir DIR]
   loongmate nodes list | ping NAME | probe NAME [--ports ...] | wake NAME | fav NAME on|off | mac NAME MAC
@@ -101,6 +102,7 @@ update_mod = _LazyMod("engine.update")
 hottabs_mod = _LazyMod("engine.hottabs")
 leafconfig_mod = _LazyMod("engine.leafconfig")
 autoresume_mod = _LazyMod("engine.autoresume")
+pocketlock_mod = _LazyMod("engine.pocketlock")
 importer_mod = _LazyMod("engine.importer")
 libsource_mod = _LazyMod("engine.libsource")
 homebrew_mod = _LazyMod("engine.homebrew")
@@ -2119,6 +2121,23 @@ def _cmd_autoresume(args, probe) -> int:
     return _lib_out(args, r, True)
 
 
+def _cmd_pocketlock(args, probe) -> int:
+    """Khoá khi thức dậy (chống bấm trong túi): LoongMate Agent giữ tay cầm ảo tới khi giữ Select + Start 1 giây."""
+    app = probe.userdata_path
+    if app is None:
+        return _usage(args, "Không xác định được thư mục userdata của LoongMate.")
+    if args.pocketlock_command == "status":
+        on, running = pocketlock_mod.enabled(app), bool(agent_mod.lock_held(app))
+        return _lib_out(args, {"success": True, "enabled": on, "agent_running": running},
+                        True, [f"Khoá khi thức dậy: {'BẬT' if on else 'TẮT'} (mở: giữ Select + Start 1 giây)",
+                               f"LoongMate Agent: {'đang chạy' if running else 'CHƯA CHẠY'}"])
+    try:
+        r = pocketlock_mod.set_enabled(app, args.pocketlock_command == "on")
+    except OSError as e:
+        return _lib_out(args, {"success": False, "message": f"Không ghi được cấu hình: {e}"}, False)
+    return _lib_out(args, r, True)
+
+
 def _cmd_hottabs(args, probe) -> int:
     """Leaf Hot Tabs: status (chỉ đọc) | on | off | install | uninstall. Việc thay launcher do hottabs.sh làm."""
     sd = probe.primary_path
@@ -2466,6 +2485,11 @@ def build_parser(only: "str | None" = None) -> argparse.ArgumentParser:
     for name in ("status", "on", "off"):
         _json_flag(ar_sub.add_parser(name))
 
+    plp = subparsers.add_parser("pocketlock", help="Lock input after wake (pocket mode), unlock by holding Select+Start: status | on | off")
+    pl_sub = plp.add_subparsers(dest="pocketlock_command")
+    for name in ("status", "on", "off"):
+        _json_flag(pl_sub.add_parser(name))
+
     lcp = subparsers.add_parser("leafconfig", help="Leaf/RetroArch config backup: snapshot | list | diff ID | restore ID --group G (--yes)")
     lc_sub = lcp.add_subparsers(dest="leafconfig_command")
     sp = lc_sub.add_parser("snapshot", help="Back up retroarch.cfg, overrides/remaps, standalone configs, Leaf DBs (skips if unchanged)")
@@ -2737,7 +2761,7 @@ def _cmd_recent(args, probe) -> int:
 
 _COMMANDS = {"library", "homebrew", "web", "patch", "import", "readiness", "scan", "backup", "restore", "health", "bundle", "verify", "recover", "endpoint", "push",
              "pull", "dedupe", "rom", "saves", "quarantine", "move", "fix", "bios", "snapshots", "roms", "history",
-             "battery", "update", "agent", "nodes", "rescan", "hottabs", "recent", "leafconfig", "autoresume"}
+             "battery", "update", "agent", "nodes", "rescan", "hottabs", "recent", "leafconfig", "autoresume", "pocketlock"}
 _NEEDS_INVENTORY = {"scan", "health", "bundle", "dedupe", "move", "fix", "bios", "roms"}
 
 
@@ -2819,6 +2843,11 @@ def main(argv=None) -> int:
             return _usage(args, "Dùng: patch list | info ID | candidates ID [--system S] | apply ID --rom PATH [--name N] [--header-skipped] --yes | delete ID --yes | store PATH")
         args.yes = getattr(args, "yes", False)
         return _cmd_patch(args, probe)
+
+    if args.command == "pocketlock":
+        if not args.pocketlock_command:
+            return _usage(args, "Dùng: pocketlock status | on | off")
+        return _cmd_pocketlock(args, probe)
 
     if args.command == "autoresume":
         if not args.autoresume_command:

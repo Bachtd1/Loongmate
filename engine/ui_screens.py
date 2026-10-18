@@ -18,6 +18,7 @@ from pathlib import Path
 
 from engine import agent as agent_mod
 from engine import autoresume as autoresume_mod
+from engine import pocketlock as pocketlock_mod
 from engine import artwork as artwork_mod
 from engine import batchfix as batchfix_mod
 from engine import bios as bios_mod
@@ -1180,6 +1181,12 @@ class App:
             "Bật/tắt (hiệu lực ngay). Cần LoongMate Agent đang chạy; không thay file nào của Leaf.",
             "Có Hot Tabs trên thẻ thì màn này cũng cho cài/gỡ Hot Tabs."],
             a=("Mở", self.open_hottabs)))
+        pl_on = pocketlock_mod.enabled(self.app_data)
+        items.append(Item("Khoá khi thức dậy", "Bật" if pl_on else "Tắt", "green" if pl_on else "unknown", [
+            "Mỗi lần máy thức sau khi ngủ, phím bị khoá tới khi giữ Select + Start 1 giây; không mở trong 10 giây thì máy ngủ lại.",
+            "Chống máy tự lướt menu, mở game khi để trong túi. Nút nguồn vẫn dùng bình thường.",
+            "Cần LoongMate Agent đang chạy (Settings > Services); không sửa file nào của Leaf."],
+            a=("Tắt" if pl_on else "Bật", self.do_pocketlock_toggle)))
         items.append(Item("Trạng thái agent", "", "unknown", [
             "LoongMate Agent có đang chạy không, lần sao lưu tự động gần nhất, mẫu pin/nhiệt gần nhất.",
             "Chỉ đọc.", AGENT_HINT], a=("Xem", self.open_agent)))
@@ -3045,6 +3052,10 @@ class App:
                 "Xem trước rồi hỏi xác nhận (mặc định Huỷ).", f"{hottabs_mod.RESTART_NOTE} sau khi cài.", why],
                 a=("Cài", lambda: self.ask_hottabs("install")) if can else None))
         return header, items
+
+    def do_pocketlock_toggle(self):
+        pocketlock_mod.set_enabled(self.app_data, not pocketlock_mod.enabled(self.app_data))
+        self.refresh_cur()
 
     def do_autoresume_toggle(self):
         autoresume_mod.set_enabled(self.app_data, not autoresume_mod.enabled(self.app_data))

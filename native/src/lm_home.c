@@ -923,6 +923,10 @@ static void build_device(ui_screen *s) {
     ui_exp(it, "Bật/tắt (hiệu lực ngay). Cần LoongMate Agent đang chạy; không thay file nào của Leaf.");
     ui_exp(it, "Có Hot Tabs trên thẻ thì màn này cũng cho cài/gỡ Hot Tabs.");
     ui_act(it, 0, "MỞ", open_hottabs);
+    it = ui_add(s, "Khoá khi thức dậy", "chống bấm túi", ST_UNKNOWN);
+    ui_exp(it, "Mỗi lần máy thức sau khi ngủ, phím bị khoá tới khi giữ Select + Start 1 giây; không mở thì máy ngủ lại.");
+    ui_exp(it, "Chống máy tự lướt menu, mở game khi để trong túi. Cần LoongMate Agent đang chạy; không sửa file nào của Leaf.");
+    ui_act(it, 0, "MỞ", open_pocketlock);
     it = ui_add(s, "Cấu hình Leaf", "RetroArch", ST_UNKNOWN);
     ui_exp(it, "Sao lưu và khôi phục phần bạn đã chỉnh: retroarch.cfg, override/core option/remap, cấu hình emulator độc lập.");
     ui_exp(it, "So sánh từng khoá với hiện tại; sau khi cập nhật Leaf, xem ngay cấu hình nào đã đổi.");

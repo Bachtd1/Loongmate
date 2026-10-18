@@ -30,6 +30,7 @@ không cần máy tính hay dòng lệnh.
 - **Cấu hình Leaf**: sao lưu `retroarch.cfg`, override, remap, core option; so từng khoá trước/sau cập nhật Leaf;
   khôi phục theo nhóm.
 - **Tự tiếp tục** chỗ đang chơi khi mở game từ Games/Favorites, không vá file nào của Leaf.
+- **Khoá khi thức dậy**: để máy trong túi không tự lướt menu, mở game; giữ Select + Start 1 giây để mở.
 
 ## Tình trạng tính năng
 
@@ -44,6 +45,7 @@ không cần máy tính hay dòng lệnh.
 | Sao lưu cấu hình Leaf/RetroArch | Thử nghiệm |
 | Tải từ web, gắn ảnh bìa từ trang tải | Thử nghiệm |
 | Tự tiếp tục qua Agent (mặc định tắt) | Thử nghiệm |
+| Khoá khi thức dậy (mặc định tắt) | Thử nghiệm |
 | Homebrew Hub, Thư viện riêng (PocketBridge), Patch ROM | Thử nghiệm |
 | Đường dẫn save của DraStic/PPSSPP | Chưa kiểm trên máy |
 
@@ -114,6 +116,8 @@ Leaf's own files.
   Leaf update and grouped restore.
 - **Resume from Games/Favorites** (experimental, off by default): loads your latest state like the Recents tab does,
   without patching Leaf.
+- **Pocket lock** (experimental, off by default): after every wake, input is blocked until you hold Select + Start for
+  one second; otherwise the device goes back to sleep.
 
 Install: download `LoongMate-AllInOne.zip` from Releases, copy the contents of `THE-NHO` to the root of your Leaf SD card,
 then open **Apps → LoongMate**. The bundled Python runtime unpacks itself on first launch.
