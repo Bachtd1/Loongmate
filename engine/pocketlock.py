@@ -33,6 +33,11 @@ RESLEEP_S = 10.0                 # thức mà không mở khoá trong ngần nà
 WAKE_GAP_S = 1.0                 # tổng thời gian ngủ tăng ít nhất ngần này mới tính là vừa thức
 CONFIG_RECHECK_S = 5.0
 EVIOCGRAB = 0x40044590           # _IOW('E', 0x90, int)
+EVIOCSFF = 0x40304580            # _IOW('E', 0x80, struct ff_effect) — 48 byte trên aarch64
+EV_FF, FF_RUMBLE = 0x15, 0x50
+PRESS_BUZZ_MS = 60               # bấm nút lúc đang khoá: rung ngắn (dấu hiệu duy nhất, Leaf không cho app vẽ đè lên màn)
+UNLOCK_BUZZ_MS = 180             # mở khoá: rung dài hơn
+BUZZ_EVERY_S = 3.0               # trong túi bị đè liên tục thì cũng chỉ rung thưa
 _EVENT = struct.Struct("llHHi")  # struct input_event (aarch64: 24 byte)
 _STANDBY_WAKE = "standby: wake on input"
 
@@ -80,11 +85,24 @@ class EvdevPad:
             if path is None:
                 raise OSError("không thấy tay cầm ảo của Leaf (Loong Gamepad, /devices/virtual)")
         self.path = path
-        self.fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
+        self.fd = os.open(path, os.O_RDWR | os.O_NONBLOCK)    # ghi: phát rung (EV_FF) qua jawakad tới motor
+        self.effects: Dict[int, int] = {}
 
     def grab(self, on: bool) -> None:
         import fcntl                                  # chỉ có trên Linux; import ở đây để test chạy được trên PC
         fcntl.ioctl(self.fd, EVIOCGRAB, 1 if on else 0)
+
+    def rumble(self, ms: int) -> None:
+        """Rung ms mili giây. Hiệu ứng thuộc fd này nên đóng fd là tự xoá; mỗi độ dài tải lên một lần."""
+        if ms not in self.effects:
+            import fcntl
+            eff = bytearray(48)
+            struct.pack_into("HhH", eff, 0, FF_RUMBLE, -1, 0)
+            struct.pack_into("HH", eff, 10, ms, 0)              # replay.length, replay.delay
+            struct.pack_into("HH", eff, 16, 0xC000, 0xC000)     # strong, weak (Pocket 1 có một motor)
+            fcntl.ioctl(self.fd, EVIOCSFF, eff, True)
+            self.effects[ms] = struct.unpack_from("h", eff, 2)[0]
+        os.write(self.fd, _EVENT.pack(0, 0, EV_FF, self.effects[ms], 1))
 
     def read(self, timeout: float) -> List[Tuple[int, int, int]]:
         r, _, _ = select.select([self.fd], [], [], timeout)
@@ -129,6 +147,8 @@ class PocketLock:
         self.held: Dict[int, bool] = {}
         self.both_since: Optional[float] = None
         self.next_config = 0.0
+        self.next_buzz = 0.0
+        self.sleep = time.sleep
         self._standby_wake = threading.Event()
 
     @property
@@ -161,9 +181,19 @@ class PocketLock:
             self.log("khoa khi thuc day: da khoa (giu Select + Start 1 giay de mo).")
         self.held.clear()
         self.both_since = None
+        self.next_buzz = 0.0
         self.deadline = now + RESLEEP_S
 
-    def _unlock(self, why: str) -> None:
+    def _buzz(self, ms: int) -> bool:
+        try:
+            self.pad.rumble(ms)
+            return True
+        except (OSError, AttributeError):
+            return False                          # máy/tay cầm không rung được: khoá vẫn chạy bình thường
+
+    def _unlock(self, why: str, buzz: bool = False) -> None:
+        if self.pad is not None and buzz and self._buzz(UNLOCK_BUZZ_MS):
+            self.sleep(UNLOCK_BUZZ_MS / 1000.0)   # đóng fd là hiệu ứng rung bị xoá: chờ rung xong mới nhả
         if self.pad is not None:
             for fn in (lambda: self.pad.grab(False), self.pad.close):
                 try:
@@ -197,11 +227,14 @@ class PocketLock:
         for typ, code, value in events:
             if typ == EV_KEY and code in (BTN_SELECT, BTN_START):
                 self.held[code] = value != 0          # 1 nhấn, 2 giữ (auto-repeat), 0 nhả
+            if typ == EV_KEY and value == 1 and now >= self.next_buzz:
+                self.next_buzz = now + BUZZ_EVERY_S
+                self._buzz(PRESS_BUZZ_MS)
         if self.held.get(BTN_SELECT) and self.held.get(BTN_START):
             if self.both_since is None:
                 self.both_since = now
             elif now - self.both_since >= UNLOCK_HOLD_S:
-                self._unlock("Select + Start")
+                self._unlock("Select + Start", buzz=True)
                 return
         else:
             self.both_since = None

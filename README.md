@@ -123,5 +123,6 @@ Install: download `LoongMate-AllInOne.zip` from Releases, copy the contents of `
 then open **Apps → LoongMate**. The bundled Python runtime unpacks itself on first launch.
 
 LoongMate ships no ROMs or BIOS files and does not bypass ads, countdowns or captchas. Only download and import content
-you are entitled to use. Tested on real hardware with Leaf 0.11.0 and 0.13.0; documentation is in Vietnamese.
+you are entitled to use. Tested on real hardware with Leaf 0.11.0 and 0.13.0. The interface is available in English
+(Device > Ngôn ngữ / Language, or the first row of the Getting started screen); documentation is in Vietnamese.
 MIT licensed. Developed by **BACHTD**.

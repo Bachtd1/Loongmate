@@ -39,6 +39,15 @@ echo "[build.sh] Đồng bộ res/bios_hashes.json (bios.py tìm cả res/)"
 cp "$PROJECT_ROOT/bios_hashes.json" "$OUT_PAK/res/bios_hashes.json"
 echo "  - đã copy bios_hashes.json -> res/bios_hashes.json"
 
+echo "[build.sh] Danh mục ngôn ngữ (i18n/*.json -> res/i18n_<lang>.json; giao diện và engine đọc khi chọn Language)"
+for f in "$PROJECT_ROOT"/i18n/*.json; do
+    [ -f "$f" ] || continue                       # không có i18n/ (bản thử tối giản): chỉ tiếng Việt
+    lang="$(basename "$f" .json)"
+    case "$lang" in strings) continue ;; esac
+    cp "$f" "$OUT_PAK/res/i18n_$lang.json"
+    echo "  - đã copy i18n/$lang.json -> res/i18n_$lang.json"
+done
+
 echo "[build.sh] Dọn __pycache__/tests/playground/simulator nếu lỡ lọt vào pak"
 find "$OUT_PAK" -type d -name "__pycache__" -prune -exec rm -rf {} \;
 rm -rf "$OUT_PAK/tests" "$OUT_PAK/playground" "$OUT_PAK/simulator"

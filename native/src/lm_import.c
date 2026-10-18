@@ -5,6 +5,7 @@
  * Chỉ nhập nội dung người dùng tự đưa vào: không có chức năng tải từ internet. */
 #define _GNU_SOURCE
 #include "lm_app.h"
+#include "lm_i18n.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -68,7 +69,7 @@ static void do_rescan(ui_screen *s, ui_item *it);
 
 static void scan_done(lm_job *j, const char *arg) {
     int push = atoi(arg);
-    cJSON *r = app_json_or_error(j, "Nhập game");
+    cJSON *r = app_json_or_error(j, tr("Nhập game"));
     if (!r) return;
     adopt_scan(r);
     if (push) ui_push(ui_screen_new("NHẬP GAME", build_import)); else ui_rebuild_all();
@@ -78,30 +79,30 @@ static void scan_done(lm_job *j, const char *arg) {
 void open_import(ui_screen *s, ui_item *it) {
     (void)s; (void)it;
     for (int i = 0; i < g_nu; i++) g_u[i].mark = 0;      /* mở lại màn = bắt đầu chọn mới */
-    cli_task("Đang quét thư mục Import/", SHORT_TIMEOUT_MS, scan_done, "1", "import", "scan", NULL);
+    cli_task(tr("Đang quét thư mục Import/"), SHORT_TIMEOUT_MS, scan_done, "1", "import", "scan", NULL);
 }
 static void do_rescan(ui_screen *s, ui_item *it) {
     (void)s; (void)it;
-    cli_task("Đang quét lại Import/", SHORT_TIMEOUT_MS, scan_done, "0", "import", "scan", NULL);
+    cli_task(tr("Đang quét lại Import/"), SHORT_TIMEOUT_MS, scan_done, "0", "import", "scan", NULL);
 }
 
 static void mkdir_done(lm_job *j, const char *arg) {
     (void)arg;
-    cJSON *r = app_json_or_error(j, "Thư mục nhập"), *d;
+    cJSON *r = app_json_or_error(j, tr("Thư mục nhập")), *d;
     if (!r) return;
     lines_t L = {0};
     cJSON_ArrayForEach(d, jarr(r, "dirs")) lines_add(&L, "%s%s", jbool_d(d, "ok", 0) ? "+ " : "!! ", jstrd(d, "message", "?"));
     lines_add(&L, "%s", "");
-    lines_add(&L, "Chép file ROM/.zip vào thư mục trên (qua máy tính, USB hoặc pc/import_push.py), rồi chọn Quét lại.");
+    lines_add(&L, tr("Chép file ROM/.zip vào thư mục trên (qua máy tính, USB hoặc pc/import_push.py), rồi chọn Quét lại."));
     cJSON_Delete(r);
-    snprintf(g_pending_title, sizeof g_pending_title, "Thư mục nhập");
+    snprintf(g_pending_title, sizeof g_pending_title, tr("Thư mục nhập"));
     lines_free(&g_pending);
     g_pending = L;
-    cli_task("Đang quét lại Import/", SHORT_TIMEOUT_MS, scan_done, "0", "import", "scan", NULL);
+    cli_task(tr("Đang quét lại Import/"), SHORT_TIMEOUT_MS, scan_done, "0", "import", "scan", NULL);
 }
 static void do_mkdir(ui_screen *s, ui_item *it) {
     (void)s; (void)it;
-    cli_task("Đang tạo thư mục Import/", SHORT_TIMEOUT_MS, mkdir_done, "", "import", "mkdir", NULL);
+    cli_task(tr("Đang tạo thư mục Import/"), SHORT_TIMEOUT_MS, mkdir_done, "", "import", "mkdir", NULL);
 }
 
 static void toggle_delete(ui_screen *s, ui_item *it) {
@@ -139,12 +140,12 @@ static void build_choose(ui_screen *s) {
     int idx = atoi(s->key);
     cJSON *u = unit_at(idx), *c;
     ui_hdr(s, "'%s': %s", jstrd(u, "name", "?"), jstrd(u, "evidence", ""));
-    ui_hdr(s, "Chọn hệ máy đúng. Chọn sai thì game nằm nhầm thư mục.");
+    ui_hdr(s, tr("Chọn hệ máy đúng. Chọn sai thì game nằm nhầm thư mục."));
     cJSON_ArrayForEach(c, jarr(u, "candidates")) {
         if (!cJSON_IsString(c)) continue;
-        ui_item *it = ui_add(s, c->valuestring, "chọn", ST_GREEN);
-        ui_exp(it, "Cài vào Roms/%s/.", c->valuestring);
-        ui_act(it, 0, "CHỌN", pick_system);
+        ui_item *it = ui_add(s, c->valuestring, tr("chọn"), ST_GREEN);
+        ui_exp(it, tr("Cài vào Roms/%s/."), c->valuestring);
+        ui_act(it, 0, tr("CHỌN"), pick_system);
         it->iarg = idx;
         ui_arg(it, c->valuestring);
     }
@@ -166,32 +167,32 @@ static void unit_tag(const cJSON *u, int i, char *tag, size_t n, int *color) {
     const char *st = jstrd(u, "status", "");
     *color = ST_UNKNOWN;
     if (g_u[i].sys[0]) { snprintf(tag, n, "%s", g_u[i].sys); *color = ST_GREEN; }
-    else if (!strcmp(st, "blocked")) { snprintf(tag, n, "bị chặn"); *color = ST_RED; }
-    else if (!strcmp(st, "unsupported")) { snprintf(tag, n, "chưa hỗ trợ"); *color = ST_YELLOW; }
-    else if (!strcmp(st, "empty")) snprintf(tag, n, "trống");
+    else if (!strcmp(st, "blocked")) { snprintf(tag, n, tr("bị chặn")); *color = ST_RED; }
+    else if (!strcmp(st, "unsupported")) { snprintf(tag, n, tr("chưa hỗ trợ")); *color = ST_YELLOW; }
+    else if (!strcmp(st, "empty")) snprintf(tag, n, tr("trống"));
     else if (!strcmp(jstrd(u, "kind", ""), "bios")) { snprintf(tag, n, "BIOS"); *color = ST_YELLOW; }
-    else if (!strcmp(st, "needs_choice")) { snprintf(tag, n, "chọn hệ"); *color = ST_YELLOW; }
+    else if (!strcmp(st, "needs_choice")) { snprintf(tag, n, tr("chọn hệ")); *color = ST_YELLOW; }
     else { snprintf(tag, n, "%s", jstrd(u, "system", "?")); *color = ST_GREEN; }
 }
 
 static void unit_explain(ui_item *it, const cJSON *u) {
     cJSON *x;
-    ui_exp(it, "Nguồn: %s", jstrd(u, "source", "?"));
-    ui_exp(it, "Dung lượng: %s", mbs(jnumd(u, "bytes", 0)));
+    ui_exp(it, tr("Nguồn: %s"), jstrd(u, "source", "?"));
+    ui_exp(it, tr("Dung lượng: %s"), mbs(jnumd(u, "bytes", 0)));
     if (!strcmp(jstrd(u, "status", ""), "ready") && jstr(u, "system"))
-        ui_exp(it, "Hệ: %s (thư mục Roms/%s/)", jstr(u, "system"), jstrd(u, "folder", jstr(u, "system")));
+        ui_exp(it, tr("Hệ: %s (thư mục Roms/%s/)"), jstr(u, "system"), jstrd(u, "folder", jstr(u, "system")));
     if (!strcmp(jstrd(u, "status", ""), "needs_choice")) {
         char buf[300] = "";
         cJSON_ArrayForEach(x, jarr(u, "candidates")) if (cJSON_IsString(x)) {
             size_t l = strlen(buf);
             snprintf(buf + l, sizeof buf - l, "%s%s", l ? ", " : "", x->valuestring);
         }
-        ui_exp(it, "Hệ ứng viên: %s — A để chọn (không tự đoán).", buf);
+        ui_exp(it, tr("Hệ ứng viên: %s — A để chọn (không tự đoán)."), buf);
     }
     cJSON *bios = jget(u, "bios");
-    if (cJSON_IsObject(bios)) ui_exp(it, "BIOS khớp md5: sẽ vào %s (xác nhận riêng ở bước kế hoạch).", jstrd(bios, "dest", "BIOS/"));
-    if (jstr(u, "evidence") && jstr(u, "evidence")[0]) ui_exp(it, "Nhận diện: %s", jstr(u, "evidence"));
-    if (!strcmp(jstrd(u, "kind", ""), "multi")) ui_exp(it, "Game nhiều file: cài cả bộ, giữ layout tương đối (%d file).", jarr_n(u, "files"));
+    if (cJSON_IsObject(bios)) ui_exp(it, tr("BIOS khớp md5: sẽ vào %s (xác nhận riêng ở bước kế hoạch)."), jstrd(bios, "dest", "BIOS/"));
+    if (jstr(u, "evidence") && jstr(u, "evidence")[0]) ui_exp(it, tr("Nhận diện: %s"), jstr(u, "evidence"));
+    if (!strcmp(jstrd(u, "kind", ""), "multi")) ui_exp(it, tr("Game nhiều file: cài cả bộ, giữ layout tương đối (%d file)."), jarr_n(u, "files"));
     cJSON_ArrayForEach(x, jarr(u, "reasons")) if (cJSON_IsString(x)) ui_exp(it, "!! %s", x->valuestring);
     cJSON_ArrayForEach(x, jarr(u, "warnings")) if (cJSON_IsString(x)) ui_exp(it, "! %s", x->valuestring);
 }
@@ -199,23 +200,23 @@ static void unit_explain(ui_item *it, const cJSON *u) {
 static void build_import(ui_screen *s) {
     cJSON *d, *units = scan_units();
     int n = g_nu, marked = n_marked();
-    ui_hdr(s, "%d mục trong Import/ (SD1 + SD2). Chỉ nhập nội dung bạn có quyền sử dụng.", n);
+    ui_hdr(s, tr("%d mục trong Import/ (SD1 + SD2). Chỉ nhập nội dung bạn có quyền sử dụng."), n);
     cJSON_ArrayForEach(d, jarr(g_scan, "import_dirs"))
         ui_hdr(s, "%s: %s %s", !strcmp(jstrd(d, "card", ""), "primary") ? "SD1" : "SD2", jstrd(d, "path", "?"),
-               jbool_d(d, "exists", 0) ? "" : "(chưa có — chọn Mở thư mục nhập)");
+               jbool_d(d, "exists", 0) ? "" : tr("(chưa có — chọn Mở thư mục nhập)"));
     cJSON_ArrayForEach(d, jarr(g_scan, "errors")) ui_hdr(s, "! %s: %s", jstrd(d, "path", "?"), jstrd(d, "message", "?"));
     ui_item *it;
     if (marked) {
         double bytes = 0;
         for (int i = 0; i < n; i++) if (g_u[i].mark) bytes += jnumd(unit_at(i), "bytes", 0);
         char lab[80];
-        snprintf(lab, sizeof lab, "Nhập %d mục đã chọn", marked);
+        snprintf(lab, sizeof lab, tr("Nhập %d mục đã chọn"), marked);
         it = ui_add(s, lab, mbs(bytes), ST_GREEN);
-        ui_exp(it, "A — chọn thẻ đích, kiểm trùng và xem kế hoạch (chưa ghi gì).");
-        ui_exp(it, "X — bỏ chọn tất cả.");
+        ui_exp(it, tr("A — chọn thẻ đích, kiểm trùng và xem kế hoạch (chưa ghi gì)."));
+        ui_exp(it, tr("X — bỏ chọn tất cả."));
         it->iarg = -1;
-        ui_act(it, 0, "XEM KẾ HOẠCH", plan_marked);
-        ui_act(it, 1, "BỎ CHỌN HẾT", clear_marks);
+        ui_act(it, 0, tr("XEM KẾ HOẠCH"), plan_marked);
+        ui_act(it, 1, tr("BỎ CHỌN HẾT"), clear_marks);
     }
     for (int i = 0; i < n; i++) {
         cJSON *u = cJSON_GetArrayItem(units, i);
@@ -228,34 +229,34 @@ static void build_import(ui_screen *s) {
         it->iarg = i;
         ui_arg(it, "u");
         const char *st = jstrd(u, "status", ""), *kind = jstrd(u, "kind", "");
-        if (!strcmp(st, "needs_choice")) ui_act(it, 0, "CHỌN HỆ", open_choose);
-        else if (is_markable(u) || !strcmp(kind, "bios")) ui_act(it, 0, "NHẬP MỤC NÀY", plan_one);
-        if (is_markable(u) || !strcmp(kind, "bios")) ui_act(it, 1, g_u[i].mark ? "BỎ CHỌN" : "CHỌN", do_toggle);
+        if (!strcmp(st, "needs_choice")) ui_act(it, 0, tr("CHỌN HỆ"), open_choose);
+        else if (is_markable(u) || !strcmp(kind, "bios")) ui_act(it, 0, tr("NHẬP MỤC NÀY"), plan_one);
+        if (is_markable(u) || !strcmp(kind, "bios")) ui_act(it, 1, g_u[i].mark ? tr("BỎ CHỌN") : tr("CHỌN"), do_toggle);
     }
     if (!n) {
-        it = ui_add(s, "Chưa có gì trong Import/", "", ST_UNKNOWN);
-        ui_exp(it, "Thư mục Import/ trống (hoặc chưa có). Chọn Mở thư mục nhập để tạo, rồi chép file vào.");
+        it = ui_add(s, tr("Chưa có gì trong Import/"), "", ST_UNKNOWN);
+        ui_exp(it, tr("Thư mục Import/ trống (hoặc chưa có). Chọn Mở thư mục nhập để tạo, rồi chép file vào."));
         it->iarg = -1;
     }
     char tg[24];
-    snprintf(tg, sizeof tg, "%d mục", n);
-    it = ui_add(s, "Quét lại Import/", tg, ST_UNKNOWN);
-    ui_exp(it, "Đọc lại Import/ của cả hai thẻ (chỉ đọc).");
+    snprintf(tg, sizeof tg, tr("%d mục"), n);
+    it = ui_add(s, tr("Quét lại Import/"), tg, ST_UNKNOWN);
+    ui_exp(it, tr("Đọc lại Import/ của cả hai thẻ (chỉ đọc)."));
     it->iarg = -1;
-    ui_act(it, 0, "QUÉT", do_rescan);
-    it = ui_add(s, "Mở thư mục nhập", "tạo", ST_UNKNOWN);
-    ui_exp(it, "Tạo <thẻ>/Import/ ở gốc mỗi thẻ nếu chưa có và cho biết đường dẫn.");
-    ui_exp(it, "Chép file ROM, .zip hoặc thư mục game vào đó (qua máy tính, USB hoặc pc/import_push.py).");
-    ui_exp(it, "LoongMate không tải ROM từ internet: chỉ nhập file bạn tự đưa vào.");
+    ui_act(it, 0, tr("QUÉT"), do_rescan);
+    it = ui_add(s, tr("Mở thư mục nhập"), tr("tạo"), ST_UNKNOWN);
+    ui_exp(it, tr("Tạo <thẻ>/Import/ ở gốc mỗi thẻ nếu chưa có và cho biết đường dẫn."));
+    ui_exp(it, tr("Chép file ROM, .zip hoặc thư mục game vào đó (qua máy tính, USB hoặc pc/import_push.py)."));
+    ui_exp(it, tr("LoongMate không tải ROM từ internet: chỉ nhập file bạn tự đưa vào."));
     it->iarg = -1;
-    ui_act(it, 0, "TẠO", do_mkdir);
-    it = ui_add(s, "Dọn file đã nhập", g_delete_src ? "XOÁ" : ".done/", g_delete_src ? ST_RED : ST_UNKNOWN);
-    ui_exp(it, "Sau khi cài thành công, file gốc trong Import/ được %s.",
-           g_delete_src ? "XOÁ (đang BẬT)" : "chuyển vào Import/.done/ (mặc định)");
-    ui_exp(it, "File chưa cài được (bị chặn, huỷ, lỗi) luôn ở nguyên chỗ.");
-    ui_exp(it, "A — bật/tắt xoá thay vì chuyển.");
+    ui_act(it, 0, tr("TẠO"), do_mkdir);
+    it = ui_add(s, tr("Dọn file đã nhập"), g_delete_src ? tr("XOÁ") : ".done/", g_delete_src ? ST_RED : ST_UNKNOWN);
+    ui_exp(it, tr("Sau khi cài thành công, file gốc trong Import/ được %s."),
+           g_delete_src ? tr("XOÁ (đang BẬT)") : tr("chuyển vào Import/.done/ (mặc định)"));
+    ui_exp(it, tr("File chưa cài được (bị chặn, huỷ, lỗi) luôn ở nguyên chỗ."));
+    ui_exp(it, tr("A — bật/tắt xoá thay vì chuyển."));
     it->iarg = -1;
-    ui_act(it, 0, "BẬT/TẮT", toggle_delete);
+    ui_act(it, 0, tr("BẬT/TẮT"), toggle_delete);
 }
 
 /* ============================================================ kế hoạch */
@@ -278,10 +279,10 @@ static void free_plan(void) {
 static void confirm_primary(const char *arg);
 
 static void plan_done(lm_job *j, const char *arg) {
-    cJSON *r = app_json_or_error(j, "Nhập game");
+    cJSON *r = app_json_or_error(j, tr("Nhập game"));
     if (!r) return;
     if (!jget(r, "card") || !jarr(r, "units")) {
-        ui_info1("Nhập game", "!! %s", jstrd(r, "message", "Engine không trả kế hoạch (engine cũ chưa có `import plan`?)."));
+        ui_info1(tr("Nhập game"), "!! %s", jstrd(r, "message", tr("Engine không trả kế hoạch (engine cũ chưa có `import plan`?).")));
         cJSON_Delete(r);
         return;
     }
@@ -289,25 +290,25 @@ static void plan_done(lm_job *j, const char *arg) {
         lines_t L = {0};
         lines_add(&L, "!! %s", jstrd(jget(r, "card"), "reason", ""));
         lines_add(&L, "%s", "");
-        lines_add(&L, "Dùng thẻ Leaf (thẻ chính) thì game nằm cùng thẻ với hệ thống; thẻ này thường gần đầy.");
-        lines_add(&L, "LoongMate KHÔNG tự chuyển sang thẻ chính — bạn quyết định.");
+        lines_add(&L, tr("Dùng thẻ Leaf (thẻ chính) thì game nằm cùng thẻ với hệ thống; thẻ này thường gần đầy."));
+        lines_add(&L, tr("LoongMate KHÔNG tự chuyển sang thẻ chính — bạn quyết định."));
         int usable = 0;
         cJSON *o;
         cJSON_ArrayForEach(o, jarr(jget(r, "card"), "options"))
             if (!strcmp(jstrd(o, "card", ""), "primary") && jbool_d(o, "usable", 0)) usable = 1;
         plan_remove("import");
         cJSON_Delete(r);
-        if (usable) ui_confirm("Thẻ phụ không dùng được", &L, "Dùng thẻ Leaf", confirm_primary, "primary");
-        else ui_info("Không có thẻ nào dùng được", &L);
+        if (usable) ui_confirm(tr("Thẻ phụ không dùng được"), &L, tr("Dùng thẻ Leaf"), confirm_primary, "primary");
+        else ui_info(tr("Không có thẻ nào dùng được"), &L);
         return;
     }
     if (!jbool_d(r, "success", 0) || !jbool_d(r, "ok", 0)) {
-        ui_info1("Không lập được kế hoạch", "!! %s", jstrd(jget(r, "card"), "reason", jstrd(r, "message", "?")));
+        ui_info1(tr("Không lập được kế hoạch"), "!! %s", jstrd(jget(r, "card"), "reason", jstrd(r, "message", "?")));
         cJSON_Delete(r);
         return;
     }
     if (ui_card_pick(jget(r, "card"), arg, confirm_primary)) { plan_remove("import"); cJSON_Delete(r); return; }  /* hai thẻ dùng được: hỏi */
-    if (!app_plan_written(r, "import", "Nhập game")) { cJSON_Delete(r); return; }
+    if (!app_plan_written(r, "import", tr("Nhập game"))) { cJSON_Delete(r); return; }
     drop_plan_data();
     g_plan = r;
     g_npu = jarr_n(r, "units");
@@ -347,7 +348,7 @@ static void make_plan(const char *pref, int only) {
         cJSON *u = unit_at(i);
         int pick = only >= 0 ? i == only : g_u[i].mark;
         if (pick && !strcmp(jstrd(u, "status", ""), "needs_choice") && !g_u[i].sys[0]) {
-            ui_info1("Chưa chọn hệ máy", "!! Chọn hệ máy (A trên mục '%s') trước khi lập kế hoạch.", jstrd(u, "name", "?"));
+            ui_info1(tr("Chưa chọn hệ máy"), tr("!! Chọn hệ máy (A trên mục '%s') trước khi lập kế hoạch."), jstrd(u, "name", "?"));
             return;
         }
     }
@@ -363,7 +364,7 @@ static void make_plan(const char *pref, int only) {
         if (g_u[i].sys[0]) { sv_add(&a, "--choice"); sv_add(&a, "%s=%s", id, g_u[i].sys); }
         n++;
     }
-    if (n) cli_task_v("Đang kiểm tra và lập kế hoạch", LONG_TIMEOUT_MS, plan_done, pref, (const char *const *)a.v, a.n);
+    if (n) cli_task_v(tr("Đang kiểm tra và lập kế hoạch"), LONG_TIMEOUT_MS, plan_done, pref, (const char *const *)a.v, a.n);
     sv_free(&a);
 }
 
@@ -373,13 +374,13 @@ static const char *action_row(const cJSON *u, int i, char *tag, size_t n, int *c
     const char *a = jstrd(u, "action", "");
     *has_act = 0;
     *color = ST_UNKNOWN;
-    if (!strcmp(a, "install")) { snprintf(tag, n, "cài"); *color = ST_GREEN; return "install"; }
-    if (!strcmp(a, "present")) { snprintf(tag, n, "đã có"); return "present"; }
-    if (!strcmp(a, "conflict")) { snprintf(tag, n, "trùng tên: %s", ACT_KEY[g_pact[i]]); *color = ST_YELLOW; *has_act = 1; return "conflict"; }
-    if (!strcmp(a, "bios_confirm")) { snprintf(tag, n, "BIOS: %s", g_pbios[i] ? "nhập" : "bỏ qua"); *color = g_pbios[i] ? ST_GREEN : ST_YELLOW; *has_act = 1; return "bios"; }
-    if (!strcmp(a, "bios_present")) { snprintf(tag, n, "BIOS đã có"); return "bios_present"; }
-    if (!strcmp(a, "bios_conflict")) { snprintf(tag, n, "BIOS khác"); *color = ST_RED; return "bios_conflict"; }
-    if (!strcmp(a, "choose_system")) { snprintf(tag, n, "chưa chọn hệ"); *color = ST_YELLOW; return "choose"; }
+    if (!strcmp(a, "install")) { snprintf(tag, n, tr("cài")); *color = ST_GREEN; return "install"; }
+    if (!strcmp(a, "present")) { snprintf(tag, n, tr("đã có")); return "present"; }
+    if (!strcmp(a, "conflict")) { snprintf(tag, n, tr("trùng tên: %s"), ACT_KEY[g_pact[i]]); *color = ST_YELLOW; *has_act = 1; return "conflict"; }
+    if (!strcmp(a, "bios_confirm")) { snprintf(tag, n, "BIOS: %s", g_pbios[i] ? tr("nhập") : tr("bỏ qua")); *color = g_pbios[i] ? ST_GREEN : ST_YELLOW; *has_act = 1; return "bios"; }
+    if (!strcmp(a, "bios_present")) { snprintf(tag, n, tr("BIOS đã có")); return "bios_present"; }
+    if (!strcmp(a, "bios_conflict")) { snprintf(tag, n, tr("BIOS khác")); *color = ST_RED; return "bios_conflict"; }
+    if (!strcmp(a, "choose_system")) { snprintf(tag, n, tr("chưa chọn hệ")); *color = ST_YELLOW; return "choose"; }
     snprintf(tag, n, "%s", jstrd(u, "status", "?"));
     *color = ST_RED;
     return "other";
@@ -405,42 +406,42 @@ static void cycle_act(ui_screen *s, ui_item *it) {
 
 static void build_plan(ui_screen *s) {
     cJSON *card = jget(g_plan, "card"), *units = jarr(g_plan, "units"), *x;
-    ui_hdr(s, "Thẻ đích: %s", jstrd(card, "reason", ""));
-    ui_hdr(s, "Cần ~%s (gồm giải nén, staging, dự phòng).", mbs(jnumd(g_plan, "needed_bytes", 0)));
+    ui_hdr(s, tr("Thẻ đích: %s"), jstrd(card, "reason", ""));
+    ui_hdr(s, tr("Cần ~%s (gồm giải nén, staging, dự phòng)."), mbs(jnumd(g_plan, "needed_bytes", 0)));
     char lab[64];
     int n = will_do();
-    snprintf(lab, sizeof lab, "THỰC HIỆN (%d việc)", n);
+    snprintf(lab, sizeof lab, tr("THỰC HIỆN (%d việc)"), n);
     ui_item *it = ui_add(s, lab, "", n ? ST_GREEN : ST_UNKNOWN);
-    ui_exp(it, "A — xác nhận cuối (mặc định Huỷ) rồi cài: giải nén vào thư mục tạm trên thẻ đích, kiểm SHA-256, rồi chuyển vào Roms/.");
-    ui_exp(it, "Nguồn trong Import/ chỉ được chuyển/xoá sau khi cài thành công.");
+    ui_exp(it, tr("A — xác nhận cuối (mặc định Huỷ) rồi cài: giải nén vào thư mục tạm trên thẻ đích, kiểm SHA-256, rồi chuyển vào Roms/."));
+    ui_exp(it, tr("Nguồn trong Import/ chỉ được chuyển/xoá sau khi cài thành công."));
     it->iarg = -1;
-    if (n) ui_act(it, 0, "THỰC HIỆN", ask_apply);
+    if (n) ui_act(it, 0, tr("THỰC HIỆN"), ask_apply);
     for (int i = 0; i < g_npu; i++) {
         cJSON *u = cJSON_GetArrayItem(units, i);
         char tag[48];
         int col, has;
         const char *kind = action_row(u, i, tag, sizeof tag, &col, &has);
         it = ui_add(s, jstrd(u, "name", "?"), tag, col);
-        ui_exp(it, "Hệ: %s  ·  %s", jstrd(u, "system", "?"), mbs(jnumd(u, "bytes", 0)));
+        ui_exp(it, tr("Hệ: %s  ·  %s"), jstrd(u, "system", "?"), mbs(jnumd(u, "bytes", 0)));
         if (!strcmp(kind, "install")) {
             int k = 0;
-            cJSON_ArrayForEach(x, jarr(u, "dest_paths")) if (cJSON_IsString(x) && k++ < 4) ui_exp(it, "Sẽ cài: %s", x->valuestring);
-        } else if (!strcmp(kind, "present")) ui_exp(it, "Cùng SHA-256 đã có trong thư viện — không cài lại.");
+            cJSON_ArrayForEach(x, jarr(u, "dest_paths")) if (cJSON_IsString(x) && k++ < 4) ui_exp(it, tr("Sẽ cài: %s"), x->valuestring);
+        } else if (!strcmp(kind, "present")) ui_exp(it, tr("Cùng SHA-256 đã có trong thư viện — không cài lại."));
         else if (!strcmp(kind, "conflict")) {
-            ui_exp(it, "!! Đã có file cùng tên nhưng KHÁC nội dung:");
+            ui_exp(it, tr("!! Đã có file cùng tên nhưng KHÁC nội dung:"));
             int k = 0;
             cJSON_ArrayForEach(x, jarr(jget(u, "conflict"), "paths")) if (cJSON_IsString(x) && k++ < 4) ui_exp(it, "• %s", x->valuestring);
-            ui_exp(it, "Hành động: %s.", ACT_VI[g_pact[i]]);
-            ui_exp(it, "A — đổi hành động (giữ / thay / bản sao / huỷ).");
+            ui_exp(it, tr("Hành động: %s."), tr(ACT_VI[g_pact[i]]));
+            ui_exp(it, tr("A — đổi hành động (giữ / thay / bản sao / huỷ)."));
         } else if (!strcmp(kind, "bios")) {
-            ui_exp(it, "BIOS khớp md5 -> %s.", jstrd(jget(u, "bios"), "dest", "BIOS/"));
-            ui_exp(it, "A — xác nhận / bỏ qua BIOS này (xác nhận riêng, không bao giờ ghi đè BIOS có sẵn).");
-        } else if (!strcmp(kind, "bios_present")) ui_exp(it, "BIOS này đã có đúng nội dung.");
-        else if (!strcmp(kind, "choose")) ui_exp(it, "Quay lại và chọn hệ máy.");
+            ui_exp(it, tr("BIOS khớp md5 -> %s."), jstrd(jget(u, "bios"), "dest", "BIOS/"));
+            ui_exp(it, tr("A — xác nhận / bỏ qua BIOS này (xác nhận riêng, không bao giờ ghi đè BIOS có sẵn)."));
+        } else if (!strcmp(kind, "bios_present")) ui_exp(it, tr("BIOS này đã có đúng nội dung."));
+        else if (!strcmp(kind, "choose")) ui_exp(it, tr("Quay lại và chọn hệ máy."));
         cJSON_ArrayForEach(x, jarr(u, "reasons")) if (cJSON_IsString(x)) ui_exp(it, "!! %s", x->valuestring);
         cJSON_ArrayForEach(x, jarr(u, "warnings")) if (cJSON_IsString(x)) ui_exp(it, "! %s", x->valuestring);
         it->iarg = i;
-        if (has) ui_act(it, 0, !strcmp(kind, "bios") ? "XÁC NHẬN/BỎ" : "ĐỔI HÀNH ĐỘNG", cycle_act);
+        if (has) ui_act(it, 0, !strcmp(kind, "bios") ? tr("XÁC NHẬN/BỎ") : tr("ĐỔI HÀNH ĐỘNG"), cycle_act);
     }
 }
 
@@ -448,15 +449,15 @@ static void build_plan(ui_screen *s) {
 static void apply_done(lm_job *j, const char *arg) {
     (void)arg;
     int code = lm_job_exit_code(j);
-    cJSON *r = app_json_or_error(j, "Nhập game");
+    cJSON *r = app_json_or_error(j, tr("Nhập game"));
     if (!r) return;
     cJSON *res = jarr(r, "results"), *x;
     lines_t L = {0};
     if (code == 3 || !res) {
-        lines_add(&L, "!! %s", code == 3 ? "Kế hoạch đã cũ hoặc không hợp lệ — CHƯA làm gì cả. Hãy xem trước lại." : "Chưa thực hiện được:");
-        lines_add(&L, "%s", jstrd(r, "message", "engine không trả kết quả thực hiện"));
+        lines_add(&L, "!! %s", code == 3 ? tr("Kế hoạch đã cũ hoặc không hợp lệ — CHƯA làm gì cả. Hãy xem trước lại.") : tr("Chưa thực hiện được:"));
+        lines_add(&L, "%s", jstrd(r, "message", tr("engine không trả kết quả thực hiện")));
         cJSON_Delete(r);
-        ui_info("Nhập game", &L);
+        ui_info(tr("Nhập game"), &L);
         return;
     }
     lines_add(&L, "%s%s", jnumd(r, "installed", 0) > 0 ? "+ " : "", jstrd(r, "message", ""));
@@ -465,16 +466,16 @@ static void apply_done(lm_job *j, const char *arg) {
         const char *mark = (!strcmp(st, "installed") || !strcmp(st, "already_present")) ? "+" : (!strcmp(st, "blocked") || !strcmp(st, "failed")) ? "!!" : "!";
         lines_add(&L, "%s %s: %s — %s", mark, jstrd(x, "name", "?"), st, jstrd(x, "message", ""));
     }
-    cJSON_ArrayForEach(x, jarr(r, "source_cleanup")) lines_add(&L, "Nguồn %s: %s", jstrd(x, "action", "?"), jstrd(x, "path", "?"));
+    cJSON_ArrayForEach(x, jarr(r, "source_cleanup")) lines_add(&L, tr("Nguồn %s: %s"), jstrd(x, "action", "?"), jstrd(x, "path", "?"));
     app_add_rescan_lines(&L, jget(r, "rescan"));
     cJSON_Delete(r);
-    snprintf(g_pending_title, sizeof g_pending_title, "Kết quả nhập game");
+    snprintf(g_pending_title, sizeof g_pending_title, tr("Kết quả nhập game"));
     lines_free(&g_pending);
     g_pending = L;
     free_plan();
     ui_pop();                         /* đóng màn kế hoạch, về danh sách */
     for (int i = 0; i < g_nu; i++) g_u[i].mark = 0;
-    cli_task("Đang quét lại Import/", SHORT_TIMEOUT_MS, scan_done, "0", "import", "scan", NULL);
+    cli_task(tr("Đang quét lại Import/"), SHORT_TIMEOUT_MS, scan_done, "0", "import", "scan", NULL);
     app_refresh();
 }
 
@@ -490,7 +491,7 @@ static void do_apply(const char *arg) {
         if (!strcmp(act, "bios_confirm") && g_pbios[i]) { sv_add(&a, "--bios-ok"); sv_add(&a, "%s", id); }
     }
     if (g_delete_src) sv_add(&a, "--delete-source");
-    cli_task_v("Đang nhập game", LONG_TIMEOUT_MS, apply_done, "", (const char *const *)a.v, a.n);
+    cli_task_v(tr("Đang nhập game"), LONG_TIMEOUT_MS, apply_done, "", (const char *const *)a.v, a.n);
     sv_free(&a);
 }
 
@@ -498,16 +499,16 @@ static void ask_apply(ui_screen *s, ui_item *it) {
     (void)s; (void)it;
     lines_t L = {0};
     cJSON *units = jarr(g_plan, "units");
-    lines_add(&L, "Thẻ đích: %s", jstrd(jget(g_plan, "card"), "root", "?"));
+    lines_add(&L, tr("Thẻ đích: %s"), jstrd(jget(g_plan, "card"), "root", "?"));
     lines_add(&L, "%s", "");
     for (int i = 0; i < g_npu; i++) {
         cJSON *u = cJSON_GetArrayItem(units, i);
         const char *a = jstrd(u, "action", "");
-        if (!strcmp(a, "install")) lines_add(&L, "+ Cài %s -> %s (%s)", jstrd(u, "name", "?"), jstrd(u, "system", "?"), mbs(jnumd(u, "bytes", 0)));
-        else if (!strcmp(a, "conflict") && (g_pact[i] == 1 || g_pact[i] == 2)) lines_add(&L, "! %s: %s", jstrd(u, "name", "?"), ACT_VI[g_pact[i]]);
+        if (!strcmp(a, "install")) lines_add(&L, tr("+ Cài %s -> %s (%s)"), jstrd(u, "name", "?"), jstrd(u, "system", "?"), mbs(jnumd(u, "bytes", 0)));
+        else if (!strcmp(a, "conflict") && (g_pact[i] == 1 || g_pact[i] == 2)) lines_add(&L, "! %s: %s", jstrd(u, "name", "?"), tr(ACT_VI[g_pact[i]]));
         else if (!strcmp(a, "bios_confirm") && g_pbios[i]) lines_add(&L, "+ BIOS %s -> BIOS/", jstrd(jget(u, "bios"), "name", "?"));
     }
     lines_add(&L, "%s", "");
-    lines_add(&L, "File gốc: %s", g_delete_src ? "sẽ bị XOÁ sau khi cài thành công." : "chuyển vào Import/.done/ sau khi cài thành công.");
-    ui_confirm("Xác nhận nhập game", &L, "Nhập", do_apply, "");
+    lines_add(&L, tr("File gốc: %s"), g_delete_src ? tr("sẽ bị XOÁ sau khi cài thành công.") : tr("chuyển vào Import/.done/ sau khi cài thành công."));
+    ui_confirm(tr("Xác nhận nhập game"), &L, tr("Nhập"), do_apply, "");
 }

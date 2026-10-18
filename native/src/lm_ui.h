@@ -9,6 +9,7 @@
 #include "lm_json.h"
 #include "lm_run.h"
 #include <stdarg.h>
+#include <stdio.h>
 
 #define UI_ARGLEN 640
 
@@ -66,12 +67,14 @@ void ui_rebuild_all(void);
 void ui_hdr(ui_screen *s, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 ui_item *ui_head(ui_screen *s, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 ui_item *ui_add(ui_screen *s, const char *label, const char *tag, int tagc);
+ui_item *ui_add_raw(ui_screen *s, const char *label, const char *tag);   /* như ui_add nhưng không dịch (nhãn song ngữ) */
 void ui_exp(ui_item *it, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 void ui_act(ui_item *it, int slot, const char *lbl, ui_fn fn);
 void ui_arg(ui_item *it, const char *arg);
 
 /* ---- hộp thoại ---- */
 void ui_info(const char *title, lines_t *L);                     /* nhận quyền sở hữu L (giải phóng bên trong) */
+void ui_measure_rows(FILE *in, FILE *out);   /* LM_MEASURE: nhãn nào bị cắt "..." */
 void ui_info1(const char *title, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 typedef void (*ui_confirm_cb)(const char *arg);
 void ui_confirm(const char *title, lines_t *L, const char *confirm_label, ui_confirm_cb cb, const char *arg);

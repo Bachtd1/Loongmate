@@ -6,6 +6,7 @@
  * (has_save có sẵn từng dòng): không gọi lại CLI mỗi lần bấm, dấu chọn (X) nằm theo chỉ số dòng nên không mất khi đổi. */
 #define _GNU_SOURCE
 #include "lm_app.h"
+#include "lm_i18n.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -156,47 +157,47 @@ static void build_games(ui_screen *s) {
     }
 
     if (del) {
-        const char *cardtxt = filter == 1 ? " trên SD1" : filter == 2 ? " trên SD2" : "";
-        if (top) ui_hdr(s, "%d game nặng nhất%s (mọi hệ).", nidx, cardtxt);
-        else if (nidx == nscope) ui_hdr(s, "Hệ %s: %d game%s.", s->key, nscope, cardtxt);
-        else ui_hdr(s, "Hệ %s: hiện %d / %d game%s.", s->key, nidx, nscope, cardtxt);
-        ui_hdr(s, "Sắp xếp: %s · Lọc: %s.", v->sort == SORT_SIZE ? "Dung lượng (lớn trước)" : "Tên", SAVE_LABEL[v->save]);
+        const char *cardtxt = filter == 1 ? tr(" trên SD1") : filter == 2 ? tr(" trên SD2") : "";
+        if (top) ui_hdr(s, tr("%d game nặng nhất%s (mọi hệ)."), nidx, cardtxt);
+        else if (nidx == nscope) ui_hdr(s, tr("Hệ %s: %d game%s."), s->key, nscope, cardtxt);
+        else ui_hdr(s, tr("Hệ %s: hiện %d / %d game%s."), s->key, nidx, nscope, cardtxt);
+        ui_hdr(s, tr("Sắp xếp: %s · Lọc: %s."), v->sort == SORT_SIZE ? tr("Dung lượng (lớn trước)") : tr("Tên"), tr(SAVE_LABEL[v->save]));
         if (nm) {
             int vis = 0;
             for (int k = 0; k < nidx; k++) if (g_mark && g_mark[idx[k]]) vis++;
-            if (nm > vis) ui_hdr(s, "Đã chọn %d game · %s, %d đang bị bộ lọc ẩn.", nm, mbs(mbytes), nm - vis);
-            else ui_hdr(s, "Đã chọn %d game · %s.", nm, mbs(mbytes));
-        } else ui_hdr(s, "Đã chọn 0 game.");
-        ui_hdr(s, "Y: đổi sắp xếp. A ở mục Lọc: đổi lọc. X: chọn nhiều game để xoá một lần. A ở game: xoá riêng game đó.");
+            if (nm > vis) ui_hdr(s, tr("Đã chọn %d game · %s, %d đang bị bộ lọc ẩn."), nm, mbs(mbytes), nm - vis);
+            else ui_hdr(s, tr("Đã chọn %d game · %s."), nm, mbs(mbytes));
+        } else ui_hdr(s, tr("Đã chọn 0 game."));
+        ui_hdr(s, tr("Y: đổi sắp xếp. A ở mục Lọc: đổi lọc. X: chọn nhiều game để xoá một lần. A ở game: xoá riêng game đó."));
     } else {
-        ui_hdr(s, "Hệ %s. A: xem kế hoạch chuyển rồi mới xác nhận (mặc định Huỷ). Chuyển nhiều game một lần: thiếu CLI (lệnh `move` chỉ nhận MỘT game mỗi kế hoạch).", s->key);
+        ui_hdr(s, tr("Hệ %s. A: xem kế hoạch chuyển rồi mới xác nhận (mặc định Huỷ). Chuyển nhiều game một lần: thiếu CLI (lệnh `move` chỉ nhận MỘT game mỗi kế hoạch)."), s->key);
     }
-    const char *ylbl = "SẮP XẾP";
+    const char *ylbl = tr("SẮP XẾP");
     if (nm >= 1) {
         char label[64];
-        snprintf(label, sizeof label, "Xoá %d game đã chọn", nm);
+        snprintf(label, sizeof label, tr("Xoá %d game đã chọn"), nm);
         ui_item *it = ui_add(s, label, mbs(mbytes), ST_RED);
         it->iarg = -1;
-        ui_exp(it, "Xoá %d game đã đánh dấu (%s)%s.", nm, mbs(mbytes), top ? " trong danh sách mọi hệ" : " trong hệ này");
-        ui_exp(it, "Gồm cả game đang bị bộ lọc ẩn (dấu chọn không mất khi đổi lọc/sắp xếp).");
-        ui_exp(it, "Một lần gọi engine cho cả lô; trước khi xoá sẽ hiện danh sách từng game và file, mặc định Huỷ.");
-        ui_exp(it, "! Save/state không bị xoá cùng game: ROM mất, save còn lại thành mồ côi.");
-        ui_exp(it, "X: bỏ đánh dấu tất cả. Y: đổi cách sắp xếp (Tên / Dung lượng). Rời màn là bỏ đánh dấu.");
-        ui_act(it, 0, "XOÁ ĐÃ CHỌN…", act_delete_marked);
-        ui_act(it, 1, "BỎ CHỌN HẾT", act_clear_marks);
+        ui_exp(it, tr("Xoá %d game đã đánh dấu (%s)%s."), nm, mbs(mbytes), top ? tr(" trong danh sách mọi hệ") : tr(" trong hệ này"));
+        ui_exp(it, tr("Gồm cả game đang bị bộ lọc ẩn (dấu chọn không mất khi đổi lọc/sắp xếp)."));
+        ui_exp(it, tr("Một lần gọi engine cho cả lô; trước khi xoá sẽ hiện danh sách từng game và file, mặc định Huỷ."));
+        ui_exp(it, tr("! Save/state không bị xoá cùng game: ROM mất, save còn lại thành mồ côi."));
+        ui_exp(it, tr("X: bỏ đánh dấu tất cả. Y: đổi cách sắp xếp (Tên / Dung lượng). Rời màn là bỏ đánh dấu."));
+        ui_act(it, 0, tr("XOÁ ĐÃ CHỌN…"), act_delete_marked);
+        ui_act(it, 1, tr("BỎ CHỌN HẾT"), act_clear_marks);
         ui_act(it, 2, ylbl, act_toggle_sort);
     }
     if (del) {
         char label[48], tag[32];
-        snprintf(label, sizeof label, "Lọc: %s", SAVE_LABEL[v->save]);
+        snprintf(label, sizeof label, tr("Lọc: %s"), tr(SAVE_LABEL[v->save]));
         snprintf(tag, sizeof tag, "%d game", nidx);
         ui_item *it = ui_add(s, label, tag, ST_UNKNOWN);
         it->iarg = -2;
-        ui_exp(it, "Lọc theo save: tất cả / có save / không save.");
-        ui_exp(it, "Có save = có file save cùng tên game (không tính state), ở thẻ nào cũng được.");
-        ui_exp(it, "Dấu chọn (X) được giữ nguyên khi đổi lọc hay đổi sắp xếp.");
-        ui_exp(it, "A: đổi sang \"%s\". Y: đổi cách sắp xếp (Tên / Dung lượng).", SAVE_LABEL[(v->save + 1) % 3]);
-        ui_act(it, 0, "ĐỔI LỌC", act_cycle_save);
+        ui_exp(it, tr("Lọc theo save: tất cả / có save / không save."));
+        ui_exp(it, tr("Có save = có file save cùng tên game (không tính state), ở thẻ nào cũng được."));
+        ui_exp(it, tr("Dấu chọn (X) được giữ nguyên khi đổi lọc hay đổi sắp xếp."));
+        ui_exp(it, tr("A: đổi sang \"%s\". Y: đổi cách sắp xếp (Tên / Dung lượng)."), tr(SAVE_LABEL[(v->save + 1) % 3]));
+        ui_act(it, 0, tr("ĐỔI LỌC"), act_cycle_save);
         ui_act(it, 2, ylbl, act_toggle_sort);
     }
     for (int k = 0; k < nidx; k++) {
@@ -211,31 +212,31 @@ static void build_games(ui_screen *s) {
         ui_arg(it, jstrd(r, "path", ""));
         it->iarg = i;
         snprintf(it->arg2, sizeof it->arg2, "%s", jstrd(r, "card", ""));
-        if (mk) ui_exp(it, "+ ĐÃ CHỌN để xoá (X để bỏ chọn).");
+        if (mk) ui_exp(it, tr("+ ĐÃ CHỌN để xoá (X để bỏ chọn)."));
         ui_exp(it, "%s", jstrd(r, "name", "?"));
-        ui_exp(it, "Hệ: %s", jstrd(r, "system", "?"));
-        ui_exp(it, "Thẻ: %s", sd_name(jstr(r, "card")));
-        ui_exp(it, "Dung lượng: %s", mbs(jnumd(r, "size", 0)));
+        ui_exp(it, tr("Hệ: %s"), jstrd(r, "system", "?"));
+        ui_exp(it, tr("Thẻ: %s"), sd_name(jstr(r, "card")));
+        ui_exp(it, tr("Dung lượng: %s"), mbs(jnumd(r, "size", 0)));
         ui_exp(it, "%s", jstrd(r, "path", "?"));
         ui_exp(it, "%s", "");
-        ui_exp(it, "Save: %s", sv ? "CÓ" : "không");
-        ui_exp(it, "State: %s", st ? "CÓ" : "không");
-        if (mode == RB_DELETE && (sv || st)) ui_exp(it, "! Save/state KHÔNG bị xoá cùng game (giữ lại, thành mồ côi nếu bạn không chơi lại).");
-        if (mode == RB_MOVE && (sv || st)) ui_exp(it, "! Save/state được CHÉP sang thẻ đích nhưng GIỮ LẠI ở thẻ nguồn.");
+        ui_exp(it, "Save: %s", sv ? tr("CÓ") : tr("không"));
+        ui_exp(it, "State: %s", st ? tr("CÓ") : tr("không"));
+        if (mode == RB_DELETE && (sv || st)) ui_exp(it, tr("! Save/state KHÔNG bị xoá cùng game (giữ lại, thành mồ côi nếu bạn không chơi lại)."));
+        if (mode == RB_MOVE && (sv || st)) ui_exp(it, tr("! Save/state được CHÉP sang thẻ đích nhưng GIỮ LẠI ở thẻ nguồn."));
         const char *ext = jstrd(r, "extension", "");
-        if (!strcasecmp(ext, ".cue") || !strcasecmp(ext, ".m3u")) ui_exp(it, "Game nhiều file: thao tác với file này áp dụng cho cả bộ (các track/đĩa đi kèm).");
+        if (!strcasecmp(ext, ".cue") || !strcasecmp(ext, ".m3u")) ui_exp(it, tr("Game nhiều file: thao tác với file này áp dụng cho cả bộ (các track/đĩa đi kèm)."));
         else if (!strcasecmp(ext, ".png") || !strcasecmp(ext, ".jpg") || !strcasecmp(ext, ".jpeg") || !strcasecmp(ext, ".bmp"))
-            ui_exp(it, "! Đây là file ảnh nằm trong Roms/ (thường là Imgs/), không phải ROM — `roms --json` liệt kê mọi file trong Roms/.");
-        else if (!strcasecmp(ext, ".bin")) ui_exp(it, "! File .bin lẻ (không thấy .cue cùng tên): engine có thể từ chối nếu nó là track của game khác.");
-        ui_act(it, 0, mode == RB_DELETE ? "XOÁ…" : "CHUYỂN…", act_game);
+            ui_exp(it, tr("! Đây là file ảnh nằm trong Roms/ (thường là Imgs/), không phải ROM — `roms --json` liệt kê mọi file trong Roms/."));
+        else if (!strcasecmp(ext, ".bin")) ui_exp(it, tr("! File .bin lẻ (không thấy .cue cùng tên): engine có thể từ chối nếu nó là track của game khác."));
+        ui_act(it, 0, mode == RB_DELETE ? tr("XOÁ…") : tr("CHUYỂN…"), act_game);
         if (mode == RB_DELETE) {
-            ui_act(it, 1, mk ? "BỎ CHỌN" : "CHỌN", act_toggle);
+            ui_act(it, 1, mk ? tr("BỎ CHỌN") : tr("CHỌN"), act_toggle);
             ui_act(it, 2, ylbl, act_toggle_sort);
         }
         shown++;
     }
     free(idx);
-    if (!shown) ui_head(s, del && nscope ? "Không có game nào khớp bộ lọc" : "Không còn game");
+    if (!shown) ui_head(s, del && nscope ? tr("Không có game nào khớp bộ lọc") : tr("Không còn game"));
 }
 
 /* đặt con trỏ vào mục game có đường dẫn `path` (sau khi dựng lại danh sách) */
@@ -329,7 +330,7 @@ static void start_preview(char **paths, int n) {
     ex[k++] = "rom"; ex[k++] = "delete";
     for (int i = 0; i < n; i++) ex[k++] = paths[i];
     /* không --yes: stdin của engine là /dev/null nên CLI chỉ in kế hoạch (mỗi game: ok/files/artwork/saves_kept) rồi dừng, không xoá gì */
-    cli_task_v(n == 1 ? "Đang lập danh sách file sẽ xoá" : "Đang lập danh sách file của cả lô sẽ xoá", SHORT_TIMEOUT_MS, del_preview_done, "", ex, k);
+    cli_task_v(n == 1 ? tr("Đang lập danh sách file sẽ xoá") : tr("Đang lập danh sách file của cả lô sẽ xoá"), SHORT_TIMEOUT_MS, del_preview_done, "", ex, k);
     free(ex);
 }
 
@@ -375,7 +376,7 @@ static cJSON *games_of(cJSON *r, cJSON **owned) {
 
 static void del_preview_done(lm_job *j, const char *arg) {
     (void)arg;
-    cJSON *p = app_json_or_error(j, "Xoá ROM");
+    cJSON *p = app_json_or_error(j, tr("Xoá ROM"));
     if (!p) return;
     cJSON *own, *games = games_of(p, &own), *g;
     int nok = 0;
@@ -388,15 +389,15 @@ static void del_preview_done(lm_job *j, const char *arg) {
     }
     if (!nok) {
         lines_t L = {0};
-        lines_add(&L, "!! Không xoá được:");
-        if (!games || !cJSON_GetArraySize(games)) lines_add(&L, "%s", jstrd(p, "message", "engine không trả danh sách game"));
+        lines_add(&L, tr("!! Không xoá được:"));
+        if (!games || !cJSON_GetArraySize(games)) lines_add(&L, "%s", jstrd(p, "message", tr("engine không trả danh sách game")));
         cJSON_ArrayForEach(g, games) {
             cJSON *pl = jget(g, "plan"), *w;
             const char *path = jstrd(g, "path", "?"), *b = strrchr(path, '/');
-            lines_add(&L, "• %s: %s", b ? b + 1 : path, jstrd(pl, "message", "engine không báo lý do"));
+            lines_add(&L, "• %s: %s", b ? b + 1 : path, jstrd(pl, "message", tr("engine không báo lý do")));
             cJSON_ArrayForEach(w, jarr(pl, "warnings")) if (cJSON_IsString(w)) lines_add(&L, "  ! %s", w->valuestring);
         }
-        ui_info("Xoá ROM", &L);
+        ui_info(tr("Xoá ROM"), &L);
     } else ask_delete(games);
     cJSON_Delete(own);
     cJSON_Delete(p);
@@ -441,19 +442,19 @@ static void drop_deleted(const cJSON *deleted) {
 
 static void del_done(lm_job *j, const char *arg) {
     (void)arg;
-    cJSON *r = app_json_or_error(j, "Kết quả xoá ROM");
+    cJSON *r = app_json_or_error(j, tr("Kết quả xoá ROM"));
     if (!r) return;
     lines_t L = {0};
     cJSON *deleted = jarr(r, "deleted"), *refused = jarr(r, "refused"), *x;
     if (!deleted) {
-        lines_add(&L, "!! Chưa xoá gì:");
-        lines_add(&L, "%s", jstrd(r, "message", jstrd(jget(r, "plan"), "message", "engine không trả kết quả")));
+        lines_add(&L, tr("!! Chưa xoá gì:"));
+        lines_add(&L, "%s", jstrd(r, "message", jstrd(jget(r, "plan"), "message", tr("engine không trả kết quả"))));
     } else {
         cJSON *own, *games = games_of(r, &own), *g;
         int nd = cJSON_GetArraySize(deleted), nr = refused ? cJSON_GetArraySize(refused) : 0, ns = 0;
-        lines_add(&L, "%sĐã xoá %d file, giải phóng %s.", nd && !nr ? "+ " : "", nd, mbs(jnumd(r, "bytes_freed", 0)));
-        if (nr) lines_add(&L, "!! %d file bị TỪ CHỐI (vẫn còn trên thẻ):", nr);
-        cJSON_ArrayForEach(x, refused) lines_add(&L, "!! TỪ CHỐI %s: %s", jstrd(x, "path", "?"), jstrd(x, "reason", ""));
+        lines_add(&L, tr("%sĐã xoá %d file, giải phóng %s."), nd && !nr ? "+ " : "", nd, mbs(jnumd(r, "bytes_freed", 0)));
+        if (nr) lines_add(&L, tr("!! %d file bị TỪ CHỐI (vẫn còn trên thẻ):"), nr);
+        cJSON_ArrayForEach(x, refused) lines_add(&L, tr("!! TỪ CHỐI %s: %s"), jstrd(x, "path", "?"), jstrd(x, "reason", ""));
         cJSON_ArrayForEach(g, games) {     /* chỉ đếm save của game đã thực sự mất file */
             int gone;
             cJSON *gd = jarr(g, "deleted");
@@ -462,12 +463,12 @@ static void del_done(lm_job *j, const char *arg) {
             if (gone) ns += jarr_n(jget(g, "plan"), "saves_kept");
         }
         cJSON_Delete(own);
-        if (ns) lines_add(&L, "Save/state được GIỮ LẠI (không xoá, giờ thành mồ côi): %d file.", ns);
+        if (ns) lines_add(&L, tr("Save/state được GIỮ LẠI (không xoá, giờ thành mồ côi): %d file."), ns);
         app_add_rescan_lines(&L, jget(r, "rescan"));
         drop_deleted(deleted);     /* bỏ các dòng đã xoá khỏi danh sách đang duyệt (khỏi quét lại) */
     }
     cJSON_Delete(r);
-    ui_info("Kết quả xoá ROM", &L);
+    ui_info(tr("Kết quả xoá ROM"), &L);
     app_refresh();
 }
 
@@ -481,7 +482,7 @@ static void do_delete(const char *arg) {
     ex[k++] = "rom"; ex[k++] = "delete";
     for (int i = 0; i < n; i++) ex[k++] = g_apply[i];
     ex[k++] = "--yes";
-    cli_task_v("Đang xoá ROM", LONG_TIMEOUT_MS, del_done, "", ex, k);
+    cli_task_v(tr("Đang xoá ROM"), LONG_TIMEOUT_MS, del_done, "", ex, k);
     free(ex);
 }
 
@@ -498,34 +499,34 @@ static void ask_delete(const cJSON *games) {
         nf += jarr_n(pl, "files"); na += jarr_n(pl, "artwork"); ns += jarr_n(pl, "saves_kept");
         bytes += jnumd(pl, "bytes", 0);
     }
-    lines_add(&L, "!! XOÁ VĨNH VIỄN %d game, %d file ROM + %d ảnh bìa (%s)", nok, nf, na, mbs(bytes));
+    lines_add(&L, tr("!! XOÁ VĨNH VIỄN %d game, %d file ROM + %d ảnh bìa (%s)"), nok, nf, na, mbs(bytes));
     cJSON_ArrayForEach(g, games) {
         cJSON *pl = jget(g, "plan");
         if (!game_live(g)) continue;
         const char *path = jstrd(g, "path", "?"), *base = strrchr(path, '/');
         lines_add(&L, "%s", "");
-        lines_add(&L, "• %s (%d file ROM + %d ảnh bìa, %s)", base ? base + 1 : path, jarr_n(pl, "files"), jarr_n(pl, "artwork"), mbs(jnumd(pl, "bytes", 0)));
+        lines_add(&L, tr("• %s (%d file ROM + %d ảnh bìa, %s)"), base ? base + 1 : path, jarr_n(pl, "files"), jarr_n(pl, "artwork"), mbs(jnumd(pl, "bytes", 0)));
         cJSON_ArrayForEach(f, jarr(pl, "files")) if (cJSON_IsString(f)) lines_add(&L, "    %s", f->valuestring);
-        cJSON_ArrayForEach(f, jarr(pl, "artwork")) if (cJSON_IsString(f)) lines_add(&L, "    (ảnh bìa) %s", f->valuestring);
+        cJSON_ArrayForEach(f, jarr(pl, "artwork")) if (cJSON_IsString(f)) lines_add(&L, tr("    (ảnh bìa) %s"), f->valuestring);
         cJSON_ArrayForEach(w, jarr(pl, "warnings")) if (cJSON_IsString(w)) lines_add(&L, "  ! %s", w->valuestring);
     }
     if (ns) {
         lines_add(&L, "%s", "");
-        lines_add(&L, "+ Save/state được GIỮ LẠI (LoongMate không xoá), %d file. ROM bị xoá nên các save này thành mồ côi:", ns);
+        lines_add(&L, tr("+ Save/state được GIỮ LẠI (LoongMate không xoá), %d file. ROM bị xoá nên các save này thành mồ côi:"), ns);
         cJSON_ArrayForEach(g, games) {
             cJSON *pl = jget(g, "plan");
             if (!game_live(g)) continue;
             cJSON_ArrayForEach(f, jarr(pl, "saves_kept")) if (cJSON_IsString(f)) lines_add(&L, "  %s", f->valuestring);
         }
-    } else lines_add(&L, "Không có save/state đi kèm.");
+    } else lines_add(&L, tr("Không có save/state đi kèm."));
     if (nskip) {
         lines_add(&L, "%s", "");
-        lines_add(&L, "!! %d game sẽ bị BỎ QUA (không xoá):", nskip);
+        lines_add(&L, tr("!! %d game sẽ bị BỎ QUA (không xoá):"), nskip);
         cJSON_ArrayForEach(g, games) {
             cJSON *pl = jget(g, "plan");
             if (jbool_d(pl, "ok", 0) || jstr(g, "merged_into")) continue;
             const char *path = jstrd(g, "path", "?"), *base = strrchr(path, '/');
-            lines_add(&L, "!! %s: %s", base ? base + 1 : path, jstrd(pl, "message", "engine không báo lý do"));
+            lines_add(&L, "!! %s: %s", base ? base + 1 : path, jstrd(pl, "message", tr("engine không báo lý do")));
         }
     }
     cJSON_ArrayForEach(g, games) {
@@ -533,15 +534,15 @@ static void ask_delete(const cJSON *games) {
         if (!mi) continue;
         const char *path = jstrd(g, "path", "?"), *b = strrchr(path, '/'), *mb2 = strrchr(mi, '/');
         lines_add(&L, "%s", "");
-        lines_add(&L, "• %s: file nằm trong kế hoạch xoá của %s (gộp, không xoá hai lần).", b ? b + 1 : path, mb2 ? mb2 + 1 : mi);
+        lines_add(&L, tr("• %s: file nằm trong kế hoạch xoá của %s (gộp, không xoá hai lần)."), b ? b + 1 : path, mb2 ? mb2 + 1 : mi);
     }
     lines_add(&L, "%s", "");
-    lines_add(&L, "Mỗi lần xoá được ghi vào sổ xoá trong thư mục dữ liệu LoongMate.");
-    lines_add(&L, "! `rom delete` của CLI chưa có kế hoạch lưu file: engine lập lại danh sách file ngay lúc xoá (thường giống hệt danh sách trên); file nào ngoài Roms/ hay không an toàn sẽ bị từ chối riêng, kèm lý do.");
+    lines_add(&L, tr("Mỗi lần xoá được ghi vào sổ xoá trong thư mục dữ liệu LoongMate."));
+    lines_add(&L, tr("! `rom delete` của CLI chưa có kế hoạch lưu file: engine lập lại danh sách file ngay lúc xoá (thường giống hệt danh sách trên); file nào ngoài Roms/ hay không an toàn sẽ bị từ chối riêng, kèm lý do."));
     char title[64];
-    if (nok == 1) snprintf(title, sizeof title, "Xác nhận xoá ROM");
-    else snprintf(title, sizeof title, "Xác nhận xoá %d game", nok);
-    ui_confirm(title, &L, "XOÁ", do_delete, "");
+    if (nok == 1) snprintf(title, sizeof title, tr("Xác nhận xoá ROM"));
+    else snprintf(title, sizeof title, tr("Xác nhận xoá %d game"), nok);
+    ui_confirm(title, &L, tr("XOÁ"), do_delete, "");
 }
 
 /* ============================================================ màn chọn hệ máy */
@@ -560,13 +561,13 @@ static void open_games(ui_screen *from, const char *title, const char *key, int 
 
 static void act_system(ui_screen *s, ui_item *it) {
     char title[120];
-    snprintf(title, sizeof title, "%s — %s", s->ia / 10 == RB_DELETE ? "Xoá ROM" : "Chuyển game", it->label);
+    snprintf(title, sizeof title, "%s — %s", s->ia / 10 == RB_DELETE ? tr("Xoá ROM") : tr("Chuyển game"), it->label);
     open_games(s, title, it->label, SORT_NAME);
 }
 
 static void act_top(ui_screen *s, ui_item *it) {
     (void)it;
-    open_games(s, "Xoá ROM — Game lớn nhất (mọi hệ)", TOP_KEY, SORT_SIZE);
+    open_games(s, tr("Xoá ROM — Game lớn nhất (mọi hệ)"), TOP_KEY, SORT_SIZE);
 }
 
 static void act_cycle_card(ui_screen *s, ui_item *it) {
@@ -595,23 +596,23 @@ static void build_systems(ui_screen *s) {
     double bytes = 0;
     for (int i = 0; i < g_n; i++) if (!g_hide[i] && card_ok(g_row[i], filter)) { total++; bytes += jnumd(g_row[i], "size", 0); }
     if (mode == RB_DELETE) {
-        ui_item *it = ui_add(s, "Thẻ", filter == 0 ? "cả hai thẻ" : filter == 1 ? "SD1" : "SD2", ST_UNKNOWN);
-        ui_exp(it, "Lọc danh sách theo thẻ: cả hai thẻ > SD1 > SD2. Bấm A để đổi.");
-        ui_act(it, 0, "ĐỔI THẺ", act_cycle_card);
+        ui_item *it = ui_add(s, tr("Thẻ"), filter == 0 ? tr("cả hai thẻ") : filter == 1 ? "SD1" : "SD2", ST_UNKNOWN);
+        ui_exp(it, tr("Lọc danh sách theo thẻ: cả hai thẻ > SD1 > SD2. Bấm A để đổi."));
+        ui_act(it, 0, tr("ĐỔI THẺ"), act_cycle_card);
     }
-    ui_hdr(s, "%d game (%s)%s", total, mbs(bytes), filter == 0 ? "" : filter == 1 ? " trên SD1" : " trên SD2");
-    if (g_nhidden) ui_hdr(s, "Ẩn %d file .bin là track của game có .cue (chọn file .cue để thao tác trọn bộ).", g_nhidden);
+    ui_hdr(s, "%d game (%s)%s", total, mbs(bytes), filter == 0 ? "" : filter == 1 ? tr(" trên SD1") : tr(" trên SD2"));
+    if (g_nhidden) ui_hdr(s, tr("Ẩn %d file .bin là track của game có .cue (chọn file .cue để thao tác trọn bộ)."), g_nhidden);
     if (mode == RB_DELETE && total > 0) {
         char tag[32];
         snprintf(tag, sizeof tag, "%d game", total < TOP_N ? total : TOP_N);
-        ui_item *it = ui_add(s, "Game lớn nhất (mọi hệ)", tag, ST_UNKNOWN);
-        ui_exp(it, "%d game nặng nhất trên mọi hệ máy%s.", TOP_N, filter == 0 ? " (cả hai thẻ)" : filter == 1 ? " (chỉ SD1)" : " (chỉ SD2)");
-        ui_exp(it, "Lọc theo save trước, rồi mới lấy %d game lớn nhất.", TOP_N);
-        ui_exp(it, "Dùng để dọn nhanh khi thẻ gần đầy.");
-        ui_exp(it, "A — duyệt (chọn nhiều bằng X, xoá cả lô, đổi lọc có/không save bằng mục Lọc, Y đổi sắp xếp).");
-        ui_act(it, 0, "MỞ", act_top);
+        ui_item *it = ui_add(s, tr("Game lớn nhất (mọi hệ)"), tag, ST_UNKNOWN);
+        ui_exp(it, tr("%d game nặng nhất trên mọi hệ máy%s."), TOP_N, filter == 0 ? tr(" (cả hai thẻ)") : filter == 1 ? tr(" (chỉ SD1)") : tr(" (chỉ SD2)"));
+        ui_exp(it, tr("Lọc theo save trước, rồi mới lấy %d game lớn nhất."), TOP_N);
+        ui_exp(it, tr("Dùng để dọn nhanh khi thẻ gần đầy."));
+        ui_exp(it, tr("A — duyệt (chọn nhiều bằng X, xoá cả lô, đổi lọc có/không save bằng mục Lọc, Y đổi sắp xếp)."));
+        ui_act(it, 0, tr("MỞ"), act_top);
     }
-    ui_head(s, "Hệ máy (%d)", nsys);
+    ui_head(s, tr("Hệ máy (%d)"), nsys);
     for (int k = 0; k < nsys; k++) {
         int c = 0, cp = 0, cs = 0;
         double sb = 0;
@@ -626,33 +627,33 @@ static void build_systems(ui_screen *s) {
         snprintf(tag, sizeof tag, "%d game, %s", c, mbs(sb));
         ui_item *it = ui_add(s, names[k], tag, ST_UNKNOWN);
         ui_exp(it, "%d game, %s.", c, mbs(sb));
-        ui_exp(it, "Trên SD1: %d game", cp);
-        ui_exp(it, "Trên SD2: %d game", cs);
-        ui_act(it, 0, "MỞ", act_system);
+        ui_exp(it, tr("Trên SD1: %d game"), cp);
+        ui_exp(it, tr("Trên SD2: %d game"), cs);
+        ui_act(it, 0, tr("MỞ"), act_system);
     }
-    if (!nsys) ui_head(s, "(Không có ROM nào)");
+    if (!nsys) ui_head(s, tr("(Không có ROM nào)"));
 }
 
 /* ============================================================ vào từ menu */
 static void roms_done(lm_job *j, const char *arg) {
     int mode = arg[0] - '0';
     const char *card = arg[1] == ':' ? arg + 2 : "";
-    cJSON *r = app_json_or_error(j, "Danh sách ROM");
+    cJSON *r = app_json_or_error(j, tr("Danh sách ROM"));
     if (!r) return;
     if (!jarr(r, "roms")) {
         lines_t L = {0};
-        lines_add(&L, "!! Không liệt kê được ROM:");
-        lines_add(&L, "%s", jstrd(r, "message", "engine không trả danh sách (engine cũ chưa có lệnh roms?)"));
+        lines_add(&L, tr("!! Không liệt kê được ROM:"));
+        lines_add(&L, "%s", jstrd(r, "message", tr("engine không trả danh sách (engine cũ chưa có lệnh roms?)")));
         cJSON_Delete(r);
-        ui_info("Danh sách ROM", &L);
+        ui_info(tr("Danh sách ROM"), &L);
         return;
     }
     cJSON_Delete(g_roms);
     g_roms = r;
     rb_index();
     char title[96];
-    if (mode == RB_MOVE) snprintf(title, sizeof title, "Chuyển game từ %s — hệ máy", sd_name(card));
-    else snprintf(title, sizeof title, "Xoá ROM — hệ máy");
+    if (mode == RB_MOVE) snprintf(title, sizeof title, tr("Chuyển game từ %s — hệ máy"), sd_name(card));
+    else snprintf(title, sizeof title, tr("Xoá ROM — hệ máy"));
     ui_screen *s = ui_screen_new(title, build_systems);
     s->ia = mode * 10 + (mode == RB_MOVE ? (strcmp(card, "primary") ? 2 : 1) : 0);
     s->on_free = roms_free;
@@ -661,14 +662,14 @@ static void roms_done(lm_job *j, const char *arg) {
 
 void open_roms_delete(ui_screen *s, ui_item *it) {
     (void)s; (void)it;
-    cli_task("Đang liệt kê ROM", LONG_TIMEOUT_MS, roms_done, "0", "roms", NULL);
+    cli_task(tr("Đang liệt kê ROM"), LONG_TIMEOUT_MS, roms_done, "0", "roms", NULL);
 }
 
 void open_roms_move(ui_screen *s, ui_item *it) {
     (void)s;
     char arg[40];
     snprintf(arg, sizeof arg, "1:%s", it->arg);
-    cli_task("Đang liệt kê ROM", LONG_TIMEOUT_MS, roms_done, arg, "roms", "--card", it->arg, NULL);
+    cli_task(tr("Đang liệt kê ROM"), LONG_TIMEOUT_MS, roms_done, arg, "roms", "--card", it->arg, NULL);
 }
 
 /* ============================================================ Tìm kiếm game */
@@ -686,12 +687,12 @@ static void search_osk_done(const char *text, const char *arg);
 
 static void act_search_again(ui_screen *s, ui_item *it) {
     (void)it;
-    ui_osk("Tìm kiếm game (gõ tên)", s->key, 80, search_osk_done, "again");
+    ui_osk(tr("Tìm kiếm game (gõ tên)"), s->key, 80, search_osk_done, "again");
 }
 
 static void build_search_results(ui_screen *s) {
-    ui_hdr(s, "Kết quả tìm kiếm cho: \"%s\"", s->key);
-    ui_hdr(s, "Bấm Y để gõ từ khoá tìm kiếm khác.");
+    ui_hdr(s, tr("Kết quả tìm kiếm cho: \"%s\""), s->key);
+    ui_hdr(s, tr("Bấm Y để gõ từ khoá tìm kiếm khác."));
 
     int count = 0;
     for (int i = 0; i < g_n; i++) {
@@ -706,21 +707,21 @@ static void build_search_results(ui_screen *s) {
         snprintf(tag, sizeof tag, "%s · %s", sys, sd_name(jstr(r, "card")));
         ui_item *it = ui_add(s, name, tag, ST_GREEN);
         if (!it) continue;
-        ui_exp(it, "Tên game: %s", name);
-        ui_exp(it, "Hệ máy: %s · Thẻ: %s", sys, sd_name(jstr(r, "card")));
-        ui_exp(it, "Dung lượng: %s", mbs(jnumd(r, "size", 0)));
-        ui_exp(it, "Đường dẫn: %s", path);
-        ui_exp(it, "Save: %s · State: %s", jbool_d(r, "has_save", 0) ? "CÓ" : "không", jbool_d(r, "has_state", 0) ? "CÓ" : "không");
-        ui_act(it, 2, "TÌM TỪ KHÁC", act_search_again);
+        ui_exp(it, tr("Tên game: %s"), name);
+        ui_exp(it, tr("Hệ máy: %s · Thẻ: %s"), sys, sd_name(jstr(r, "card")));
+        ui_exp(it, tr("Dung lượng: %s"), mbs(jnumd(r, "size", 0)));
+        ui_exp(it, tr("Đường dẫn: %s"), path);
+        ui_exp(it, "Save: %s · State: %s", jbool_d(r, "has_save", 0) ? tr("CÓ") : tr("không"), jbool_d(r, "has_state", 0) ? tr("CÓ") : tr("không"));
+        ui_act(it, 2, tr("TÌM TỪ KHÁC"), act_search_again);
         count++;
     }
 
     if (!count) {
-        ui_head(s, "(Không tìm thấy game nào khớp từ khoá)");
-        ui_item *it = ui_add(s, "Tìm lại với từ khoá khác…", "", ST_YELLOW);
+        ui_head(s, tr("(Không có game khớp từ khoá)"));
+        ui_item *it = ui_add(s, tr("Tìm lại với từ khoá khác…"), "", ST_YELLOW);
         if (it) {
-            ui_exp(it, "Thử gõ một phần tên game, ví dụ: mario, poke, zelda...");
-            ui_act(it, 0, "GÕ LẠI", act_search_again);
+            ui_exp(it, tr("Thử gõ một phần tên game, ví dụ: mario, poke, zelda..."));
+            ui_act(it, 0, tr("GÕ LẠI"), act_search_again);
         }
     }
 }
@@ -744,20 +745,20 @@ static void search_osk_done(const char *text, const char *arg) {
 
 static void roms_search_init_done(lm_job *j, const char *arg) {
     (void)arg;
-    cJSON *r = app_json_or_error(j, "Danh sách ROM");
+    cJSON *r = app_json_or_error(j, tr("Danh sách ROM"));
     if (!r) return;
     cJSON_Delete(g_roms);
     g_roms = r;
     rb_index();
-    ui_osk("Tìm kiếm game (gõ tên)", "", 80, search_osk_done, "");
+    ui_osk(tr("Tìm kiếm game (gõ tên)"), "", 80, search_osk_done, "");
 }
 
 void open_roms_search(ui_screen *s, ui_item *it) {
     (void)s; (void)it;
     if (g_roms && g_n > 0) {
-        ui_osk("Tìm kiếm game (gõ tên)", "", 80, search_osk_done, "");
+        ui_osk(tr("Tìm kiếm game (gõ tên)"), "", 80, search_osk_done, "");
     } else {
-        cli_task("Đang quét danh sách ROM", LONG_TIMEOUT_MS, roms_search_init_done, "", "roms", NULL);
+        cli_task(tr("Đang quét danh sách ROM"), LONG_TIMEOUT_MS, roms_search_init_done, "", "roms", NULL);
     }
 }
 

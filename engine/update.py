@@ -466,9 +466,14 @@ def main(argv=None):
         r = rollback(a.apps_dir, a.app_data)
     else:
         r = status(a.app_data)
-        print(json.dumps(r, ensure_ascii=False, indent=2))
+    try:                                          # chạy như script cứu hộ (rollback) thì có thể không có gói engine
+        from engine import i18n
+        r_out = i18n.translate_obj(r)
+    except Exception:
+        r_out = r
+    print(json.dumps(r_out, ensure_ascii=False, indent=2))
+    if a.cmd not in ("verify", "apply", "rollback"):
         return 0
-    print(json.dumps(r, ensure_ascii=False, indent=2))
     return 0 if r.get("ok") else 1
 
 

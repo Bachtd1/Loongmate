@@ -61,6 +61,12 @@ void open_update(ui_screen *s, ui_item *it);
 /* lm_hottabs.c */
 void open_hottabs(ui_screen *s, ui_item *it);
 void open_pocketlock(ui_screen *s, ui_item *it);
+/* lm_home.c */
+void act_lang_toggle(ui_screen *s, ui_item *it);   /* Tiếng Việt <-> English (lm_i18n.c), dựng lại mọi màn */
+void add_lang_item(ui_screen *s);                  /* dòng "Ngôn ngữ / Language" (không dịch) */
+/* lm_onboard.c */
+void open_onboarding(ui_screen *s, ui_item *it);   /* Máy -> Hướng dẫn bắt đầu */
+void onboard_maybe(void);                           /* lúc khởi động: mở màn Bắt đầu nếu chưa xong */
 /* lm_leafcfg.c */
 void open_leafcfg(ui_screen *s, ui_item *it);
 /* lm_roms.c, lm_web.c */

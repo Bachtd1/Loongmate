@@ -228,7 +228,8 @@ def _build_remote_vault(endpoint_name: str, vault: SaveVault, config_store: Conf
 
 
 def _print_json(data) -> None:
-    print(json.dumps(data, indent=2, ensure_ascii=False))
+    from engine import i18n                       # LOONGMATE_LANG=en: dịch chuỗi cho giao diện (vi thì không làm gì)
+    print(json.dumps(i18n.translate_obj(data), indent=2, ensure_ascii=False))
 
 
 def _cmd_readiness(probe: PlatformProbe, args) -> int:
@@ -264,6 +265,17 @@ def _cmd_readiness(probe: PlatformProbe, args) -> int:
         "message": "Chưa quét lần nào. Chạy 'scan' để cập nhật."
     }
     readiness["crash_recovery"] = recovery
+    # Agent tắt thì tự sao lưu, tự tiếp tục, khoá khi thức dậy đều ngừng mà không ai hay: báo ngay ở ô MÁY của Home.
+    # Chỉ khi thẻ có cài LoongMateAgent.pak (chạy trên PC thì không báo).
+    from engine.autobackup import pid_lock_held      # nhẹ: không import engine.agent ở lệnh chạy mỗi lần mở Home
+    agent_running = bool(pid_lock_held(Path(probe.userdata_path) / "agent.lock")) if probe.userdata_path else False
+    agent_installed = probe.primary_path is not None and (Path(probe.primary_path) / "Apps" / "mlp1" / "LoongMateAgent.pak").is_dir()
+    readiness["agent"] = {"running": agent_running, "installed": agent_installed}
+    dev = readiness.get("device")
+    if agent_installed and not agent_running and isinstance(dev, dict):
+        dev.setdefault("warnings", []).insert(0, "Agent chưa chạy: bật ở Settings > Services")
+        if dev.get("status") in ("green", "unknown", None):
+            dev["status"] = "yellow"
     offsite = status_mod.offsite_status(probe.userdata_path)
     readiness["offsite"] = offsite
 
@@ -2121,6 +2133,45 @@ def _cmd_autoresume(args, probe) -> int:
     return _lib_out(args, r, True)
 
 
+ONBOARDING_NAME = "onboarding.json"
+
+
+def _cmd_onboarding(args, probe) -> int:
+    """Màn Bắt đầu: trạng thái thật của từng bước (Agent, tự tiếp tục, khoá, sao lưu lần đầu, quét thư viện); done/reset."""
+    app = probe.userdata_path
+    if app is None:
+        return _usage(args, "Không xác định được thư mục userdata của LoongMate.")
+    flag = Path(app) / ONBOARDING_NAME
+    cmd = args.onboarding_command
+    if cmd in ("done", "reset"):
+        try:
+            if cmd == "done":
+                _write_json_atomic(flag, {"done": True, "at": time.strftime("%Y-%m-%d %H:%M:%S")})
+            elif flag.exists():
+                flag.unlink()
+        except OSError as e:
+            return _lib_out(args, {"success": False, "message": f"Không ghi được: {e}"}, False)
+        return _lib_out(args, {"success": True, "done": cmd == "done"}, True)
+    try:
+        done = bool(json.loads(flag.read_text(encoding="utf-8")).get("done"))
+    except (OSError, ValueError, AttributeError):
+        done = False
+    snaps = 0
+    if probe.primary_path is not None:
+        try:
+            snaps = len(SaveVault(probe.primary_path, probe.secondary_path, app).list_snapshots())
+        except Exception:
+            snaps = 0
+    st = {"success": True, "done": done, "agent_running": bool(agent_mod.lock_held(app)),
+          "agent_installed": probe.primary_path is not None
+          and (Path(probe.primary_path) / "Apps" / "mlp1" / "LoongMateAgent.pak").is_dir(),
+          "autoresume": autoresume_mod.enabled(app), "pocketlock": pocketlock_mod.enabled(app),
+          "snapshots": snaps, "library_scanned": (Path(app) / "cache" / "last_audit.json").is_file()}
+    yn = lambda v: "có" if v else "chưa"  # noqa: E731
+    return _lib_out(args, st, True, [f"Agent chạy: {yn(st['agent_running'])}; tự tiếp tục: {yn(st['autoresume'])}; "
+                                     f"khoá: {yn(st['pocketlock'])}; snapshot: {snaps}; đã quét: {yn(st['library_scanned'])}"])
+
+
 def _cmd_pocketlock(args, probe) -> int:
     """Khoá khi thức dậy (chống bấm trong túi): LoongMate Agent giữ tay cầm ảo tới khi giữ Select + Start 1 giây."""
     app = probe.userdata_path
@@ -2485,6 +2536,11 @@ def build_parser(only: "str | None" = None) -> argparse.ArgumentParser:
     for name in ("status", "on", "off"):
         _json_flag(ar_sub.add_parser(name))
 
+    obp = subparsers.add_parser("onboarding", help="First-run guide state: status | done | reset")
+    ob_sub = obp.add_subparsers(dest="onboarding_command")
+    for name in ("status", "done", "reset"):
+        _json_flag(ob_sub.add_parser(name))
+
     plp = subparsers.add_parser("pocketlock", help="Lock input after wake (pocket mode), unlock by holding Select+Start: status | on | off")
     pl_sub = plp.add_subparsers(dest="pocketlock_command")
     for name in ("status", "on", "off"):
@@ -2761,7 +2817,7 @@ def _cmd_recent(args, probe) -> int:
 
 _COMMANDS = {"library", "homebrew", "web", "patch", "import", "readiness", "scan", "backup", "restore", "health", "bundle", "verify", "recover", "endpoint", "push",
              "pull", "dedupe", "rom", "saves", "quarantine", "move", "fix", "bios", "snapshots", "roms", "history",
-             "battery", "update", "agent", "nodes", "rescan", "hottabs", "recent", "leafconfig", "autoresume", "pocketlock"}
+             "battery", "update", "agent", "nodes", "rescan", "hottabs", "recent", "leafconfig", "autoresume", "pocketlock", "onboarding"}
 _NEEDS_INVENTORY = {"scan", "health", "bundle", "dedupe", "move", "fix", "bios", "roms"}
 
 
@@ -2843,6 +2899,11 @@ def main(argv=None) -> int:
             return _usage(args, "Dùng: patch list | info ID | candidates ID [--system S] | apply ID --rom PATH [--name N] [--header-skipped] --yes | delete ID --yes | store PATH")
         args.yes = getattr(args, "yes", False)
         return _cmd_patch(args, probe)
+
+    if args.command == "onboarding":
+        if not args.onboarding_command:
+            return _usage(args, "Dùng: onboarding status | done | reset")
+        return _cmd_onboarding(args, probe)
 
     if args.command == "pocketlock":
         if not args.pocketlock_command:

@@ -26,7 +26,7 @@ COMMON  := $(B)/cat_impl.o $(B)/lm_common.o $(B)/cJSON.o
 .PHONY: all clean check
 all: $(B)/lm-home $(B)/lm-hello check
 
-HOME_OBJS := $(B)/lm_home.o $(B)/lm_ui.o $(B)/lm_cli.o $(B)/lm_library.o $(B)/lm_roms.o $(B)/lm_import.o $(B)/lm_lib.o $(B)/lm_saves.o $(B)/lm_misc.o $(B)/lm_update.o $(B)/lm_hottabs.o $(B)/lm_lock.o $(B)/lm_leafcfg.o $(B)/lm_osk.o $(B)/lm_web.o $(B)/lm_patch.o $(B)/lm_run.o
+HOME_OBJS := $(B)/lm_home.o $(B)/lm_ui.o $(B)/lm_cli.o $(B)/lm_library.o $(B)/lm_roms.o $(B)/lm_import.o $(B)/lm_lib.o $(B)/lm_saves.o $(B)/lm_misc.o $(B)/lm_update.o $(B)/lm_hottabs.o $(B)/lm_lock.o $(B)/lm_onboard.o $(B)/lm_leafcfg.o $(B)/lm_osk.o $(B)/lm_web.o $(B)/lm_patch.o $(B)/lm_run.o $(B)/lm_i18n.o
 
 $(B)/lm-home: $(HOME_OBJS) $(COMMON)
 	$(CC) -o $@ $^ $(LDFLAGS)

@@ -3,6 +3,7 @@
  * (a-z / A-Z / ký hiệu URL), L1/R1 dời con trỏ, SELECT nhảy tới XONG. START đã bị đổi thành A ở vòng lặp chính nên không dùng. */
 #define _GNU_SOURCE
 #include "lm_ui.h"
+#include "lm_i18n.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -166,7 +167,7 @@ static void osk_draw(ui_screen *s, SDL_Rect a) {
     y += fh + gap;
 
     char hint[160];
-    snprintf(hint, sizeof hint, "Bàn phím: %s · %d/%d ký tự · L1/R1 dời con trỏ · SELECT tới XONG", LAYOUT_NAME[o->layout], o->len, o->maxlen);
+    snprintf(hint, sizeof hint, tr("Bàn phím: %s · %d/%d ký tự · L1/R1 dời con trỏ · SELECT tới XONG"), LAYOUT_NAME[o->layout], o->len, o->maxlen);
     cat_draw_text_ellipsized(ft, hint, a.x, y, th->hint, a.w);
     y += TTF_FontHeight(ft) + gap * 2;
 
@@ -182,7 +183,7 @@ static void osk_draw(ui_screen *s, SDL_Rect a) {
             const char *lab;
             char ch[2] = { 0, 0 };
             if (r < NCHR) { ch[0] = CHR_ROWS[o->layout][r][c]; lab = ch; }
-            else lab = r == NCHR ? SHORTCUT[c] : BOTTOM[c];
+            else lab = r == NCHR ? SHORTCUT[c] : tr(BOTTOM[c]);
             cat_draw_rounded_rect(px, py, pw, ph, cat_device_scale(6), sel ? th->highlight : lift(th->background, 24));
             cat_draw_color tc = sel ? th->highlighted_text : th->text;
             if (!sel && r == NROWS - 1 && c == 3) tc = ui_color(ST_GREEN);
@@ -216,10 +217,10 @@ void ui_osk(const char *title, const char *initial, int maxlen, void (*cb)(const
     s->draw = osk_draw;
     s->key_fn = osk_key;
     s->on_free = osk_free;
-    s->footer[0] = (cat_footer_item){ .button = CAT_BTN_B, .label = "XOÁ" };
-    s->footer[1] = (cat_footer_item){ .button = CAT_BTN_X, .label = "DẤU CÁCH" };
-    s->footer[2] = (cat_footer_item){ .button = CAT_BTN_Y, .label = "ĐỔI BÀN PHÍM" };
-    s->footer[3] = (cat_footer_item){ .button = CAT_BTN_A, .label = "CHỌN", .is_confirm = true };
+    s->footer[0] = (cat_footer_item){ .button = CAT_BTN_B, .label = tr("XOÁ") };
+    s->footer[1] = (cat_footer_item){ .button = CAT_BTN_X, .label = tr("DẤU CÁCH") };
+    s->footer[2] = (cat_footer_item){ .button = CAT_BTN_Y, .label = tr("ĐỔI BÀN PHÍM") };
+    s->footer[3] = (cat_footer_item){ .button = CAT_BTN_A, .label = tr("CHỌN"), .is_confirm = true };
     s->nfooter = 4;
     ui_push(s);
 }

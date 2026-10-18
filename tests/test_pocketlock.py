@@ -35,6 +35,10 @@ class FakePad:
         self.closed = False
         self.events = []
         self.grab_calls = []
+        self.buzzes = []
+
+    def rumble(self, ms):
+        self.buzzes.append(ms)
 
     def grab(self, on):
         self.grab_calls.append(on)
@@ -67,6 +71,7 @@ class Base(unittest.TestCase):
         self.lock = PL.PocketLock(self.tmp, open_pad=open_pad, request=self.sent.append,
                                   clock=lambda: self.t[0], suspended_s=lambda: self.susp[0],
                                   log=self.logs.append, is_enabled=lambda: self.on)
+        self.lock.sleep = lambda s: None
 
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
@@ -162,6 +167,52 @@ class Unlock(Base):
         self.key(PL.BTN_SELECT, 1)
         self.key(PL.BTN_START, 1)
         self.key(PL.BTN_START, 2)
+        self.advance(1.1)
+        self.assertFalse(self.lock.locked)
+
+
+class Feedback(Base):
+    """Khoá không có chữ trên màn (Leaf không cho app vẽ đè): rung là dấu hiệu duy nhất."""
+    def setUp(self):
+        super().setUp()
+        self.lock.step()
+        self.wake()
+
+    def test_locking_on_wake_does_not_buzz(self):
+        self.assertEqual(self.pad().buzzes, [])
+
+    def test_press_while_locked_buzzes_rate_limited(self):
+        self.key(304, 1)
+        self.assertEqual(len(self.pad().buzzes), 1)
+        self.key(304, 0)
+        self.key(305, 1)
+        self.assertEqual(len(self.pad().buzzes), 1)        # chưa đủ BUZZ_EVERY_S
+        self.advance(PL.BUZZ_EVERY_S + 0.1)
+        self.key(305, 1)
+        self.assertEqual(len(self.pad().buzzes), 2)
+
+    def test_releases_and_repeats_do_not_buzz(self):
+        self.key(304, 0)
+        self.key(304, 2)
+        self.assertEqual(self.pad().buzzes, [])
+
+    def test_unlock_gives_a_longer_buzz_before_release(self):
+        pad = self.pad()
+        self.key(PL.BTN_SELECT, 1)
+        self.key(PL.BTN_START, 1)
+        self.advance(1.1)
+        self.assertFalse(self.lock.locked)
+        self.assertEqual(pad.buzzes[-1], PL.UNLOCK_BUZZ_MS)
+        self.assertGreater(PL.UNLOCK_BUZZ_MS, PL.PRESS_BUZZ_MS)
+
+    def test_pad_without_rumble_still_works(self):
+        pad = self.pad()
+        def no_ff(ms):
+            raise OSError("no FF")
+        pad.rumble = no_ff
+        self.key(304, 1)
+        self.key(PL.BTN_SELECT, 1)
+        self.key(PL.BTN_START, 1)
         self.advance(1.1)
         self.assertFalse(self.lock.locked)
 

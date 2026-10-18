@@ -5,7 +5,6 @@ Danh sách dự định, **chưa có** trong app. Thứ tự có thể đổi th
 
 ## Gần
 
-- Giao diện tiếng Anh (chọn ngôn ngữ trong app).
 - Ảnh động demo và ảnh chụp trên máy thật trong README.
 - Kiểm đường dẫn save của PPSSPP, DraStic, YabaSanshiro trên máy thật.
 - Kiểm thẻ exFAT.

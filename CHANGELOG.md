@@ -1,5 +1,18 @@
 # Thay đổi
 
+## 0.2.0-beta — 2026-10-18
+
+- **Giao diện tiếng Anh**: Máy > Ngôn ngữ / Language (hoặc dòng đầu màn Bắt đầu), đổi là có hiệu lực ngay. Dịch cả giao
+  diện native lẫn thông báo của engine (~3000 chuỗi, danh mục `i18n/en.json`). Giao diện Python dự phòng vẫn tiếng Việt.
+- Khoá khi thức dậy: bấm nút lúc đang khoá thì máy rung ngắn (tối đa 3 giây một lần), mở khoá rung dài một nhịp;
+  trước đây khoá không có dấu hiệu gì nên dễ tưởng máy treo.
+- **Bắt đầu**: lần đầu mở app hiện các bước nên làm, mỗi bước có trạng thái thật và làm ngay tại chỗ (bật Agent, sao lưu
+  lần đầu, quét thư viện, tự tiếp tục, khoá khi thức dậy). Mở lại ở Máy > Hướng dẫn bắt đầu. Lệnh `onboarding`.
+- Home báo "Agent chưa chạy" ở ô MÁY khi đã cài LoongMate Agent mà service không chạy (tự sao lưu, tự tiếp tục, khoá
+  đều ngừng khi đó).
+- Màn Máy chia nhóm: Khi chơi game, Pin & Agent, Bảo trì, Nâng cao.
+- Rà mọi nhãn bằng font thật trên máy, rút gọn 22 nhãn/tiêu đề bị cắt "..."; công cụ `native/tools/label_audit.py`.
+
 ## 0.1.2-beta — 2026-10-18
 
 - **Khoá khi thức dậy** (Máy → Khoá khi thức dậy, mặc định tắt): chống bấm nhầm khi để máy trong túi. Mỗi lần máy thức

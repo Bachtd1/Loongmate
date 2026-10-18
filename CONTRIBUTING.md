@@ -68,6 +68,9 @@ python pc/deploy.py --key ~/.ssh/<khoá> --host <IP>   # đẩy lên máy qua SS
   captcha hay DRM.
 - Script chạy trên máy là POSIX sh, xuống dòng LF (CI kiểm).
 - Tài liệu và thông báo cho người dùng viết tiếng Việt; tên hàm, biến tiếng Anh.
+- Giao diện có tiếng Anh (Máy > Ngôn ngữ / Language). Viết chữ tiếng Việt trong `tr("...")` (C) hoặc như thường (engine),
+  rồi: `python native/tools/wrap_tr.py` (bọc tr() còn sót), `python i18n/extract.py --missing` (khoá chưa dịch), thêm bản
+  dịch vào một file JSON và `python i18n/merge.py file.json` (kiểm %s/{} trước khi nhận). Thuật ngữ: `i18n/GLOSSARY.md`.
 
 ## Gửi thay đổi
 

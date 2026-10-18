@@ -292,3 +292,25 @@ class AutoBackup:
         if self.on_result:
             self.on_result(res)
         return res
+
+
+def pid_lock_held(path) -> Optional[bool]:
+    """True/False = có tiến trình đang giữ khoá file này hay không; None = chưa từng có file khoá. CHỈ ĐỌC: khoá thử rồi
+    nhả, KHÔNG tạo file/ghi pid (khác PidLock.acquire) -- lệnh xem trạng thái không được ghi gì. Đặt ở module nhẹ này để
+    `readiness` (mỗi lần mở Home) kiểm được Agent mà không phải import engine.agent."""
+    path = Path(path)
+    if not path.exists():
+        return None
+    try:
+        fd = os.open(str(path), os.O_RDONLY)
+    except OSError:
+        return None
+    try:
+        try:
+            PidLock._lock(fd)
+        except OSError:
+            return True
+        PidLock._unlock(fd)
+        return False
+    finally:
+        os.close(fd)

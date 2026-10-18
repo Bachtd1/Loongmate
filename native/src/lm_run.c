@@ -1,5 +1,6 @@
 #define _GNU_SOURCE
 #include "lm_run.h"
+#include "lm_i18n.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
@@ -60,7 +61,7 @@ lm_job *lm_job_start(char *const argv[], int timeout_ms, char *err, size_t errsz
     }
     close(po[1]); close(pe[1]);
     lm_job *j = calloc(1, sizeof *j);
-    if (!j) { kill(pid, SIGKILL); waitpid(pid, NULL, 0); close(po[0]); close(pe[0]); snprintf(err, errsz, "hết bộ nhớ"); return NULL; }
+    if (!j) { kill(pid, SIGKILL); waitpid(pid, NULL, 0); close(po[0]); close(pe[0]); snprintf(err, errsz, tr("hết bộ nhớ")); return NULL; }
     j->pid = pid; j->out_fd = po[0]; j->err_fd = pe[0];
     set_nb(j->out_fd); set_nb(j->err_fd);
     j->out_alloc = 4096;

@@ -31,7 +31,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 from . import autoresume, leafconfig, pocketlock, telemetry
-from .autobackup import GAME_ACTIVE_MAX_S, AutoBackup, Event, LogWatcher, PidLock, ProcWatcher
+from .autobackup import GAME_ACTIVE_MAX_S, AutoBackup, Event, LogWatcher, PidLock, ProcWatcher, pid_lock_held
 from .probe import PlatformProbe
 from .savevault import SaveVault
 
@@ -553,24 +553,8 @@ class Detector:
 
 
 def lock_held(app_data) -> Optional[bool]:
-    """True/False = agent đang giữ khoá hay không; None = chưa từng có file khoá. CHỈ ĐỌC: khoá thử rồi
-    nhả, KHÔNG tạo file/ghi pid (khác PidLock.acquire) -- lệnh xem trạng thái không được ghi gì."""
-    path = Path(app_data) / LOCK_NAME
-    if not path.exists():
-        return None
-    try:
-        fd = os.open(str(path), os.O_RDONLY)
-    except OSError:
-        return None
-    try:
-        try:
-            PidLock._lock(fd)
-        except OSError:
-            return True
-        PidLock._unlock(fd)
-        return False
-    finally:
-        os.close(fd)
+    """True/False = agent đang giữ khoá hay không; None = chưa từng có file khoá. CHỈ ĐỌC (xem autobackup.pid_lock_held)."""
+    return pid_lock_held(Path(app_data) / LOCK_NAME)
 
 
 def cmd_status(app_data: Path, leaf_log: Path) -> int:

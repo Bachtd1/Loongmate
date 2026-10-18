@@ -1,5 +1,6 @@
 #define _GNU_SOURCE
 #include "lm_ui.h"
+#include "lm_i18n.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,7 +16,7 @@ void lines_add(lines_t *L, const char *fmt, ...) {
     char *s = NULL;
     va_list ap;
     va_start(ap, fmt);
-    if (vasprintf(&s, fmt, ap) < 0) s = NULL;
+    if (vasprintf(&s, tr(fmt), ap) < 0) s = NULL;
     va_end(ap);
     if (!s) return;
     if (L->n >= L->cap) {
@@ -45,10 +46,10 @@ void ui_fmt_mb(char *buf, size_t n, double mb) {
 }
 
 const char *ui_status_vi(const char *s) {
-    if (!s) return "Chưa đọc được";
-    if (!strcmp(s, "green")) return "Ổn";
-    if (!strcmp(s, "yellow")) return "Cần chú ý";
-    if (!strcmp(s, "red")) return "Có vấn đề";
+    if (!s) return tr("Chưa đọc được");
+    if (!strcmp(s, "green")) return tr("Ổn");
+    if (!strcmp(s, "yellow")) return tr("Cần chú ý");
+    if (!strcmp(s, "red")) return tr("Có vấn đề");
     return s;
 }
 
@@ -262,7 +263,7 @@ void ui_hdr(ui_screen *s, const char *fmt, ...) {
     char *t = NULL;
     va_list ap;
     va_start(ap, fmt);
-    if (vasprintf(&t, fmt, ap) < 0) t = NULL;
+    if (vasprintf(&t, tr(fmt), ap) < 0) t = NULL;
     va_end(ap);
     if (t) { lines_add(&s->hdr, "%s", t); free(t); }
 }
@@ -286,7 +287,7 @@ ui_item *ui_head(ui_screen *s, const char *fmt, ...) {
     if (!it) return NULL;
     va_list ap;
     va_start(ap, fmt);
-    vsnprintf(it->label, sizeof it->label, fmt, ap);
+    vsnprintf(it->label, sizeof it->label, tr(fmt), ap);
     va_end(ap);
     it->head = 1;
     return it;
@@ -295,9 +296,17 @@ ui_item *ui_head(ui_screen *s, const char *fmt, ...) {
 ui_item *ui_add(ui_screen *s, const char *label, const char *tag, int tagc) {
     ui_item *it = item_new(s);
     if (!it) return NULL;
+    snprintf(it->label, sizeof it->label, "%s", label ? tr(label) : "");   /* tr: nhãn từ mảng tĩnh chưa dịch ở nơi gọi */
+    snprintf(it->tag, sizeof it->tag, "%s", tag ? tr(tag) : "");
+    it->tagc = tagc;
+    return it;
+}
+
+ui_item *ui_add_raw(ui_screen *s, const char *label, const char *tag) {
+    ui_item *it = item_new(s);
+    if (!it) return NULL;
     snprintf(it->label, sizeof it->label, "%s", label ? label : "");
     snprintf(it->tag, sizeof it->tag, "%s", tag ? tag : "");
-    it->tagc = tagc;
     return it;
 }
 
@@ -306,7 +315,7 @@ void ui_exp(ui_item *it, const char *fmt, ...) {
     char *t = NULL;
     va_list ap;
     va_start(ap, fmt);
-    if (vasprintf(&t, fmt, ap) < 0) t = NULL;
+    if (vasprintf(&t, tr(fmt), ap) < 0) t = NULL;
     va_end(ap);
     if (t) { lines_add(&it->exp, "%s", t); free(t); }
 }
@@ -344,9 +353,9 @@ static int dlg_box_h(void) { return cat_get_screen_height() - dlg_top() - cat_ge
 static void dialog_open(const char *title, lines_t *L, int confirm, const char *clabel, ui_confirm_cb cb, const char *arg) {
     if (D.open) dialog_close();
     memset(&D, 0, sizeof D);
-    snprintf(D.title, sizeof D.title, "%s", title);
+    snprintf(D.title, sizeof D.title, "%s", tr(title));
     D.confirm = confirm;
-    snprintf(D.clabel, sizeof D.clabel, "%s", clabel ? clabel : "Xác nhận");
+    snprintf(D.clabel, sizeof D.clabel, "%s", clabel ? clabel : tr("Xác nhận"));
     D.cb = cb;
     snprintf(D.arg, sizeof D.arg, "%s", arg ? arg : "");
     TTF_Font *f = cat_get_font(CAT_FONT_SMALL);
@@ -382,7 +391,7 @@ void ui_info1(const char *title, const char *fmt, ...) {
     char *t = NULL;
     va_list ap;
     va_start(ap, fmt);
-    if (vasprintf(&t, fmt, ap) < 0) t = NULL;
+    if (vasprintf(&t, tr(fmt), ap) < 0) t = NULL;
     va_end(ap);
     if (t) { lines_add(&L, "%s", t); free(t); }
     dialog_open(title, &L, 0, NULL, NULL, NULL);
@@ -408,21 +417,21 @@ static void card_pick_free(ui_screen *s) { free(s->priv); }
 static void card_pick_build(ui_screen *s) {
     char need[32], fr[32];
     ui_fmt_mb(need, sizeof need, jnumd(s->d, "needed_bytes", 0) / (1024.0 * 1024.0));
-    ui_hdr(s, "Cả hai thẻ đều ghi được và đủ chỗ (cần ~%s). Lưu game vào thẻ nào?", need);
+    ui_hdr(s, tr("Cả hai thẻ đều ghi được và đủ chỗ (cần ~%s). Lưu game vào thẻ nào?"), need);
     cJSON *o;
     cJSON_ArrayForEach(o, jarr(s->d, "options")) {
         if (!jbool_d(o, "usable", 0)) continue;
         int pri = !strcmp(jstrd(o, "card", ""), "primary");
         ui_fmt_mb(fr, sizeof fr, jnumd(o, "free_bytes", 0) / (1024.0 * 1024.0));
-        ui_item *it = ui_add(s, pri ? "SD1 — thẻ Leaf" : "SD2 — thẻ phụ", fr, pri ? ST_YELLOW : ST_GREEN);
+        ui_item *it = ui_add(s, pri ? tr("SD1 — thẻ Leaf") : tr("SD2 — thẻ phụ"), fr, pri ? ST_YELLOW : ST_GREEN);
         if (!it) continue;
-        ui_exp(it, "Thư mục gốc: %s", jstrd(o, "root", "?"));
-        ui_exp(it, "Còn trống %s, cần ~%s (file + staging + dự phòng).", fr, need);
-        ui_exp(it, pri ? "Cùng thẻ với hệ thống Leaf: thẻ này đầy thì Leaf có thể lỗi khi ghi save/cấu hình."
-                       : "Thẻ chỉ chứa game: không làm đầy thẻ hệ thống Leaf.");
-        ui_exp(it, "Game vào Roms/<hệ máy>/ trên thẻ này (thư mục hệ máy tự tạo nếu chưa có).");
+        ui_exp(it, tr("Thư mục gốc: %s"), jstrd(o, "root", "?"));
+        ui_exp(it, tr("Còn trống %s, cần ~%s (file + staging + dự phòng)."), fr, need);
+        ui_exp(it, pri ? tr("Cùng thẻ với hệ thống Leaf: thẻ này đầy thì Leaf có thể lỗi khi ghi save/cấu hình.")
+                       : tr("Thẻ chỉ chứa game: không làm đầy thẻ hệ thống Leaf."));
+        ui_exp(it, tr("Game vào Roms/<hệ máy>/ trên thẻ này (thư mục hệ máy tự tạo nếu chưa có)."));
         ui_arg(it, pri ? "primary" : "secondary");
-        ui_act(it, 0, "CHỌN", card_pick_act);
+        ui_act(it, 0, tr("CHỌN"), card_pick_act);
     }
 }
 
@@ -503,7 +512,7 @@ static void dialog_draw(void) {
     if (D.confirm) {
         int bh = cat_device_scale(30), bw = cat_device_scale(110);
         by -= bh;
-        const char *lab[2] = { "Huỷ", D.clabel };
+        const char *lab[2] = { tr("Huỷ"), tr(D.clabel) };
         for (int i = 0; i < 2; i++) {
             int lw = cat_measure_text(fb, lab[i]) + cat_device_scale(24);
             int bx = x + pad + (i ? bw + cat_device_scale(14) : 0), ww = i ? (lw > bw ? lw : bw) : bw;
@@ -515,12 +524,12 @@ static void dialog_draw(void) {
                 cat_draw_text(fb, lab[i], bx + (ww - cat_measure_text(fb, lab[i])) / 2, by + (bh - TTF_FontHeight(fb)) / 2, th->text);
             }
         }
-        cat_draw_text_ellipsized(fs, "Trái/Phải chọn nút", x + pad + 2 * bw + cat_device_scale(40),
+        cat_draw_text_ellipsized(fs, tr("Trái/Phải chọn nút"), x + pad + 2 * bw + cat_device_scale(40),
                                  by + (bh - TTF_FontHeight(fs)) / 2, th->hint, w - 2 * bw - cat_device_scale(70));
     }
     if (D.nw > rows) {
         char info[96];
-        snprintf(info, sizeof info, "(dòng %d-%d/%d — Lên/Xuống để cuộn)", D.scroll + 1, D.scroll + rows < D.nw ? D.scroll + rows : D.nw, D.nw);
+        snprintf(info, sizeof info, tr("(dòng %d-%d/%d — Lên/Xuống để cuộn)"), D.scroll + 1, D.scroll + rows < D.nw ? D.scroll + rows : D.nw, D.nw);
         cat_draw_text(fs, info, x + pad, by - TTF_FontHeight(fs) - cat_device_scale(4), th->hint);
     }
 }
@@ -544,10 +553,10 @@ int ui_task(const char *label, char *const argv[], int timeout_ms, ui_task_cb cb
     if (T.job) return 0;      /* chống chạy chồng: đang có tác vụ thì bỏ qua */
     char err[200];
     lm_job *j = lm_job_start(argv, timeout_ms, err, sizeof err);
-    if (!j) { ui_info1("Lỗi", "%s thất bại: %s", label, err); return 0; }
+    if (!j) { ui_info1(tr("Lỗi"), tr("%s thất bại: %s"), label, err); return 0; }
     T.job = j;
     T.cb = cb;
-    snprintf(T.label, sizeof T.label, "%s", label);
+    snprintf(T.label, sizeof T.label, "%s", tr(label));
     snprintf(T.arg, sizeof T.arg, "%s", arg ? arg : "");
     T.t0 = SDL_GetTicks();
     T.cancelable = T.cancel_req = 0;
@@ -556,16 +565,16 @@ int ui_task(const char *label, char *const argv[], int timeout_ms, ui_task_cb cb
 }
 
 void ui_job_failure(const lm_job *j, char *buf, size_t n) {
-    if (lm_job_timed_out(j)) { snprintf(buf, n, "engine quá thời gian chờ"); return; }
+    if (lm_job_timed_out(j)) { snprintf(buf, n, tr("engine quá thời gian chờ")); return; }
     int ec = lm_job_exit_code(j);
-    if (ec == 127) { snprintf(buf, n, "không chạy được engine (execv thất bại)"); return; }
+    if (ec == 127) { snprintf(buf, n, tr("không chạy được engine (execv thất bại)")); return; }
     const char *e = lm_job_stderr(j);
     size_t len = strlen(e);
     while (len && (e[len - 1] == '\n' || e[len - 1] == '\r')) len--;
     size_t s = len;
     while (s && e[s - 1] != '\n') s--;
-    if (len > s) snprintf(buf, n, "engine thoát mã %d: %.*s", ec, (int)(len - s), e + s);
-    else snprintf(buf, n, "engine thoát mã %d, không có thông báo", ec);
+    if (len > s) snprintf(buf, n, tr("engine thoát mã %d: %.*s"), ec, (int)(len - s), e + s);
+    else snprintf(buf, n, tr("engine thoát mã %d, không có thông báo"), ec);
 }
 
 cJSON *ui_job_json(const lm_job *j, char *err, size_t errsz) {
@@ -574,7 +583,7 @@ cJSON *ui_job_json(const lm_job *j, char *err, size_t errsz) {
     cJSON_Delete(r);
     char why[300];
     ui_job_failure(j, why, sizeof why);
-    snprintf(err, errsz, "JSON không hợp lệ — %s", why);
+    snprintf(err, errsz, tr("JSON không hợp lệ — %s"), why);
     return NULL;
 }
 
@@ -593,6 +602,42 @@ static int task_pump(void) {
     g_cancelled = 0;
     lm_job_free(j);
     return T.job != NULL;
+}
+
+/* ============================================================ đo nhãn (kiểm thử) */
+static int credit_h(void);
+/* LM_MEASURE=1: đọc từng dòng "label<TAB>tag" (hoặc "#HEAD<TAB>tiêu đề nhóm") ở stdin, in những dòng sẽ bị cắt "..."
+ * theo đúng bố cục của render()+draw_list(). Dùng bởi native/tools/label_audit.py để rà mọi nhãn viết cứng. */
+void ui_measure_rows(FILE *in, FILE *out) {
+    SDL_Rect a = cat_get_content_rect(true, true, true);
+    int inset = cat_device_scale(5);
+    a.x += inset; a.w -= 2 * inset;
+    a.h -= credit_h();
+    TTF_Font *fh = cat_get_font(CAT_FONT_TINY), *fl = cat_get_font(CAT_FONT_SMALL);
+    int lw = a.w * 54 / 100, sbw = cat_device_scale(6), pad = cat_device_scale(8);
+    int avail = lw - sbw - 2 * pad;
+    char line[1024];
+    while (fgets(line, sizeof line, in)) {
+        line[strcspn(line, "\r\n")] = 0;
+        char *tag = strchr(line, '\t');
+        if (tag) *tag++ = 0; else tag = "";
+        if (!strcmp(line, "#HEAD")) {
+            int w = cat_measure_text(fh, tag);
+            if (w > lw - sbw) fprintf(out, "CUT\tHEAD\t%s\t\t%d/%d\n", tag, w, lw - sbw);
+            continue;
+        }
+        int labw = cat_measure_text(fl, line), tagw = 0, tagfull = 0, cap = 0;
+        if (tag[0]) {
+            cap = avail * 40 / 100;
+            int room = avail - labw - pad;
+            if (room > cap) cap = room;
+            tagfull = cat_measure_text(fh, tag);
+            tagw = cat_measure_text_ellipsized(fh, tag, cap);
+        }
+        int allow = avail - (tagw ? tagw + pad : 0);
+        if (labw > allow || tagfull > cap)
+            fprintf(out, "CUT\t%s\t%s\t%s\t%d/%d\n", labw > allow ? "LABEL" : "TAG", line, tag, labw, allow);
+    }
 }
 
 /* ============================================================ vẽ danh sách */
@@ -655,10 +700,10 @@ static void draw_list(ui_screen *s, SDL_Rect a) {
     int ip = cat_device_scale(8), tx = px + ip, tw = pw - 2 * ip, ty = y + ip;
     ui_item *it = s->n ? s->items[s->sel] : NULL;
     if (!it || it->head) {
-        cat_draw_text(fh, "(Không có mục nào)", tx, ty, th->hint);
+        cat_draw_text(fh, tr("(Không có mục nào)"), tx, ty, th->hint);
         return;
     }
-    cat_draw_text_ellipsized(fh, "Giải thích", tx, ty, th->hint, tw);
+    cat_draw_text_ellipsized(fh, tr("Giải thích"), tx, ty, th->hint, tw);
     ty += hlh + cat_device_scale(4);
     wl_t *w = NULL; int nw = 0, cap = 0;
     lines_t all = {0};
@@ -682,7 +727,7 @@ static void draw_list(ui_screen *s, SDL_Rect a) {
     for (int i = 0; i < shown; i++) cat_draw_text(fh, w[s->exp_scroll + i].s, tx, ty + i * lh, w[s->exp_scroll + i].col);
     if (nw > vis) {
         char ind[64];
-        snprintf(ind, sizeof ind, "L1/R1 cuộn %d-%d/%d", s->exp_scroll + 1, s->exp_scroll + shown, nw);
+        snprintf(ind, sizeof ind, tr("L1/R1 cuộn %d-%d/%d"), s->exp_scroll + 1, s->exp_scroll + shown, nw);
         int iw = cat_measure_text(fh, ind);
         cat_draw_rounded_rect(px + pw - iw - 2 * ip, y + body_h - hlh - ip, iw + ip, hlh + 2, cat_device_scale(4), lift(th->background, 16));
         cat_draw_text(fh, ind, px + pw - iw - ip - cat_device_scale(4), y + body_h - hlh - ip + 1, th->hint);
@@ -734,7 +779,7 @@ static void draw_busy(void) {
     TTF_Font *ft = cat_get_font(CAT_FONT_LARGE), *fs = cat_get_font(CAT_FONT_TINY);
     char msg[160], note[260];
     int pct = -1;
-    snprintf(note, sizeof note, "Vui lòng chờ, đừng tắt máy. Tác vụ dài có thể mất vài phút.");
+    snprintf(note, sizeof note, tr("Vui lòng chờ, đừng tắt máy. Tác vụ dài có thể mất vài phút."));
     snprintf(msg, sizeof msg, "%s... (%us)", T.label, (SDL_GetTicks() - T.t0) / 1000u);
     /* tiến độ do CLI báo trên stderr: dòng "LMPROGRESS <phase> <done> <total> <i> <n>\t<tên>" (dòng cuối ĐÃ kết thúc bằng \n) */
     const char *e = lm_job_stderr(T.job), *last = NULL, *q = e;
@@ -751,11 +796,11 @@ static void draw_busy(void) {
         ui_fmt_bytes(a, sizeof a, done);
         ui_fmt_bytes(b, sizeof b, total);
         snprintf(msg, sizeof msg, "%s... %d%% (%us)", T.label, pct, (SDL_GetTicks() - T.t0) / 1000u);
-        if (!strcmp(phase, "install")) snprintf(note, sizeof note, "Đang cài bằng trình Nhập game (%s)", b);
+        if (!strcmp(phase, "install")) snprintf(note, sizeof note, tr("Đang cài bằng trình Nhập game (%s)"), b);
         else if (!strcmp(phase, "catalog")) snprintf(note, sizeof note, "Trang %.0f/%.0f — %s", done, total, nm);
-        else snprintf(note, sizeof note, "%s / %s — %s %d/%d: %s", a, b, !strcmp(phase, "verify") ? "kiểm hash" : "file", idx, cnt, nm);
+        else snprintf(note, sizeof note, "%s / %s — %s %d/%d: %s", a, b, !strcmp(phase, "verify") ? tr("kiểm hash") : "file", idx, cnt, nm);
     }
-    const char *note2 = T.cancelable ? (T.cancel_req ? "Đang tạm dừng..." : "B: tạm dừng (tải tiếp được sau). Đừng tắt máy.") : NULL;
+    const char *note2 = T.cancelable ? (T.cancel_req ? tr("Đang tạm dừng...") : tr("B: tạm dừng (tải tiếp được sau). Đừng tắt máy.")) : NULL;
     int pad = cat_device_scale(14), barh = pct >= 0 ? cat_device_scale(10) : 0, g6 = cat_device_scale(6);
     int w = cat_measure_text(ft, msg), w2 = cat_measure_text(fs, note);
     w = (w > w2 ? w : w2) + 2 * pad;
@@ -793,7 +838,7 @@ static void draw_credit(void) {
 static void render(ui_screen *s) {
     cat_clear_screen();
     cat_status_bar_opts sb = { .show_clock = CAT_CLOCK_SHOW, .use_24h = true, .show_battery = true, .show_wifi = true };
-    cat_draw_screen_title(s->title, &sb);
+    cat_draw_screen_title(tr(s->title), &sb);
     cat_draw_status_bar(&sb);   /* cat_draw_screen_title không tự vẽ status bar dù tài liệu nói có */
     SDL_Rect c = cat_get_content_rect(true, true, true);
     int inset = cat_device_scale(5);
@@ -807,18 +852,18 @@ static void render(ui_screen *s) {
     int nf = 0;
     if (D.open) {
         if (D.confirm) {
-            f[nf++] = (cat_footer_item){ .button = CAT_BTN_B, .label = "HUỶ" };
-            f[nf++] = (cat_footer_item){ .button = CAT_BTN_A, .label = "CHỌN", .is_confirm = true };
-        } else f[nf++] = (cat_footer_item){ .button = CAT_BTN_A, .label = "ĐÓNG", .is_confirm = true };
+            f[nf++] = (cat_footer_item){ .button = CAT_BTN_B, .label = tr("HUỶ") };
+            f[nf++] = (cat_footer_item){ .button = CAT_BTN_A, .label = tr("CHỌN"), .is_confirm = true };
+        } else f[nf++] = (cat_footer_item){ .button = CAT_BTN_A, .label = tr("ĐÓNG"), .is_confirm = true };
     } else if (s->draw && s->nfooter) {
-        for (int i = 0; i < s->nfooter && nf < 6; i++) f[nf++] = s->footer[i];
+        for (int i = 0; i < s->nfooter && nf < 6; i++) { f[nf] = s->footer[i]; f[nf].label = tr(f[nf].label); nf++; }
     } else {
         ui_item *it = s->n ? s->items[s->sel] : NULL;
-        f[nf++] = (cat_footer_item){ .button = CAT_BTN_B, .label = "QUAY LẠI" };
+        f[nf++] = (cat_footer_item){ .button = CAT_BTN_B, .label = tr("QUAY LẠI") };
         if (it && !it->head) {
-            if (it->fn[2] && it->lbl[2]) f[nf++] = (cat_footer_item){ .button = CAT_BTN_Y, .label = it->lbl[2] };
-            if (it->fn[1] && it->lbl[1]) f[nf++] = (cat_footer_item){ .button = CAT_BTN_X, .label = it->lbl[1] };
-            if (it->fn[0] && it->lbl[0]) f[nf++] = (cat_footer_item){ .button = CAT_BTN_A, .label = it->lbl[0], .is_confirm = true };
+            if (it->fn[2] && it->lbl[2]) f[nf++] = (cat_footer_item){ .button = CAT_BTN_Y, .label = tr(it->lbl[2]) };
+            if (it->fn[1] && it->lbl[1]) f[nf++] = (cat_footer_item){ .button = CAT_BTN_X, .label = tr(it->lbl[1]) };
+            if (it->fn[0] && it->lbl[0]) f[nf++] = (cat_footer_item){ .button = CAT_BTN_A, .label = tr(it->lbl[0]), .is_confirm = true };
         }
     }
     if (D.open) dialog_draw();
