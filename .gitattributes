@@ -1,0 +1,8 @@
+* text=auto
+*.sh text eol=lf
+launch.sh text eol=lf
+*.py text
+*.png binary
+*.tar binary
+native/third_party/** -text
+pak/Apps/mlp1/LoongMate.pak/bin/** binary

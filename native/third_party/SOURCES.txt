@@ -1,0 +1,13 @@
+Nguon cac thanh phan ben thu ba (vendored nguyen ban, khong sua):
+
+catastrophe/include/catastrophe.h, cjson/*  (catastrophe_widgets.h khong dung nen khong vendor)
+  https://github.com/Utility-Muffin-Research-Kitchen/Catastrophe
+  commit cb2bdffa2c6b51b2fdb49262bc1efeddf87e0db1  (giay phep MIT, xem catastrophe/LICENSE)
+  cJSON 1.7.x di kem trong include/cjson/ (giay phep MIT, ghi o dau cJSON.c / cJSON.h)
+
+sdl-headers/SDL2/*.h  (chi header, de bien dich; thu vien that lay tu may)
+  SDL 2.28.5      https://github.com/libsdl-org/SDL        tag release-2.28.5  commit 15ead9a40d09a1eb9972215cceac2bf29c9b77f6  (zlib)
+  SDL_ttf 2.22.0  https://github.com/libsdl-org/SDL_ttf    tag release-2.22.0  commit 4a318f8dfaa1bb6f10e0c5e54052e25d3c7f3440  (zlib)
+  SDL_image 2.8.2 https://github.com/libsdl-org/SDL_image  tag release-2.8.2   (zlib)
+abcf63aa71b4e3ac32120fa9870a6500ddcdcc89
+LoongMate patch: catastrophe.h cat_draw_rounded_rect_ex / cat_draw_pill chồng các thanh 1px để hết vạch hở (xem 'LoongMate patch').

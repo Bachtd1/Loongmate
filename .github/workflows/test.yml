@@ -1,0 +1,34 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  unittest:
+    # Linux phân biệt hoa/thường và có AF_UNIX — chạy được cả các test bị bỏ qua trên Windows.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"   # cùng phiên bản với runtime CPython trên máy
+      - name: Kiểm script shell (POSIX sh, không CRLF)
+        run: |
+          for f in $(git ls-files '*.sh'); do
+            sh -n "$f"
+            if grep -q $'\r' "$f"; then echo "CRLF trong $f"; exit 1; fi
+          done
+      - name: Binary native chạy được trên máy (ARM64, glibc <= 2.38, không rỗng, bin/ chỉ có lm-home)
+        run: |
+          b=pak/Apps/mlp1/LoongMate.pak/bin/lm-home
+          test -s "$b"
+          readelf -h "$b" | grep -q 'AArch64'
+          max=$(readelf -V "$b" | grep -o 'GLIBC_[0-9.]*' | sed 's/GLIBC_//' | sort -V | tail -1)
+          echo "glibc cao nhất: $max"
+          [ -n "$max" ] || { echo "không đọc được phiên bản glibc"; exit 1; }
+          [ "$(printf '%s\n%s\n' "$max" 2.38 | sort -V | tail -1)" = "2.38" ] || { echo "cần glibc $max > 2.38 của máy"; exit 1; }
+          test "$(ls -A pak/Apps/mlp1/LoongMate.pak/bin)" = "lm-home" || { echo "LoongMate.pak/bin chỉ được chứa lm-home, đang có:"; ls -A pak/Apps/mlp1/LoongMate.pak/bin; exit 1; }
+          test ! -e pak/Apps/mlp1/LoongMateNative.pak || { echo "LoongMateNative.pak đã gộp vào LoongMate.pak, không được còn"; exit 1; }
+      - name: Test
+        run: python -m unittest discover -s tests -v

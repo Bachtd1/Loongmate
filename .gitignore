@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.pyc
+
+# Sản phẩm build (dựng lại bằng pak/build.sh, native/build.sh)
+pak/build/
+# Runtime CPython di động (~30 MB) — build.sh chép vào gói, không đưa vào git
+loongmate-runtime.tar.gz
+native/build/
+
+# Thư viện hệ thống kéo từ máy về để link (glibc, SDL...) — dựng lại bằng native/fetch-sysroot.sh
+native/sysroot/
+
+# File tạm của quá trình ghi nguyên tử
+*.partial
+*.restore.tmp
+
+# DỮ LIỆU CÁ NHÂN — ROM có bản quyền và bản Việt hoá của người dùng, không thuộc dự án
+CT-vi/
+
+# Ảnh chụp thô (giữ PNG, bỏ PPM)
+*.ppm
+
+# Công cụ của dự án Việt hoá Chrono Trigger (đọc file trong CT-vi/) — không thuộc LoongMate
+tests/find_crono.py
+tests/inspect_snes_dialogue.py
+tests/parse_fnt.py
+native/shots/c4_*.png
+native/shots/c4emu_*.png
+
+# Tài liệu nghiên cứu / ghi chú cá nhân ở gốc repo: không thuộc mã nguồn public (chỉ giữ các tài liệu dưới đây)
+/*.md
+!/README.md
+!/INSTALL.md
+!/TAILSCALE.md
+!/CONTRIBUTING.md
+!/CHANGELOG.md
+!/ARCHITECTURE.md
+!/PRIVACY.md
+!/SECURITY.md
+!/ROADMAP.md
+!/COMPATIBILITY.md
+ctdump.out
+
+# Do simulator/server.py tự tạo khi chạy; ảnh chụp lúc phát triển (ảnh cho tài liệu nằm ở docs/images/)
+playground/
+native/shots/
+_backup/

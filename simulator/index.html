@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LoongMate — Pocket 1 Care & Sync Simulator</title>
+  <meta name="description" content="Trình giả lập thiết bị Miniloong Pocket 1 và bộ công cụ bảo trì LoongMate trên nền tảng Leaf CFW">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-layout">
+    
+    <!-- LEFT: HANDHELD SIMULATOR -->
+    <main class="console-viewport">
+      <header class="console-top-branding">
+        <div class="brand-badge">
+          <span class="brand-logo-dot"></span>
+          <span class="brand-text">MINILOONG POCKET 1</span>
+          <span class="cfw-pill">LEAF CFW</span>
+        </div>
+        <div class="spec-pills">
+          <span class="spec-tag">RK3566 ARM64</span>
+          <span class="spec-tag">1GB RAM</span>
+          <span class="spec-tag">960×720 (4:3)</span>
+          <span class="spec-tag">DUAL SD</span>
+        </div>
+      </header>
+
+      <!-- PHYSICAL CONSOLE CHASSIS -->
+      <section class="handheld-chassis" id="handheld-device">
+        <!-- Shoulder buttons -->
+        <div class="shoulder-buttons-row">
+          <button class="btn-shoulder" id="btn-l1" title="L1 (Phím Q)">L1</button>
+          <div class="top-vent"></div>
+          <button class="btn-shoulder" id="btn-r1" title="R1 (Phím E)">R1</button>
+        </div>
+
+        <div class="console-body">
+          <!-- Left Controls Column -->
+          <div class="control-cluster left-cluster">
+            <div class="dpad" id="dpad-cluster">
+              <button class="dpad-btn dpad-up" id="btn-dpad-up" title="Lên (Mũi tên lên / W)">▲</button>
+              <div class="dpad-horizontal">
+                <button class="dpad-btn dpad-left" id="btn-dpad-left" title="Trái (Mũi tên trái / A)">◀</button>
+                <div class="dpad-center"></div>
+                <button class="dpad-btn dpad-right" id="btn-dpad-right" title="Phải (Mũi tên phải / D)">▶</button>
+              </div>
+              <button class="dpad-btn dpad-down" id="btn-dpad-down" title="Xuống (Mũi tên xuống / S)">▼</button>
+            </div>
+            
+            <div class="thumbstick left-stick" id="stick-left">
+              <div class="stick-cap"></div>
+            </div>
+          </div>
+
+          <!-- 4:3 SCREEN FRAME -->
+          <div class="screen-bezel">
+            <div class="screen-glare"></div>
+            
+            <!-- 960x720 VIRTUAL FRAMEBUFFER -->
+            <div class="virtual-screen" id="virtual-screen">
+              
+              <!-- STATUS BAR -->
+              <div class="screen-statusbar" id="screen-statusbar">
+                <div class="sb-left">
+                  <span class="sb-app-title">LoongMate</span>
+                  <span class="sb-leaf-version">Leaf 1.0</span>
+                </div>
+                <div class="sb-center" id="sb-clock">12:45</div>
+                <div class="sb-right">
+                  <span class="sb-indicator" id="sb-sd1-badge" title="Primary SD">SD1: OK</span>
+                  <span class="sb-indicator" id="sb-sd2-badge" title="Secondary SD">SD2: OK</span>
+                  <span class="sb-indicator temp-badge" id="sb-temp-badge">41°C</span>
+                  <div class="battery-meter" id="sb-battery-meter" title="Pin">
+                    <div class="battery-body">
+                      <div class="battery-fill" id="sb-battery-fill" style="width: 88%;"></div>
+                      <span class="battery-bolt" id="sb-battery-bolt">⚡</span>
+                    </div>
+                    <span class="battery-label" id="sb-battery-text">88%</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- SCREEN CONTENT VIEWPORT -->
+              <div class="screen-content" id="screen-viewport">
+                
+                <!-- VIEW 1: HOME (READINESS) -->
+                <div class="view-screen active" id="view-home">
+                  <div class="home-header">
+                    <div class="app-hero-row">
+                      <div class="app-icon-box">
+                        <img src="assets/icon.png" alt="LoongMate Icon" class="hero-app-icon" id="home-app-icon">
+                      </div>
+                      <div class="hero-titles">
+                        <h1 class="hero-app-name">LoongMate</h1>
+                        <p class="hero-tagline">Chăm sóc & Đồng bộ dữ liệu cho Miniloong Pocket 1</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 4 READINESS STATUS CARDS (2x2) -->
+                  <div class="readiness-grid">
+                    <!-- Card 0: Device -->
+                    <div class="readiness-card focused" id="card-device" data-index="0" tabindex="0">
+                      <div class="card-status-bar status-green" id="card-device-indicator"></div>
+                      <div class="card-content">
+                        <div class="card-header-row">
+                          <span class="card-category">PHẦN CỨNG</span>
+                          <span class="card-status-badge badge-green" id="badge-device-state">HOẠT ĐỘNG TỐT</span>
+                        </div>
+                        <h2 class="card-title">Tình trạng máy</h2>
+                        <div class="card-metric" id="text-device-metric">Pin 88% • 41.5°C</div>
+                        <p class="card-detail" id="text-device-detail">Nhiệt độ ổn định, CPU RK3566 4-core</p>
+                      </div>
+                    </div>
+
+                    <!-- Card 1: Storage -->
+                    <div class="readiness-card" id="card-storage" data-index="1" tabindex="0">
+                      <div class="card-status-bar status-green" id="card-storage-indicator"></div>
+                      <div class="card-content">
+                        <div class="card-header-row">
+                          <span class="card-category">LƯU TRỮ</span>
+                          <span class="card-status-badge badge-green" id="badge-storage-state">SD1 + SD2 OK</span>
+                        </div>
+                        <h2 class="card-title">Thẻ nhớ SD</h2>
+                        <div class="card-metric" id="text-storage-metric">SD1: 14.2 GB • SD2: 54.1 GB</div>
+                        <p class="card-detail" id="text-storage-detail">SD2 định dạng FAT32 chuẩn, quyền ghi OK</p>
+                      </div>
+                    </div>
+
+                    <!-- Card 2: SaveVault -->
+                    <div class="readiness-card" id="card-savevault" data-index="2" tabindex="0">
+                      <div class="card-status-bar status-green" id="card-savevault-indicator"></div>
+                      <div class="card-content">
+                        <div class="card-header-row">
+                          <span class="card-category">SAO LƯU</span>
+                          <span class="card-status-badge badge-green" id="badge-savevault-state">AN TOÀN</span>
+                        </div>
+                        <h2 class="card-title">SaveVault</h2>
+                        <div class="card-metric" id="text-savevault-metric">3 Snapshots hợp lệ</div>
+                        <p class="card-detail" id="text-savevault-detail">Sao lưu mới nhất: Hôm nay 10:15</p>
+                      </div>
+                    </div>
+
+                    <!-- Card 3: Library Doctor -->
+                    <div class="readiness-card" id="card-doctor" data-index="3" tabindex="0">
+                      <div class="card-status-bar status-yellow" id="card-doctor-indicator"></div>
+                      <div class="card-content">
+                        <div class="card-header-row">
+                          <span class="card-category">KIỂM TOÁN</span>
+                          <span class="card-status-badge badge-yellow" id="badge-doctor-state">2 CẦN CHÚ Ý</span>
+                        </div>
+                        <h2 class="card-title">Library Doctor</h2>
+                        <div class="card-metric" id="text-doctor-metric">1 Lỗi đĩa • 1 Đa đĩa</div>
+                        <p class="card-detail" id="text-doctor-detail">Nhấn [A] để xem và duyệt Fix Plan an toàn</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- VIEW 2: SAVEVAULT HUB -->
+                <div class="view-screen" id="view-savevault">
+                  <div class="module-view-header">
+                    <div class="mvh-title-row">
+                      <span class="mvh-icon">🛡️</span>
+                      <h2>SaveVault — Quản lý bản sao lưu Save & State</h2>
+                    </div>
+                    <p class="mvh-subtitle">Giao thức sao lưu tăng tiến nguyên tử (atomic incremental), bảo vệ save chống ghi đè nhầm</p>
+                  </div>
+
+                  <div class="module-action-bar">
+                    <button class="btn-module-action btn-primary" id="btn-create-snapshot">
+                      <span class="action-icon">➕</span> Tạo Snapshot mới ngay
+                    </button>
+                    <button class="btn-module-action btn-secondary" id="btn-preview-restore">
+                      <span class="action-icon">🔍</span> Xem trước khôi phục (Dry-Run)
+                    </button>
+                  </div>
+
+                  <div class="snapshot-list-container">
+                    <div class="list-section-header">Danh sách các bản snapshot đã kiểm chứng</div>
+                    <div class="snapshot-items" id="snapshot-items-list">
+                      <!-- Dynamic snapshot entries -->
+                    </div>
+                  </div>
+                </div>
+
+                <!-- VIEW 3: LIBRARY DOCTOR HUB -->
+                <div class="view-screen" id="view-doctor">
+                  <div class="module-view-header">
+                    <div class="mvh-title-row">
+                      <span class="mvh-icon">🩺</span>
+                      <h2>Library Doctor — Bác sĩ kiểm toán thư viện</h2>
+                    </div>
+                    <p class="mvh-subtitle">Chỉ đọc khi quét; mọi thay đổi đều chuyển vào Quarantine/<timestamp>/ thay vì xoá</p>
+                  </div>
+
+                  <div class="module-action-bar">
+                    <button class="btn-module-action btn-primary" id="btn-run-audit">
+                      <span class="action-icon">🔄</span> Quét lại toàn bộ thư viện
+                    </button>
+                    <button class="btn-module-action btn-success" id="btn-apply-safe-fixes">
+                      <span class="action-icon">✨</span> Duyệt & Thực hiện Fix Plan an toàn
+                    </button>
+                  </div>
+
+                  <div class="doctor-issues-container">
+                    <div class="list-section-header" id="doctor-issues-header">Các vấn đề phát hiện được</div>
+                    <div class="issues-list" id="doctor-issues-list">
+                      <!-- Dynamic issue cards -->
+                    </div>
+                  </div>
+                </div>
+
+                <!-- VIEW 4: DEVICE HEALTH HUB -->
+                <div class="view-screen" id="view-health">
+                  <div class="module-view-header">
+                    <div class="mvh-title-row">
+                      <span class="mvh-icon">⚡</span>
+                      <h2>Device Health — Chẩn đoán phần cứng & Hỗ trợ</h2>
+                    </div>
+                    <p class="mvh-subtitle">Tự kiểm tra quyền ghi $USERDATA_PATH, thư mục Leaf, và xuất gói chẩn đoán đã lọc mật khẩu</p>
+                  </div>
+
+                  <div class="module-action-bar">
+                    <button class="btn-module-action btn-primary" id="btn-run-self-tests">
+                      <span class="action-icon">🔬</span> Chạy chẩn đoán tự kiểm tra
+                    </button>
+                    <button class="btn-module-action btn-success" id="btn-download-bundle">
+                      <span class="action-icon">📦</span> Xuất Support Bundle (.zip)
+                    </button>
+                  </div>
+
+                  <div class="health-tests-container">
+                    <div class="list-section-header">Kết quả kiểm tra phần cứng & hệ thống</div>
+                    <div class="test-results-list" id="health-test-list">
+                      <!-- Dynamic self tests -->
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- BOTTOM CONTROL PROMPTS (CATASTROPHE CONVENTIONS) -->
+              <footer class="screen-footer" id="screen-footer">
+                <div class="footer-legend">
+                  <span class="legend-item"><kbd class="fkey">D-Pad</kbd> Di chuyển</span>
+                  <span class="legend-item"><kbd class="fkey btn-color-a">A</kbd> Chọn/Mở</span>
+                  <span class="legend-item"><kbd class="fkey btn-color-b">B</kbd> Quay lại</span>
+                  <span class="legend-item"><kbd class="fkey btn-color-x">X</kbd> Sao lưu nhanh</span>
+                  <span class="legend-item"><kbd class="fkey btn-color-y">Y</kbd> Chẩn đoán</span>
+                </div>
+              </footer>
+
+              <!-- NOTIFICATION MODAL TOAST -->
+              <div class="screen-toast" id="screen-toast">
+                <span class="toast-icon" id="toast-icon">✓</span>
+                <span class="toast-text" id="toast-text">Thông báo hệ thống</span>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Right Controls Column -->
+          <div class="control-cluster right-cluster">
+            <div class="face-buttons" id="face-buttons-cluster">
+              <button class="btn-face btn-x" id="btn-face-x" title="Phím X / U (Sao lưu nhanh)">X</button>
+              <div class="face-horizontal">
+                <button class="btn-face btn-y" id="btn-face-y" title="Phím Y / I (Gói chẩn đoán)">Y</button>
+                <div class="face-center"></div>
+                <button class="btn-face btn-a" id="btn-face-a" title="Phím A / Enter / J (Chọn)">A</button>
+              </div>
+              <button class="btn-face btn-b" id="btn-face-b" title="Phím B / Esc / K (Quay lại)">B</button>
+            </div>
+
+            <div class="thumbstick right-stick" id="stick-right">
+              <div class="stick-cap"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Center System Buttons (Select, Menu, Start) -->
+        <div class="bottom-system-row">
+          <button class="btn-sys" id="btn-select" title="Select (Phím Tab)">SELECT</button>
+          <div class="speaker-grill">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <button class="btn-sys" id="btn-start" title="Start (Phím Space)">START</button>
+        </div>
+
+        <div class="chassis-bottom-ports">
+          <div class="port-slot" title="Khe cắm thẻ SD1 (Primary)">SD1</div>
+          <div class="port-slot usb-c" title="Cổng USB-C (Đã mod xuất Audio)">USB-C AUDIO MOD</div>
+          <div class="port-slot" title="Khe cắm thẻ SD2 (Secondary)">SD2</div>
+        </div>
+      </section>
+    </main>
+
+    <!-- RIGHT: WORKBENCH & TEST LAB -->
+    <aside class="workbench-panel">
+      <header class="wb-header">
+        <h2 class="wb-title">Bàn điều khiển thử nghiệm phần cứng</h2>
+        <p class="wb-desc">Mô phỏng các trạng thái thực tế của Pocket 1 để kiểm tra phản ứng của LoongMate</p>
+      </header>
+
+      <!-- TEST CONTROLS -->
+      <section class="wb-section">
+        <h3 class="wb-section-title">1. Giả lập phần cứng & Pin</h3>
+        
+        <div class="sim-control-group">
+          <div class="sim-control-label">
+            <span>Dung lượng Pin:</span>
+            <strong id="label-sim-battery">88%</strong>
+          </div>
+          <input type="range" id="slider-sim-battery" min="5" max="100" value="88" class="sim-slider">
+          <div class="range-marks">
+            <span class="mark danger">10% (Yếu)</span>
+            <span class="mark warn">25%</span>
+            <span class="mark ok">100% (Đầy)</span>
+          </div>
+        </div>
+
+        <div class="sim-toggle-row">
+          <label class="toggle-container">
+            <input type="checkbox" id="toggle-sim-charging">
+            <span class="toggle-slider"></span>
+            <span class="toggle-text">Đang cắm sạc nguồn ngoài (Charging)</span>
+          </label>
+        </div>
+
+        <div class="sim-control-group">
+          <div class="sim-control-label">
+            <span>Nhiệt độ SoC RK3566:</span>
+            <strong id="label-sim-temp">41.5°C</strong>
+          </div>
+          <input type="range" id="slider-sim-temp" min="30" max="85" step="0.5" value="41.5" class="sim-slider">
+          <div class="range-marks">
+            <span class="mark ok">40°C (Mát)</span>
+            <span class="mark warn">60°C (Ấm)</span>
+            <span class="mark danger">75°C (Quá nhiệt)</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="wb-section">
+        <h3 class="wb-section-title">2. Giả lập khe thẻ nhớ SD2</h3>
+        <div class="sim-select-group">
+          <label for="select-sim-sd2">Trạng thái thẻ khe SD2:</label>
+          <select id="select-sim-sd2" class="sim-select">
+            <option value="vfat">✅ Thẻ FAT32 chuẩn (Leaf hỗ trợ hoàn toàn)</option>
+            <option value="exfat">❌ Thẻ exFAT (Leaf không nhận, cần FAT32)</option>
+            <option value="ro">⚠️ Thẻ bị khoá Read-Only</option>
+            <option value="none">⭕ Không gắn thẻ SD khe 2</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="wb-section">
+        <h3 class="wb-section-title">3. Thao tác CLI trên thiết bị</h3>
+        <div class="cli-buttons-grid">
+          <button class="wb-btn" id="wb-run-readiness"><code>loongmate readiness</code></button>
+          <button class="wb-btn" id="wb-run-scan"><code>loongmate scan</code></button>
+          <button class="wb-btn" id="wb-run-backup"><code>loongmate backup</code></button>
+          <button class="wb-btn" id="wb-run-restore-preview"><code>loongmate restore --dry-run</code></button>
+          <button class="wb-btn" id="wb-run-health"><code>loongmate health</code></button>
+          <button class="wb-btn" id="wb-run-bundle"><code>loongmate bundle</code></button>
+        </div>
+      </section>
+
+      <!-- TERMINAL OUTPUT / EVENT JOURNAL -->
+      <section class="wb-section flex-grow">
+        <div class="terminal-header">
+          <span class="term-title">Nhật ký sự kiện / Console Engine Log</span>
+          <button class="term-clear-btn" id="btn-clear-term">Xoá log</button>
+        </div>
+        <div class="terminal-box" id="wb-terminal">
+          <div class="term-line info">[LoongMate Simulator] Đã kết nối với engine Python tại http://127.0.0.1:8080/</div>
+          <div class="term-line success">[Ready] Hệ thống đã sẵn sàng cho Miniloong Pocket 1.</div>
+        </div>
+      </section>
+
+      <footer class="wb-footer">
+        <p>Phím tắt: <strong>Mũi tên</strong>: D-pad | <strong>Enter/J</strong>: A | <strong>Esc/K</strong>: B | <strong>U</strong>: X | <strong>I</strong>: Y</p>
+      </footer>
+    </aside>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

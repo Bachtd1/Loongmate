@@ -1,0 +1,27 @@
+{
+  "id": "org.loongmate.agent",
+  "name": "LoongMate Agent",
+  "icon": "res/icon.png",
+  "platform": "mlp1",
+  "pak_version": "1.0.0",
+  "min_jawaka_version": "0.0.1",
+  "type": "TOOL",
+  "description": "Chạy nền như một service của Leaf: ghi lịch sử pin/nhiệt độ mỗi 5 phút và tự sao lưu save khi thoát game. Bấm từ tab Apps để xem trạng thái.",
+  "author": "LoongMate",
+  "service": {
+    "schema": 1,
+    "id": "org.loongmate.agent",
+    "run": {
+      "path": "launch.sh",
+      "args": ["service", "run"]
+    },
+    "restart": "on-failure",
+    "default_enabled": false,
+    "stop_grace_ms": 5000,
+    "lifecycle": {
+      "game": "ignore",
+      "stop_on_storage_change": true,
+      "stop_on_suspend": false
+    }
+  }
+}

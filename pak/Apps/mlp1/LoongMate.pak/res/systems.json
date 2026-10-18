@@ -1,0 +1,112 @@
+{
+  "version": "1.0",
+  "systems": [
+    {
+      "id": "FC",
+      "name": "Nintendo Entertainment System",
+      "folder": "FC",
+      "extensions": [".nes", ".zip", ".7z", ".fds"],
+      "bios": ["disksys.rom"],
+      "has_saves": true
+    },
+    {
+      "id": "SFC",
+      "name": "Super Nintendo Entertainment System",
+      "folder": "SFC",
+      "extensions": [".sfc", ".smc", ".zip", ".7z"],
+      "bios": [],
+      "has_saves": true
+    },
+    {
+      "id": "GB",
+      "name": "Game Boy",
+      "folder": "GB",
+      "extensions": [".gb", ".zip", ".7z"],
+      "bios": [],
+      "has_saves": true
+    },
+    {
+      "id": "GBC",
+      "name": "Game Boy Color",
+      "folder": "GBC",
+      "extensions": [".gbc", ".zip", ".7z"],
+      "bios": [],
+      "has_saves": true
+    },
+    {
+      "id": "GBA",
+      "name": "Game Boy Advance",
+      "folder": "GBA",
+      "extensions": [".gba", ".zip", ".7z"],
+      "bios": ["gba_bios.bin"],
+      "has_saves": true
+    },
+    {
+      "id": "MD",
+      "name": "Sega Mega Drive / Genesis",
+      "folder": "MD",
+      "extensions": [".md", ".gen", ".smd", ".bin", ".zip", ".7z"],
+      "bios": [],
+      "has_saves": true
+    },
+    {
+      "id": "PS",
+      "name": "Sony PlayStation",
+      "folder": "PS",
+      "extensions": [".chd", ".cue", ".iso", ".pbp", ".m3u"],
+      "bios": ["scph5501.bin", "scph5502.bin", "scph5500.bin"],
+      "has_saves": true,
+      "requires_disc_cue_validation": true
+    },
+    {
+      "id": "NDS",
+      "name": "Nintendo DS",
+      "folder": "NDS",
+      "extensions": [".nds", ".zip", ".7z"],
+      "bios": ["bios7.bin", "bios9.bin", "firmware.bin"],
+      "has_saves": true
+    },
+    {
+      "id": "N64",
+      "name": "Nintendo 64",
+      "folder": "N64",
+      "extensions": [".z64", ".n64", ".v64", ".zip", ".7z"],
+      "bios": [],
+      "has_saves": true
+    },
+    {
+      "id": "DC",
+      "name": "Sega Dreamcast",
+      "folder": "DC",
+      "extensions": [".chd", ".cdi", ".gdi", ".cue"],
+      "bios": ["dc_boot.bin", "dc_flash.bin"],
+      "has_saves": true,
+      "requires_disc_cue_validation": true
+    },
+    {
+      "id": "SS",
+      "name": "Sega Saturn",
+      "folder": "SS",
+      "extensions": [".chd", ".cue", ".iso", ".m3u"],
+      "bios": ["sega_101.bin", "mpr-17933.bin"],
+      "has_saves": true,
+      "requires_disc_cue_validation": true
+    },
+    {
+      "id": "PCE",
+      "name": "PC Engine / TurboGrafx-16",
+      "folder": "PCE",
+      "extensions": [".pce", ".chd", ".cue", ".zip", ".7z"],
+      "bios": ["syscard3.pce"],
+      "has_saves": true
+    },
+    {
+      "id": "ARCADE",
+      "name": "Arcade (FBNeo / MAME)",
+      "folder": "ARCADE",
+      "extensions": [".zip", ".7z"],
+      "bios": ["neogeo.zip"],
+      "has_saves": false
+    }
+  ]
+}

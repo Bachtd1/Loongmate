@@ -1,0 +1,684 @@
+{
+  "version": "2.0",
+  "catalog_version": "verified-on-device-2026.10.02",
+  "systems": [
+    {
+      "id": "32X",
+      "name": "Sega 32X",
+      "folder": "32X",
+      "extensions": [
+        ".32x",
+        ".bin",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "A7800",
+      "name": "Atari 7800",
+      "folder": "A7800",
+      "extensions": [
+        ".a78",
+        ".bin",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": false,
+      "aliases": []
+    },
+    {
+      "id": "AMIGA",
+      "name": "Commodore Amiga",
+      "folder": "AMIGA",
+      "extensions": [
+        ".adf",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "ARCADE",
+      "name": "Arcade (FBNeo / MAME)",
+      "folder": "ARCADE",
+      "extensions": [
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": false,
+      "aliases": []
+    },
+    {
+      "id": "ATARI2600",
+      "name": "Atari 2600",
+      "folder": "ATARI2600",
+      "extensions": [
+        ".a26",
+        ".bin",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": false,
+      "aliases": []
+    },
+    {
+      "id": "ATOMISWAVE",
+      "name": "Sammy Atomiswave",
+      "folder": "ATOMISWAVE",
+      "extensions": [
+        ".zip",
+        ".7z",
+        ".chd"
+      ],
+      "bios": [],
+      "has_saves": false,
+      "aliases": []
+    },
+    {
+      "id": "COLECO",
+      "name": "ColecoVision",
+      "folder": "COLECO",
+      "extensions": [
+        ".col",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": false,
+      "aliases": []
+    },
+    {
+      "id": "CPS1",
+      "name": "Capcom Play System 1",
+      "folder": "CPS1",
+      "extensions": [
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "CPS2",
+      "name": "Capcom Play System 2",
+      "folder": "CPS2",
+      "extensions": [
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "CPS3",
+      "name": "Capcom Play System 3",
+      "folder": "CPS3",
+      "extensions": [
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "DC",
+      "name": "Sega Dreamcast",
+      "folder": "DC",
+      "extensions": [
+        ".chd",
+        ".cdi",
+        ".gdi",
+        ".cue",
+        ".m3u"
+      ],
+      "bios": [
+        "dc_boot.bin",
+        "dc_flash.bin"
+      ],
+      "has_saves": true,
+      "aliases": [],
+      "requires_disc_cue_validation": true,
+      "bios_hle": "Flycast của Leaf tự dùng BIOS giả lập (reios) khi thiếu BIOS thật — log trên máy: \"Did not load BIOS, using reios\". Phần lớn game chạy; BIOS thật giúp game kén BIOS và lưu VMU ổn định hơn.",
+      "bios_dir": "dc"
+    },
+    {
+      "id": "DOS",
+      "name": "MS-DOS (DOSBox)",
+      "folder": "DOS",
+      "extensions": [],
+      "extension_check": false,
+      "extension_check_note": "Thu muc Leaf hop le, nhung danh sach phan mo rong CHUA KIEM CHUNG -> bo qua kiem tra phan mo rong thay vi bao sai.",
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "EASYRPG",
+      "name": "RPG Maker 2000/2003 (EasyRPG)",
+      "folder": "EASYRPG",
+      "extensions": [],
+      "extension_check": false,
+      "extension_check_note": "Thu muc Leaf hop le, nhung danh sach phan mo rong CHUA KIEM CHUNG -> bo qua kiem tra phan mo rong thay vi bao sai.",
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "FBNEO",
+      "name": "FinalBurn Neo",
+      "folder": "FBNEO",
+      "extensions": [
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "FDS",
+      "name": "Famicom Disk System",
+      "folder": "FDS",
+      "extensions": [
+        ".fds",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [
+        "disksys.rom"
+      ],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "GB",
+      "name": "Game Boy",
+      "folder": "GB",
+      "extensions": [
+        ".gb",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "GBA",
+      "name": "Game Boy Advance",
+      "folder": "GBA",
+      "extensions": [
+        ".gba",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "bios_optional": [
+        "gba_bios.bin"
+      ],
+      "has_saves": true,
+      "aliases": [],
+      "bios_hle": "mGBA tự giả lập BIOS khi thiếu gba_bios.bin; chỉ màn hình khởi động và vài game hiếm cần BIOS thật."
+    },
+    {
+      "id": "GBC",
+      "name": "Game Boy Color",
+      "folder": "GBC",
+      "extensions": [
+        ".gbc",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "GENESIS",
+      "name": "Sega Mega Drive / Genesis",
+      "folder": "GENESIS",
+      "extensions": [
+        ".md",
+        ".gen",
+        ".smd",
+        ".bin",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": [
+        "MD",
+        "MEGADRIVE"
+      ]
+    },
+    {
+      "id": "GG",
+      "name": "Sega Game Gear",
+      "folder": "GG",
+      "extensions": [
+        ".gg",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "GW",
+      "name": "Game & Watch",
+      "folder": "GW",
+      "extensions": [],
+      "extension_check": false,
+      "extension_check_note": "Thu muc Leaf hop le, nhung danh sach phan mo rong CHUA KIEM CHUNG -> bo qua kiem tra phan mo rong thay vi bao sai.",
+      "bios": [],
+      "has_saves": false,
+      "aliases": []
+    },
+    {
+      "id": "LYNX",
+      "name": "Atari Lynx",
+      "folder": "LYNX",
+      "extensions": [
+        ".lnx",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "MAME",
+      "name": "MAME",
+      "folder": "MAME",
+      "extensions": [
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": false,
+      "aliases": []
+    },
+    {
+      "id": "MAME2003",
+      "name": "MAME 2003",
+      "folder": "MAME2003",
+      "extensions": [
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "MAME2010",
+      "name": "MAME 2010",
+      "folder": "MAME2010",
+      "extensions": [
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "MD32X",
+      "name": "Sega 32X (Mega Drive 32X)",
+      "folder": "MD32X",
+      "extensions": [
+        ".32x",
+        ".bin",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "MS",
+      "name": "Sega Master System",
+      "folder": "MS",
+      "extensions": [
+        ".sms",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "N64",
+      "name": "Nintendo 64",
+      "folder": "N64",
+      "extensions": [
+        ".z64",
+        ".n64",
+        ".v64",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "NAOMI",
+      "name": "Sega NAOMI",
+      "folder": "NAOMI",
+      "extensions": [
+        ".zip",
+        ".7z",
+        ".chd"
+      ],
+      "bios": [],
+      "has_saves": false,
+      "aliases": []
+    },
+    {
+      "id": "NDS",
+      "name": "Nintendo DS",
+      "folder": "NDS",
+      "extensions": [
+        ".nds",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "bios_optional": [
+        "bios7.bin",
+        "bios9.bin",
+        "firmware.bin"
+      ],
+      "has_saves": true,
+      "aliases": [],
+      "bios_hle": "DraStic tự giả lập BIOS và firmware NDS; BIOS thật chỉ cần cho vài game hiếm."
+    },
+    {
+      "id": "NEOGEO",
+      "name": "Neo Geo (MVS/AES)",
+      "folder": "NEOGEO",
+      "extensions": [
+        ".zip",
+        ".7z"
+      ],
+      "bios": [
+        "neogeo.zip"
+      ],
+      "has_saves": false,
+      "aliases": []
+    },
+    {
+      "id": "NES",
+      "name": "Nintendo Entertainment System",
+      "folder": "NES",
+      "extensions": [
+        ".nes",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": [
+        "FC"
+      ]
+    },
+    {
+      "id": "NGP",
+      "name": "Neo Geo Pocket",
+      "folder": "NGP",
+      "extensions": [
+        ".ngp",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "NGPC",
+      "name": "Neo Geo Pocket Color",
+      "folder": "NGPC",
+      "extensions": [
+        ".ngc",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "PC98",
+      "name": "NEC PC-98",
+      "folder": "PC98",
+      "extensions": [],
+      "extension_check": false,
+      "extension_check_note": "Thu muc Leaf hop le, nhung danh sach phan mo rong CHUA KIEM CHUNG -> bo qua kiem tra phan mo rong thay vi bao sai.",
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "PCE",
+      "name": "PC Engine / TurboGrafx-16",
+      "folder": "PCE",
+      "extensions": [
+        ".pce",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": [
+        "TG16"
+      ]
+    },
+    {
+      "id": "PCECD",
+      "name": "PC Engine CD / TurboGrafx-CD",
+      "folder": "PCECD",
+      "extensions": [
+        ".chd",
+        ".cue",
+        ".iso",
+        ".m3u"
+      ],
+      "bios": [
+        "syscard3.pce"
+      ],
+      "has_saves": true,
+      "aliases": [
+        "TGCD"
+      ],
+      "requires_disc_cue_validation": true
+    },
+    {
+      "id": "PICO8",
+      "name": "PICO-8",
+      "folder": "PICO8",
+      "extensions": [],
+      "extension_check": false,
+      "extension_check_note": "Thu muc Leaf hop le, nhung danh sach phan mo rong CHUA KIEM CHUNG -> bo qua kiem tra phan mo rong thay vi bao sai.",
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "PORTS",
+      "name": "Native ports",
+      "folder": "PORTS",
+      "extensions": [],
+      "extension_check": false,
+      "extension_check_note": "Thu muc Leaf hop le, nhung danh sach phan mo rong CHUA KIEM CHUNG -> bo qua kiem tra phan mo rong thay vi bao sai.",
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "PSP",
+      "name": "Sony PlayStation Portable",
+      "folder": "PSP",
+      "extensions": [
+        ".iso",
+        ".cso",
+        ".pbp",
+        ".m3u"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "PSX",
+      "name": "Sony PlayStation",
+      "folder": "PSX",
+      "extensions": [
+        ".chd",
+        ".cue",
+        ".iso",
+        ".pbp",
+        ".m3u"
+      ],
+      "bios": [],
+      "bios_any_of": [
+        [
+          "scph5500.bin",
+          "scph5501.bin",
+          "scph5502.bin"
+        ]
+      ],
+      "has_saves": true,
+      "aliases": [
+        "PS",
+        "PS1",
+        "PSONE"
+      ],
+      "requires_disc_cue_validation": true,
+      "bios_hle": "PCSX-ReARMed (core PS1 mặc định của Leaf) đặt bios = auto: không có BIOS thật thì dùng BIOS giả lập tích hợp. Phần lớn game chạy; vài game cần BIOS thật đúng vùng."
+    },
+    {
+      "id": "SATURN",
+      "name": "Sega Saturn",
+      "folder": "SATURN",
+      "extensions": [
+        ".chd",
+        ".cue",
+        ".iso",
+        ".m3u"
+      ],
+      "bios": [
+        "sega_101.bin",
+        "mpr-17933.bin"
+      ],
+      "has_saves": true,
+      "aliases": [
+        "SS"
+      ],
+      "requires_disc_cue_validation": true
+    },
+    {
+      "id": "SEGACD",
+      "name": "Sega CD / Mega-CD",
+      "folder": "SEGACD",
+      "extensions": [
+        ".chd",
+        ".cue",
+        ".iso",
+        ".m3u"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": [
+        "MEGACD",
+        "SCD"
+      ],
+      "requires_disc_cue_validation": true
+    },
+    {
+      "id": "SNES",
+      "name": "Super Nintendo Entertainment System",
+      "folder": "SNES",
+      "extensions": [
+        ".sfc",
+        ".smc",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": [
+        "SFC"
+      ]
+    },
+    {
+      "id": "VB",
+      "name": "Virtual Boy",
+      "folder": "VB",
+      "extensions": [
+        ".vb",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "VECTREX",
+      "name": "Vectrex",
+      "folder": "VECTREX",
+      "extensions": [
+        ".vec",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": false,
+      "aliases": []
+    },
+    {
+      "id": "WS",
+      "name": "WonderSwan",
+      "folder": "WS",
+      "extensions": [
+        ".ws",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    },
+    {
+      "id": "WSC",
+      "name": "WonderSwan Color",
+      "folder": "WSC",
+      "extensions": [
+        ".wsc",
+        ".zip",
+        ".7z"
+      ],
+      "bios": [],
+      "has_saves": true,
+      "aliases": []
+    }
+  ]
+}

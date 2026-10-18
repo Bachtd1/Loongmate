@@ -1,0 +1,10 @@
+{
+  "name": "LoongMate",
+  "icon": "res/icon.png",
+  "platform": "mlp1",
+  "pak_version": "1.0.0",
+  "min_jawaka_version": "0.0.1",
+  "type": "TOOL",
+  "description": "Pocket 1 Care & Sync — sao lưu save, kiểm toán thư viện và chẩn đoán thiết bị, chạy hoàn toàn ở user-space.",
+  "author": "LoongMate"
+}

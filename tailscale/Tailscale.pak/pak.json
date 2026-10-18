@@ -1,0 +1,31 @@
+{
+  "id": "org.loongmate.tailscale",
+  "name": "Tailscale",
+  "icon": "res/icon.png",
+  "platform": "mlp1",
+  "pak_version": "1.102.4",
+  "min_jawaka_version": "0.0.1",
+  "type": "TOOL",
+  "description": "Tailscale ở user-space. Chạy nền như một service của Leaf nên tự lên cùng máy và tự kết nối lại khi Wi-Fi trở lại.",
+  "author": "LoongMate",
+  "service": {
+    "schema": 1,
+    "id": "org.loongmate.tailscale",
+    "run": {
+      "path": "launch.sh",
+      "args": ["service", "run"]
+    },
+    "restart": "on-failure",
+    "default_enabled": false,
+    "stop_grace_ms": 5000,
+    "lifecycle": {
+      "game": "ignore",
+      "stop_on_storage_change": true,
+      "stop_on_suspend": false
+    }
+  },
+  "state": {
+    "root": "tailscale",
+    "retained_roots": ["state"]
+  }
+}

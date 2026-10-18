@@ -1,0 +1,14 @@
+{
+  "_comment": "md5 chi lay tu bang BIOS tren docs.libretro.com (doc ngay 2026-10-02). File khong co hash trong nguon thi KHONG co muc o day (se bao unknown_hash): neogeo.zip, dc_flash.bin, firmware.bin.",
+  "scph5500.bin": {"md5": ["8dd7d5296a650fac7319bce665a6a53c"], "source": "https://docs.libretro.com/library/beetle_psx_hw/", "systems": ["PSX"]},
+  "scph5501.bin": {"md5": ["490f666e1afb15b7362b406ed1cea246"], "source": "https://docs.libretro.com/library/beetle_psx_hw/", "systems": ["PSX"]},
+  "scph5502.bin": {"md5": ["32736f17079d0b2b7024407c39bd3050"], "source": "https://docs.libretro.com/library/beetle_psx_hw/", "systems": ["PSX"]},
+  "gba_bios.bin": {"md5": ["a860e8c0b6d573d191e4ec7db1b1e4f6"], "source": "https://docs.libretro.com/library/mgba/", "systems": ["GBA"]},
+  "bios7.bin": {"md5": ["df692a80a5b1bc90728bc3dfc76cd948"], "source": "https://docs.libretro.com/library/melonds/", "systems": ["NDS"]},
+  "bios9.bin": {"md5": ["a392174eb3e572fed6447e956bde4b25"], "source": "https://docs.libretro.com/library/melonds/", "systems": ["NDS"]},
+  "dc_boot.bin": {"md5": ["e10c53c2f8b90bab96ead2d368858623"], "source": "https://docs.libretro.com/library/flycast/", "systems": ["DC"], "dir": "dc"},
+  "sega_101.bin": {"md5": ["85ec9ca47d8f6807718151cbcca8b964"], "source": "https://docs.libretro.com/library/beetle_saturn/", "systems": ["SATURN"]},
+  "mpr-17933.bin": {"md5": ["3240872c70984b6cbfda1586cab68dbe"], "source": "https://docs.libretro.com/library/beetle_saturn/", "systems": ["SATURN"]},
+  "disksys.rom": {"md5": ["ca30b50f880eb660a320674ed365ef7a"], "source": "https://docs.libretro.com/library/fceumm/", "systems": ["FDS"]},
+  "syscard3.pce": {"md5": ["38179df8f4ac870017db21ebcbf53114"], "source": "https://docs.libretro.com/library/beetle_pce_fast/", "systems": ["PCECD"]}
+}
