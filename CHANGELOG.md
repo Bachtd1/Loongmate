@@ -1,5 +1,18 @@
 # Thay đổi
 
+## 0.1.1-beta — 2026-10-18
+
+- **Sửa: tự tiếp tục qua Agent bỏ qua mọi game trên thẻ Leaf (SD1).** Leaf ghi đường dẫn game SD1 dạng tương đối
+  (`Roms/SNES/…`) còn RetroArch báo tuyệt đối (`/mnt/sdcard/Roms/SNES/…`); trước đây so chuỗi y nguyên nên coi là "game
+  khác". Game trên SD2 không bị ảnh hưởng.
+- Tự kiểm tương thích với bản Leaf đang chạy (log `launch-game`, dòng xác nhận chạy game, socket `jawakad`): sau khi cập
+  nhật Leaf, màn **Tự tiếp tục game** báo "tương thích" hoặc "lệch". Chỉ khi lệch mới gợi ý Hot Tabs (vá launcher).
+- Màn hiện lần tự tiếp tục gần nhất (đã nạp state, game chưa có state…); `autoresume status` cũng in các thông tin này.
+- Màn **Leaf Hot Tabs** đổi thành **Tự tiếp tục game**: dòng "Qua Agent" lên đầu với tên ngắn không bị cắt, báo LoongMate
+  Agent có đang chạy không. Phần Hot Tabs (launcher, bật/tắt, cài/gỡ) chỉ hiện khi trên thẻ có Hot Tabs hoặc bộ cài;
+  trước đây máy không có Hot Tabs vẫn thấy dòng Hot Tabs "Bật" gây hiểu nhầm.
+- Giao diện Python dự phòng có thêm nút bật/tắt tự tiếp tục qua Agent.
+
 ## 0.1.0-beta — 2026-10-18
 
 Bản công khai đầu tiên. Đã dùng thật trên Miniloong Pocket 1 với Leaf 0.11.0 và 0.13.0.

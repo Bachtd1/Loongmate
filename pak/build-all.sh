@@ -84,14 +84,14 @@ if [ -n "$VERSIONS" ]; then
      Có sẵn: ${OTHERS:-(không có)}
    - Không có bản nào khớp: bỏ qua Hot Tabs. LoongMate sẽ báo \"không khớp phiên bản Leaf\"
      và không cho cài, máy không bị ảnh hưởng.
-   Cài: LoongMate -> Máy -> Leaf Hot Tabs -> Cài lại Hot Tabs, xác nhận, rồi KHỞI ĐỘNG LẠI máy.
+   Cài: LoongMate -> Máy -> Tự tiếp tục game -> Cài lại Hot Tabs, xác nhận, rồi KHỞI ĐỘNG LẠI máy.
    Bộ cài tự sao lưu launcher gốc và kiểm md5 trước khi thay; gỡ ở cùng màn đó.
    Khi cập nhật Leaf, launcher trở về bản gốc (vô hại); cần bộ Hot Tabs mới cho bản Leaf mới."
 else
     HT_TREE=""
     RESUME_DOC="3. TỰ TIẾP TỤC (thử nghiệm, mặc định tắt: mở game từ Games/Favorites là tiếp tục chỗ đang chơi)
-   Cần bật LoongMate Agent (mục 2). Rồi: LoongMate -> Máy -> Leaf Hot Tabs ->
-   \"Tự tiếp tục qua Agent (không vá launcher)\" -> Bật.
+   Cần bật LoongMate Agent (mục 2). Rồi: LoongMate -> Máy -> Tự tiếp tục game ->
+   \"Qua Agent\" -> Bật.
    Không sửa file nào của Leaf, dùng được qua các lần cập nhật Leaf."
 fi
 cat > "$STAGE/DOC-TRUOC.txt" <<EOF

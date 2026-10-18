@@ -122,6 +122,42 @@ class TestAutoResume(unittest.TestCase):
         self.assertEqual(self.ar.tick()["outcome"], "timeout")
         self.assertEqual(self.loads(), [])
 
+    def test_primary_card_launch_logs_relative_rom_path(self):
+        """Máy thật (Leaf 0.13.0): game trên thẻ Leaf được log là 'rom=Roms/SNES/...' (tương đối) còn retroarch-session
+        báo '/mnt/sdcard/Roms/SNES/...' (tuyệt đối). Trước đây so chuỗi y nguyên nên mọi game SD1 bị coi là 'game khác'."""
+        self.state("Hero Quest.state99")
+        self.ready()
+        self.ar.feed_line(launch_line(rom="Roms/GBA/Hero Quest.gba"))
+        self.ar.feed_line(commit_line())
+        r = self.ar.tick()
+        self.assertEqual((r["outcome"], r["slot"]), ("loaded", 99))
+        self.assertEqual(self.loads(), [99])
+
+    def test_relative_rom_without_active_game_uses_session_path_for_states(self):
+        self.state("Hero Quest.state99")
+        self.ready()
+        self.d.session["rom_path"] = str(self.tmp / "Roms" / "GBA" / "Hero Quest.gba").replace("\\", "/")
+        self.ar.active_game = lambda: None
+        self.ar.feed_line(launch_line(rom="Roms/GBA/Hero Quest.gba"))
+        self.ar.feed_line(commit_line())
+        self.assertEqual(self.ar.tick()["outcome"], "loaded")
+
+    def test_relative_rom_does_not_match_a_different_game(self):
+        self.state("Hero Quest.state99")
+        self.ready()
+        self.d.session["rom_path"] = "/mnt/sdcard/Roms/GBA/Super Hero Quest.gba"
+        self.ar.feed_line(launch_line(rom="Roms/GBA/Hero Quest.gba"))
+        self.ar.feed_line(commit_line())
+        self.assertEqual(self.ar.tick()["outcome"], "other_game")
+        self.assertEqual(self.loads(), [])
+
+    def test_same_rom(self):
+        self.assertTrue(AR.same_rom("Roms/SNES/EarthBound (USA).smc", "/mnt/sdcard/Roms/SNES/EarthBound (USA).smc"))
+        self.assertTrue(AR.same_rom("/media/sdcard1/Roms/PS/A.cue", "/media/sdcard1/Roms/PS/A.cue"))
+        self.assertFalse(AR.same_rom("/media/sdcard1/Roms/PS/A.cue", "/mnt/sdcard/Roms/PS/A.cue"))
+        self.assertFalse(AR.same_rom("Roms/GBA/A.gba", "/mnt/sdcard/Roms/GBA/BA.gba"))
+        self.assertFalse(AR.same_rom("Roms/GBA/A.gba", None))
+
     def test_other_game_running_is_not_touched(self):
         self.state("Hero Quest.state99")
         self.ready()
@@ -151,6 +187,58 @@ class TestAutoResume(unittest.TestCase):
         self.assertFalse(AR.enabled(self.tmp))
         AR.set_enabled(self.tmp, True)
         self.assertTrue(AR.enabled(self.tmp))
+
+
+REAL_LAUNCH = ("2026-10-18 16:19:58 INFO launch-game requested system=SFC rom=Roms/SNES/EarthBound (USA).smc "
+               "core=(default) resume=none")
+REAL_COMMIT = ("2026-10-18 16:19:59 INFO life1: active launch committed launch_id=1792315199-173065230-1410-21-443713194 "
+               "source=primary kind=RETROARCH")
+
+
+@unittest.skipUnless(hasattr(__import__("socket"), "AF_UNIX") and os.name == "posix", "cần socket Unix (chạy trên CI Linux)")
+class TestCompat(unittest.TestCase):
+    """Sau khi cập nhật Leaf: biết cách qua Agent còn chạy không, chỉ báo 'lệch' khi Leaf thật sự đổi cấu trúc."""
+    def setUp(self):
+        import socket
+        self.tmp = Path(tempfile.mkdtemp(prefix="lm_compat_"))
+        self.sock_path = str(self.tmp / "jawakad.sock")
+        self.srv = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.srv.bind(self.sock_path)
+        self.log = self.tmp / "umrk-leaf-session.log"
+
+    def tearDown(self):
+        self.srv.close()
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def check(self, *lines):
+        self.log.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        return AR.compat(self.log, self.sock_path)
+
+    def test_leaf_0_13_log_is_compatible(self):
+        r = self.check("x INFO boot", REAL_LAUNCH, REAL_COMMIT)
+        self.assertIs(r["ok"], True, r)
+
+    def test_no_game_launched_yet_is_unknown_not_broken(self):
+        self.assertIsNone(self.check("x INFO boot")["ok"])
+
+    def test_changed_launch_line_format_is_reported(self):
+        r = self.check("2026 INFO launch-game requested game=Roms/SNES/x.smc mode=fresh", REAL_COMMIT)
+        self.assertIs(r["ok"], False)
+        self.assertIn("launch-game", r["message"])
+
+    def test_missing_commit_line_is_reported(self):
+        self.assertIs(self.check(REAL_LAUNCH)["ok"], False)
+
+    def test_missing_socket_is_reported(self):
+        self.srv.close()
+        os.unlink(self.sock_path)
+        r = self.check(REAL_LAUNCH, REAL_COMMIT)
+        self.assertIs(r["ok"], False)
+        self.assertIn("jawakad", r["message"])
+
+    def test_real_lines_parse(self):
+        self.assertEqual(AR._LAUNCH_RE.search(REAL_LAUNCH).group(2), "Roms/SNES/EarthBound (USA).smc")
+        self.assertEqual(AR._COMMIT_RE.search(REAL_COMMIT).group(1), "RETROARCH")
 
 
 if __name__ == "__main__":

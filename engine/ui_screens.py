@@ -17,6 +17,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from pathlib import Path
 
 from engine import agent as agent_mod
+from engine import autoresume as autoresume_mod
 from engine import artwork as artwork_mod
 from engine import batchfix as batchfix_mod
 from engine import bios as bios_mod
@@ -1174,9 +1175,10 @@ class App:
         items.append(Item("Cập nhật LoongMate", "gói trên thẻ", "unknown", [
             "Xem phiên bản đang chạy, tìm gói cập nhật trong LoongMate-update/ trên thẻ, kiểm tra toàn vẹn rồi áp dụng; có thể quay về bản trước.",
             "Áp dụng luôn qua hộp xác nhận (mặc định Huỷ). Cần thoát và mở lại LoongMate để dùng bản mới."], a=("Mở", self.open_update)))
-        items.append(Item("Leaf Hot Tabs", "", "unknown", [
-            "Bản jawaka-launcher đã patch: mở game từ Games/Favorites thì tự tiếp tục chỗ đang chơi dở như tab Recents.",
-            "Xem đang dùng bản Hot Tabs hay bản gốc, bật/tắt tính năng (hiệu lực ngay), gỡ hoặc cài lại (có hộp xác nhận, mặc định Huỷ)."],
+        items.append(Item("Tự tiếp tục game", "Games/Favorites", "unknown", [
+            "Mở game từ Games/Favorites thì vào thẳng chỗ đang chơi dở như tab Recents.",
+            "Bật/tắt (hiệu lực ngay). Cần LoongMate Agent đang chạy; không thay file nào của Leaf.",
+            "Có Hot Tabs trên thẻ thì màn này cũng cho cài/gỡ Hot Tabs."],
             a=("Mở", self.open_hottabs)))
         items.append(Item("Trạng thái agent", "", "unknown", [
             "LoongMate Agent có đang chạy không, lần sao lưu tự động gần nhất, mẫu pin/nhiệt gần nhất.",
@@ -2961,44 +2963,75 @@ class App:
             self.refresh_cur()
         self.run("Đang quay về bản trước", lambda: update_mod.rollback(apps, self.app_data), done)
 
-    # ---- LEAF HOT TABS
+    # ---- TỰ TIẾP TỤC GAME (Agent; Hot Tabs nếu có trên thẻ)
     def open_hottabs(self):
         if self.need(self.probe.primary_path):
-            self.push(ListScreen(self, "LEAF HOT TABS", self._build_hottabs))
+            self.push(ListScreen(self, "TỰ TIẾP TỤC GAME", self._build_hottabs))
 
     def _build_hottabs(self):
         sd = self.probe.primary_path
         ud = hottabs_mod.userdata_for(sd, os.environ.get("USERDATA_PATH"))
         st = hottabs_mod.status(sd, ud)
         inst = st["installed"]
+        patched = inst == "patched"
+        ar = autoresume_mod.enabled(self.app_data)
+        agent = bool(agent_mod.lock_held(self.app_data))
+        import argparse
+        compat = autoresume_mod.compat(agent_mod._leaf_log_path(argparse.Namespace(leaf_log=None), self.probe))
+        broken = compat["ok"] is False
+        # Hot Tabs chỉ hiện khi có trên máy/thẻ, hoặc khi Leaf đổi cấu trúc khiến cách qua Agent không chạy được.
+        hot = patched or st["bundle_version"] or st["installer_path"] or broken
+        if patched:
+            first = "Đang dùng Hot Tabs: launcher tự tiếp tục, Agent bỏ qua."
+        elif ar and broken:
+            first = "!! Bản Leaf này đã đổi cấu trúc: tự tiếp tục qua Agent không chạy được. Cập nhật LoongMate hoặc dùng Hot Tabs."
+        elif ar and agent:
+            first = "Đang BẬT: mở game từ Games/Favorites sẽ vào chỗ đang chơi dở."
+        elif ar:
+            first = "! Đã bật nhưng LoongMate Agent chưa chạy: Settings > Services > LoongMate Agent > Run."
+        else:
+            first = "Đang TẮT: mở game từ Games/Favorites luôn chạy mới (như Leaf gốc)."
+        header = [first, "Tab Recents của Leaf vốn đã tự tiếp tục; màn này thêm cho Games/Favorites."]
+        items = [Item("Tự tiếp tục", head=True)]
+        items.append(Item("Qua Agent", "Bật" if ar else "Tắt", ("green" if agent else "yellow") if ar else "unknown", [
+            "Khuyên dùng. Không thay file nào của Leaf: LoongMate Agent thấy game mở từ Games/Favorites thì nạp state mới nhất",
+            "(ưu tiên state của bộ chuyển game) ngay khi RetroArch sẵn sàng, như tab Recents.",
+            "Vẫn chạy sau khi cập nhật Leaf, không cần làm gì thêm. Chỉ game RetroArch; game chưa có state thì chạy mới.",
+            "LoongMate Agent: " + ("đang chạy." if agent else "CHƯA CHẠY — bật ở Settings > Services > LoongMate Agent (Start with Leaf + Run).")]
+            + (["Đang dùng Hot Tabs nên launcher tự làm, Agent bỏ qua."] if patched else []),
+            a=("Tắt" if ar else "Bật", self.do_autoresume_toggle)))
+        items.append(Item("Kiểm với Leaf này", "lệch" if broken else "tương thích" if compat["ok"] else "chưa rõ",
+                          "red" if broken else "green" if compat["ok"] else "unknown", [
+            compat["message"],
+            "LoongMate đọc log của Leaf và socket jawakad; sau mỗi lần cập nhật Leaf, mục này cho biết cách qua Agent còn chạy không."]
+            + (["Chỉ khi lệch như vậy mới cần Hot Tabs (vá launcher, cần bản dựng đúng phiên bản Leaf) hoặc chờ bản LoongMate mới."]
+               if broken else [])))
+        if not hot:
+            return header, items
         if not st["bundle_matches"] and st["bundle_version"]:
             line, tag, tc = "Không khớp phiên bản Leaf — cần build lại bộ cài", "không khớp", "red"
-        elif inst == "patched":
+        elif patched:
             line, tag, tc = "Đang dùng bản Hot Tabs", "Hot Tabs", "green"
         elif inst == "stock":
             line, tag, tc = "Bản gốc của Leaf (chưa cài Hot Tabs)", "bản gốc", "yellow"
         elif inst == "absent":
             line, tag, tc = "Không thấy launcher của Leaf trên thẻ", "không có", "red"
         else:
-            line, tag, tc = "Không nhận diện được launcher (không có bộ cài trên thẻ hoặc md5 lạ)", "không rõ", "yellow"
-        header = [f"Trạng thái: {line}", f"Leaf: {st['leaf_version'] or 'không đọc được'}; bộ cài: {st['bundle_version'] or 'không có trên thẻ'}",
-                  "Leaf vừa cập nhật? Hot Tabs bị thay về bản gốc — xem docs/CAP-NHAT-LEAF.md"]
-        items = [Item("Trạng thái", head=True)]
+            line, tag, tc = "Không nhận diện được launcher (md5 lạ)", "không rõ", "yellow"
+        items.append(Item("Hot Tabs (nâng cao, thay launcher)", head=True))
         items.append(Item("Launcher", tag, tc, [
-            st["message"], f"Phiên bản Leaf: {st['leaf_version'] or '?'}  (commit launcher {st['launcher_commit'] or '?'})",
+            line, st["message"], f"Phiên bản Leaf: {st['leaf_version'] or '?'}  (commit launcher {st['launcher_commit'] or '?'})",
             f"Bộ cài trên thẻ: {st['bundle_version'] or 'không có'}" + (" — khớp Leaf này." if st["bundle_matches"] else " — KHÔNG khớp Leaf này."),
             f"Bản gốc đã sao lưu: {'có' if st['backup_present'] else 'không'}",
             "Cập nhật Leaf thay cả thư mục launcher nên Hot Tabs biến mất (máy về bản gốc, vô hại). Cài lại theo docs/CAP-NHAT-LEAF.md."]))
-        items.append(Item("Tính năng", head=True))
-        on = st["resume_from_lists"]
-        items.append(Item("Tự tiếp tục khi mở từ Games/Favorites", "Bật" if on else "Tắt", "green" if on else "yellow", [
-            "Bật: mở game từ Games/Favorites thì vào thẳng chỗ đang chơi dở như Recents (game chưa có state thì chạy mới).",
-            "Tắt: Games/Favorites luôn chạy mới như Leaf gốc.",
-            "A đổi ngay; launcher kiểm mỗi lần mở game nên không cần khởi động lại.",
-            "Không tốn pin: không có gì chạy nền, chỉ khác lúc mở game.",
-            "! Chỉ có tác dụng khi đang dùng bản Hot Tabs." if inst != "patched" else "Ghi một file cờ nhỏ trên thẻ; bật = xoá file cờ."],
-            a=("Bật" if not on else "Tắt", self.do_hottabs_toggle)))
-        items.append(Item("Cài / gỡ", head=True))
+        if patched:
+            on = st["resume_from_lists"]
+            items.append(Item("Qua Hot Tabs", "Bật" if on else "Tắt", "green" if on else "yellow", [
+                "Bật: mở game từ Games/Favorites thì vào thẳng chỗ đang chơi dở như Recents (game chưa có state thì chạy mới).",
+                "Tắt: Games/Favorites luôn chạy mới như Leaf gốc.",
+                "A đổi ngay; launcher kiểm mỗi lần mở game nên không cần khởi động lại.",
+                "Ghi một file cờ nhỏ trên thẻ; bật = xoá file cờ."],
+                a=("Bật" if not on else "Tắt", self.do_hottabs_toggle)))
         can = st["installer_path"] is not None and st["bundle_matches"]
         why = ("" if can else "!! Không dùng được: " + ("không có hottabs/hottabs.sh trên thẻ." if st["installer_path"] is None
                                                        else "bộ cài không khớp phiên bản Leaf — cần build lại (docs/CAP-NHAT-LEAF.md)."))
@@ -3012,6 +3045,10 @@ class App:
                 "Xem trước rồi hỏi xác nhận (mặc định Huỷ).", f"{hottabs_mod.RESTART_NOTE} sau khi cài.", why],
                 a=("Cài", lambda: self.ask_hottabs("install")) if can else None))
         return header, items
+
+    def do_autoresume_toggle(self):
+        autoresume_mod.set_enabled(self.app_data, not autoresume_mod.enabled(self.app_data))
+        self.refresh_cur()
 
     def do_hottabs_toggle(self):
         sd = self.probe.primary_path

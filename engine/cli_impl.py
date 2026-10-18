@@ -2090,15 +2090,28 @@ def _cmd_leafconfig(args, probe) -> int:
         return _lib_out(args, {"success": False, "message": str(e)}, False)
 
 
+def _autoresume_info(probe) -> dict:
+    """Trạng thái tự tiếp tục qua Agent cho màn hình: bật/tắt, Agent chạy không, Leaf này còn tương thích không, lần gần nhất."""
+    app = probe.userdata_path
+    if app is None:
+        return {"agent_resume": False, "agent_running": False, "agent_compat": None, "agent_last": None}
+    leaf_log = agent_mod._leaf_log_path(argparse.Namespace(leaf_log=None), probe)
+    return {"agent_resume": autoresume_mod.enabled(app), "agent_running": bool(agent_mod.lock_held(app)),
+            "agent_compat": autoresume_mod.compat(leaf_log), "agent_last": _read_agent_state(app).get("autoresume_last")}
+
+
 def _cmd_autoresume(args, probe) -> int:
     """Tự tiếp tục khi mở từ Games/Favorites qua LoongMate Agent (engine/autoresume.py), không vá launcher."""
     if probe.userdata_path is None:
         return _usage(args, "Không xác định được thư mục userdata của LoongMate.")
     ar, cmd = autoresume_mod, args.autoresume_command
     if cmd == "status":
-        on = ar.enabled(probe.userdata_path)
-        return _lib_out(args, {"success": True, "enabled": on},
-                        True, [f"Tự tiếp tục khi mở từ Games/Favorites (qua Agent): {'BẬT' if on else 'TẮT'}"])
+        info = _autoresume_info(probe)
+        on, c = info["agent_resume"], info["agent_compat"]
+        return _lib_out(args, {"success": True, "enabled": on, **info},
+                        True, [f"Tự tiếp tục khi mở từ Games/Favorites (qua Agent): {'BẬT' if on else 'TẮT'}",
+                               f"LoongMate Agent: {'đang chạy' if info['agent_running'] else 'CHƯA CHẠY'}",
+                               f"Leaf: {c['message']}"])
     try:
         r = ar.set_enabled(probe.userdata_path, cmd == "on")
     except OSError as e:
@@ -2113,7 +2126,7 @@ def _cmd_hottabs(args, probe) -> int:
     cmd = args.hottabs_command
     if cmd == "status":
         st = hottabs_mod.status(sd, ud)
-        st["agent_resume"] = autoresume_mod.enabled(probe.userdata_path) if probe.userdata_path else False
+        st.update(_autoresume_info(probe))
         if args.json:
             _print_json(st)
         else:

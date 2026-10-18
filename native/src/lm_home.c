@@ -918,9 +918,10 @@ static void build_device(ui_screen *s) {
     ui_exp(it, "Xem phiên bản đang chạy, tìm gói cập nhật trong LoongMate-update/ trên thẻ, kiểm tra toàn vẹn rồi áp dụng; có thể quay về bản trước.");
     ui_exp(it, "Áp dụng luôn qua hộp xác nhận (mặc định Huỷ). Cần thoát và mở lại LoongMate để dùng bản mới.");
     ui_act(it, 0, "MỞ", open_update);
-    it = ui_add(s, "Leaf Hot Tabs", "", ST_UNKNOWN);
-    ui_exp(it, "Bản jawaka-launcher đã patch: mở game từ Games/Favorites thì tự tiếp tục chỗ đang chơi dở như tab Recents.");
-    ui_exp(it, "Xem đang dùng bản Hot Tabs hay bản gốc, bật/tắt tính năng (hiệu lực ngay), gỡ hoặc cài lại (có hộp xác nhận, mặc định Huỷ).");
+    it = ui_add(s, "Tự tiếp tục game", "Games/Favorites", ST_UNKNOWN);
+    ui_exp(it, "Mở game từ Games/Favorites thì vào thẳng chỗ đang chơi dở như tab Recents.");
+    ui_exp(it, "Bật/tắt (hiệu lực ngay). Cần LoongMate Agent đang chạy; không thay file nào của Leaf.");
+    ui_exp(it, "Có Hot Tabs trên thẻ thì màn này cũng cho cài/gỡ Hot Tabs.");
     ui_act(it, 0, "MỞ", open_hottabs);
     it = ui_add(s, "Cấu hình Leaf", "RetroArch", ST_UNKNOWN);
     ui_exp(it, "Sao lưu và khôi phục phần bạn đã chỉnh: retroarch.cfg, override/core option/remap, cấu hình emulator độc lập.");

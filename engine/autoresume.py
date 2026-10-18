@@ -122,6 +122,66 @@ def find_resume_slot(states_dir, core_folder: str, rom_path: str) -> Optional[Tu
     return (best[1], best[2]) if best else None
 
 
+COMPAT_TAIL_BYTES = 512 * 1024
+
+
+def compat(leaf_log, sock: Optional[str] = None) -> Dict[str, Any]:
+    """Leaf đang chạy còn đủ thứ tự tiếp tục qua Agent cần không (chỉ đọc). Sau một lần cập nhật Leaf, đây là chỗ
+    phát hiện "lệch cấu trúc": socket jawakad mất, hoặc Leaf vẫn ghi dòng launch-game/commit nhưng định dạng đã đổi.
+    ok: True tương thích | False lệch (cần cập nhật LoongMate hoặc dùng Hot Tabs) | None chưa đủ dữ liệu (chưa mở game nào)."""
+    import stat as _stat
+    sock = sock or socket_path()
+    problems, notes = [], []
+    try:
+        if not _stat.S_ISSOCK(os.stat(sock).st_mode):
+            problems.append(f"{sock} không phải socket")
+    except OSError:
+        problems.append(f"không có socket {sock} (jawakad)")
+    launch_seen = launch_ok = commit_seen = commit_ok = 0
+    try:
+        with open(leaf_log, "rb") as f:
+            f.seek(0, os.SEEK_END)
+            f.seek(max(0, f.tell() - COMPAT_TAIL_BYTES))
+            for raw in f.read().decode("utf-8", "replace").splitlines():
+                if "launch-game requested" in raw:
+                    launch_seen += 1
+                    launch_ok += bool(_LAUNCH_RE.search(raw))
+                if "active launch committed" in raw:
+                    commit_seen += 1
+                    commit_ok += bool(_COMMIT_RE.search(raw))
+    except OSError:
+        problems.append(f"không đọc được log Leaf {leaf_log}")
+    if launch_seen and not launch_ok:
+        problems.append("dòng 'launch-game requested' của Leaf đã đổi định dạng")
+    if commit_seen and not commit_ok:
+        problems.append("dòng 'active launch committed' của Leaf đã đổi định dạng")
+    if not problems and launch_ok and not commit_seen:
+        problems.append("Leaf không còn ghi dòng 'active launch committed'")
+    if not launch_seen and not problems:
+        notes.append("chưa thấy lần mở game nào trong log Leaf gần đây")
+    ok: Optional[bool] = False if problems else (True if launch_ok else None)
+    if ok:
+        msg = f"Tương thích bản Leaf này ({launch_ok} lần mở game gần đây đọc được)."
+    elif ok is None:
+        msg = "Chưa đủ dữ liệu: mở một game rồi xem lại."
+    else:
+        msg = "Leaf đã đổi cấu trúc: " + "; ".join(problems) + "."
+    return {"ok": ok, "message": msg, "problems": problems, "notes": notes,
+            "launch_lines": launch_seen, "launch_parsed": launch_ok, "commit_lines": commit_seen, "commit_parsed": commit_ok}
+
+
+def same_rom(launched: str, running: Optional[str]) -> bool:
+    """launched: rom= trong dòng launch-game; Leaf ghi tương đối với thẻ Leaf ('Roms/SNES/x.smc', kiểm trên máy với
+    Leaf 0.13.0) và tuyệt đối với thẻ phụ. running: rom_path của retroarch-session, luôn tuyệt đối."""
+    if not isinstance(running, str) or not running:
+        return False
+    a, b = launched.replace("\\", "/"), running.replace("\\", "/")
+    if a.startswith("/"):
+        return a == b
+    a = a[2:] if a.startswith("./") else a
+    return b.endswith("/" + a)
+
+
 def _states_dir_for(rom_path: str, active_game: Optional[Dict[str, Any]]) -> Optional[str]:
     sp = (active_game or {}).get("states_path")
     if isinstance(sp, str) and sp:
@@ -190,9 +250,9 @@ class AutoResume:
         s = self.request({"type": "retroarch-session"})
         if s.get("type") != "retroarch-session" or not s.get("active") or not s.get("command_ok"):
             return None                                   # chưa chạy / chưa nhận lệnh: thử lại lần sau
-        if s.get("rom_path") != p["rom"]:
+        if not same_rom(p["rom"], s.get("rom_path")):
             return self._done("other_game", f"dang chay game khac ({s.get('rom_path')}); bo qua.")
-        states = _states_dir_for(p["rom"], self.active_game())
+        states = _states_dir_for(s["rom_path"], self.active_game())     # đường dẫn tuyệt đối của RetroArch
         found = find_resume_slot(states, s.get("core_config_folder") or "", p["rom"]) if states else None
         if not found:
             return self._done("no_state", f"{os.path.basename(p['rom'])} chua co state voi core nay; chay moi.")

@@ -749,7 +749,11 @@ def cmd_run(args: argparse.Namespace, probe: PlatformProbe, app_data: Path, leaf
             finally:
                 busy["v"] = False
             try:
-                resumer.tick()
+                res = resumer.tick()
+                if res:                         # cho man "Tu tiep tuc game" biet lan gan nhat co chay that khong
+                    _write_state(app_data, {"autoresume_last": {"at": time.strftime("%Y-%m-%d %H:%M:%S"),
+                                                                "outcome": res.get("outcome"), "rom": res.get("rom"),
+                                                                "slot": res.get("slot")}})
             except Exception as e:
                 log(f"Loi tu tiep tuc (bo qua): {e}")
                 resumer.pending = None

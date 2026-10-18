@@ -17,11 +17,14 @@ chỗ nào chưa tự chạy thử một lần cập nhật thật thì ghi rõ 
 - **Cấu hình RetroArch không đổi**: `retroarch.cfg`, override, core option, remap giống hệt bản trước cập nhật
   (so bằng `leafconfig diff`).
 - **Hot Tabs mất** đúng như dự kiến (launcher bị thay); bộ cài v0.11.0 không khớp v0.13.0, cần build lại (mục 6).
-  **Thay thế không cần build lại:** Máy -> Leaf Hot Tabs -> "Tự tiếp tục qua Agent" (hoặc `cli.py autoresume on`). LoongMate Agent
+  **Thay thế không cần build lại:** Máy -> Tự tiếp tục game -> "Qua Agent" (hoặc `cli.py autoresume on`). LoongMate Agent
   đọc dòng `launch-game ... resume=none` trong log của Leaf rồi nạp state (slot 99, không có thì state mới nhất) qua lệnh
   `retroarch-action load-state` của chính Leaf — không sửa file nào của Leaf nên không mất khi cập nhật. Đã thử trên máy
   (Leaf 0.13.0, 2026-10-17): mở từ tab Games nạp state sau 3 giây, bằng thời gian tab Recents tự nạp; mở từ Recents thì
   Agent không xen vào. Cần Agent đang chạy (Settings -> Services); chỉ game RetroArch.
+  **Sau mỗi lần cập nhật Leaf:** mở game bất kỳ một lần, rồi xem Máy -> Tự tiếp tục game -> "Kiểm với Leaf này".
+  "tương thích" thì không cần làm gì. "lệch" nghĩa là Leaf đã đổi định dạng log hoặc bỏ socket `jawakad`: chỉ lúc đó mới
+  cần Hot Tabs (build lại theo mục 6) hoặc chờ bản LoongMate mới (`cli.py autoresume status` in cùng thông tin).
 - **Hai thẻ đổi chỗ** sau lần khởi động ngay sau đó (thẻ Leaf từ `/media/sdcard1` sang `/mnt/sdcard`); LoongMate tự dò lại.
 - Nếu runtime Python trong `/userdata` bị xoá (cập nhật/reset máy), `launch.sh` tự giải nén lại từ `loongmate-runtime.tar.gz`
   đi kèm pak.
@@ -61,7 +64,7 @@ danh sách đó nên **không bị xoá hay ghi đè**.
 | **Tailscale** (`Apps/mlp1/Tailscale.pak` + service `org.loongmate.tailscale`; binary và state ở `.userdata/mlp1/tailscale/`) | **Còn** (pak, binary, state đăng nhập đều ngoài vùng bị thay). Cờ service như Agent | Như Agent: kiểm Services, bật nếu bị tắt. Không cần đăng nhập lại nếu `state/tailscaled.state` còn | `tailscale status` thấy máy online; PC `ssh` được vào IP Tailscale |
 | **SSH Server** của Leaf (`SSHServer.pak`) | **Pak bị thay** bằng bản mới (có trong `managed-apps.txt`). State của nó ở `.userdata/mlp1/umrk-ssh-server/` (theo `docs/GHI-CHU-PHAT-TRIEN.md`, đã đọc từ log máy thật) nên theo tài liệu là còn; chưa kiểm sau một lần cập nhật thật. Cờ "Start with Leaf" của SSH cũng ở `services-control.db` | Kiểm Services: SSH Server phải đang chạy, nếu không PC (kéo save, deploy) mất đường vào. Nếu tắt: bật lại trên máy | Từ PC: `ssh -i ~/.ssh/pocket1_loongmate -p 2222 sshadmin@<IP> true`. Nếu `ssh` báo khoá host đổi: xoá dòng cũ trong `known_hosts` rồi xác nhận lại |
 | **PocketBridge.pak** | **Còn** (không thuộc danh sách bị thay) | Không | Mở app, thấy danh sách node |
-| **Leaf Hot Tabs** (repo riêng `Bachtd1/leaf-hottabs`; thay đúng `launcher/bin/jawaka-launcher`) | **MẤT.** `launcher/` bị thay nguyên thư mục nên máy trở về launcher gốc, vô hại (`leaf-hottabs/docs/README.md:108-110`; cơ chế ở `umrk-launcher-install.sh:1753`). Bản sao lưu trong `.userdata/mlp1/hot-tabs/backup/` chỉ khớp phiên bản Leaf cũ, **không được chép lại** | Trên PC (Git Bash), trong thư mục `leaf-hottabs`: `sh scripts/update-for-leaf.sh` rồi `sh scripts/update-for-leaf.sh --install` và **khởi động lại máy**. Xem mục 6 | LoongMate → Máy → Leaf Hot Tabs: "Đang dùng bản Hot Tabs" |
+| **Leaf Hot Tabs** (repo riêng `Bachtd1/leaf-hottabs`; thay đúng `launcher/bin/jawaka-launcher`) | **MẤT.** `launcher/` bị thay nguyên thư mục nên máy trở về launcher gốc, vô hại (`leaf-hottabs/docs/README.md:108-110`; cơ chế ở `umrk-launcher-install.sh:1753`). Bản sao lưu trong `.userdata/mlp1/hot-tabs/backup/` chỉ khớp phiên bản Leaf cũ, **không được chép lại** | Trên PC (Git Bash), trong thư mục `leaf-hottabs`: `sh scripts/update-for-leaf.sh` rồi `sh scripts/update-for-leaf.sh --install` và **khởi động lại máy**. Xem mục 6 | LoongMate → Máy → Tự tiếp tục game: "Đang dùng Hot Tabs" |
 | **Lịch kéo save trên PC** (Task Scheduler `LoongMate-Pull`) | **Còn** (chạy trên PC, không phụ thuộc Leaf). Từ nay script tự dò thẻ Leaf (mục 3). `install_schedule.ps1` không truyền đường dẫn cứng nào | Không cần đổi lịch. Cần SSH Server trên máy chạy (xem hàng SSH) | Chạy tay `python pc\pull_saves.py`; log in dòng `Thẻ Leaf: ...`; `pull.log` nằm cạnh thư mục SaveVault trên PC |
 
 ## 3. Hai thẻ nhớ đổi chỗ sau khi khởi động
@@ -122,7 +125,7 @@ sh scripts/update-for-leaf.sh --install   # cài thật
 Rồi **khởi động lại Pocket 1**. Script tự dừng và không cài gì nếu bản build gốc không khớp md5 bản Leaf chính thức,
 hoặc patch không áp được lên mã launcher mới — khi đó cần sửa patch trong `leaf-hottabs` cho khớp mã launcher mới. Đã giả lập trước với Leaf v0.12.1: chạy trọn.
 
-Bật/tắt và kiểm trạng thái ngay trên máy: **LoongMate → Máy → Leaf Hot Tabs**
+Bật/tắt và kiểm trạng thái ngay trên máy: **LoongMate → Máy → Tự tiếp tục game**
 - *Tự tiếp tục khi mở từ Games/Favorites*: Bật/Tắt, hiệu lực ở lần mở game kế tiếp, không cần khởi động lại.
 - *Gỡ Hot Tabs / Cài lại*: có xem trước, hộp xác nhận mặc định Huỷ; xong phải khởi động lại máy.
 - "Không khớp phiên bản Leaf — cần build lại" nghĩa là Leaf vừa cập nhật: chạy hai lệnh ở trên.

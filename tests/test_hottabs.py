@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 import engine.cli as CLI
+from engine import autoresume as AR
 from engine import hottabs as HT
 from engine import ui_screens as ui
 
@@ -260,18 +261,68 @@ class InstallerTests(Base):
 
 
 class UiTests(Base):
+    def app(self):
+        app = mock.Mock()
+        app.probe.primary_path = self.sd
+        app.app_data = self.ud / "LoongMate"
+        app.app_data.mkdir(parents=True, exist_ok=True)
+        return app
+
+    def rows(self, app, compat_ok=None):
+        fake = {"ok": compat_ok, "message": "x", "problems": [], "notes": []}
+        with mock.patch.object(ui.autoresume_mod, "compat", return_value=fake):
+            header, items = ui.App._build_hottabs(app)
+        return header, {i.label: i.tag for i in items if not getattr(i, "head", False)}
+
     def test_ui_builder_labels(self):
         """Màn Python dựng đúng theo trạng thái thật (không cần SDL)."""
         self.build(PATCHED_BIN)
-        app = mock.Mock()
-        app.probe.primary_path = self.sd
-        header, items = ui.App._build_hottabs(app)
-        text = "\n".join(header + [i.label + " " + i.tag for i in items])
-        self.assertIn("Hot Tabs", text)
-        self.assertIn("Bật", text)
+        app = self.app()
+        header, rows = self.rows(app)
+        self.assertIn("Hot Tabs", "\n".join(header))
+        self.assertEqual(rows["Qua Hot Tabs"], "Bật")
         HT.set_resume(self.ud, False)
-        header, items = ui.App._build_hottabs(app)
-        self.assertIn("Tắt", "\n".join(i.tag for i in items))
+        _, rows = self.rows(app)
+        self.assertEqual(rows["Qua Hot Tabs"], "Tắt")
+
+    def test_without_hot_tabs_only_the_agent_row_is_shown(self):
+        """Bản phát hành công khai không kèm Hot Tabs: màn không được hiện dòng Hot Tabs 'Bật' gây hiểu nhầm."""
+        self.build(STOCK_BIN, manifest=False, installer=False)
+        app = self.app()
+        header, rows = self.rows(app)
+        self.assertEqual(list(rows), ["Qua Agent", "Kiểm với Leaf này"])
+        self.assertEqual(rows["Qua Agent"], "Tắt")
+        self.assertEqual(rows["Kiểm với Leaf này"], "chưa rõ")
+        self.assertIn("TẮT", header[0])
+
+    def test_enabled_without_running_agent_warns(self):
+        self.build(STOCK_BIN, manifest=False, installer=False)
+        app = self.app()
+        AR.set_enabled(app.app_data, True)
+        header, rows = self.rows(app)
+        self.assertEqual(rows["Qua Agent"], "Bật")
+        self.assertIn("chưa chạy", header[0])
+
+    def test_leaf_structure_change_surfaces_hot_tabs_fallback(self):
+        """Chỉ khi Leaf đổi cấu trúc (Agent không chạy được) mới đưa Hot Tabs ra làm phương án vá."""
+        self.build(STOCK_BIN, manifest=False, installer=False)
+        app = self.app()
+        AR.set_enabled(app.app_data, True)
+        header, rows = self.rows(app, compat_ok=False)
+        self.assertIn("đổi cấu trúc", header[0])
+        self.assertEqual(rows["Kiểm với Leaf này"], "lệch")
+        self.assertIn("Cài lại Hot Tabs", rows)
+        _, rows = self.rows(app, compat_ok=True)
+        self.assertEqual(rows["Kiểm với Leaf này"], "tương thích")
+        self.assertNotIn("Cài lại Hot Tabs", rows)
+
+    def test_cli_status_reports_agent_state(self):
+        self.build(STOCK_BIN, manifest=False, installer=False)
+        code, out = self.run_cli("--json", "hottabs", "status")
+        self.assertEqual(code, 0)
+        st = json.loads(out)
+        self.assertIn("agent_running", st)
+        self.assertFalse(st["agent_running"])
 
 
 if __name__ == "__main__":
