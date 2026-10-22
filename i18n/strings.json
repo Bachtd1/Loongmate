@@ -680,6 +680,14 @@
    "dedupe.py"
   ]
  },
+ " Mật khẩu lấy từ: {}.": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
+  ]
+ },
  " Patch lỗi: ": {
   "kind": [
    "py"
@@ -866,6 +874,14 @@
    "lm_web.c"
   ]
  },
+ " để chọn hoặc gõ mật khẩu": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "libsource.py"
+  ]
+ },
  " — CHƯA xác minh": {
   "kind": [
    "py"
@@ -912,6 +928,14 @@
   ],
   "files": [
    "lm_library.c"
+  ]
+ },
+ " — chọn hoặc nhập mật khẩu": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
   ]
  },
  " — file KHÔNG bị xoá": {
@@ -2311,14 +2335,6 @@
    "lm_update.c"
   ]
  },
- "%s chưa hỗ trợ giải nén trên máy: tải trên PC rồi giải nén": {
-  "kind": [
-   "py"
-  ],
-  "files": [
-   "web.py"
-  ]
- },
  "%s gần nhất: %s": {
   "kind": [
    "c"
@@ -2360,6 +2376,38 @@
   ]
  },
  "%s · %.0f file · %.0f trang · %.0f liên kết ngoài": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_web.c"
+  ]
+ },
+ "%s · %d game có ảnh · Y: danh sách, tìm kiếm, lọc": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_web.c"
+  ]
+ },
+ "%s · %d game có ảnh · lọc: %s · Y: danh sách": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_web.c"
+  ]
+ },
+ "%s · %d mục tải (đầu lưới) · %d game có ảnh · Y: danh sách": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_web.c"
+  ]
+ },
+ "%s · %d mục tải · A: tải · Y: danh sách": {
   "kind": [
    "c"
   ],
@@ -2726,6 +2774,22 @@
   ],
   "files": [
    "lm_misc.c"
+  ]
+ },
+ "(?i)(?:\\bpass(?:word)?|\\bpwd?|mật\\s*khẩu|mat\\s*khau|\\bmk|\\bunzip|\\bunrar)\\s*(?:là|is)?\\s*[:=：]\\s*(.+)": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
+  ]
+ },
+ "(?i)^(pass|password|pwd|mk|mat\\s*khau|mật\\s*khẩu)\\b.*\\.txt$": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
   ]
  },
  "(Bản có save và bản được playlist tham chiếu luôn được giữ, bất kể lựa chọn.)": {
@@ -3708,6 +3772,22 @@
    "lm_misc.c"
   ]
  },
+ "7-Zip báo lỗi khi giải nén: ": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
+  ]
+ },
+ "7-Zip không đọc được archive: ": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
+  ]
+ },
  "; file bundle VẪN CÒN: hãy xoá tay vì file còn chứa mã.": {
   "kind": [
    "py"
@@ -3988,6 +4068,14 @@
    "lm_lib.c"
   ]
  },
+ "A — giải nén bằng mật khẩu này (sai thì không ghi gì).": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
+  ]
+ },
  "A — hỏi máy chủ kích thước từng file, chọn thẻ đích và xem kế hoạch (chưa tải gì).": {
   "kind": [
    "c"
@@ -4002,6 +4090,14 @@
   ],
   "files": [
    "lm_lib.c"
+  ]
+ },
+ "A — kiểm nội dung rồi giải vào Import/<tên>/; archive gốc vào Import/.done/.": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
   ]
  },
  "A — kiểm tra gói này bằng SHA-256 rồi hỏi xác nhận mới cập nhật.": {
@@ -4068,6 +4164,14 @@
    "lm_web.c"
   ]
  },
+ "A — nhập tất cả mục đã chọn (kể cả mục này).": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
+  ]
+ },
  "A — so với cấu hình hiện tại (khoá nào đổi, giá trị cũ -> mới).": {
   "kind": [
    "c"
@@ -4083,6 +4187,14 @@
   "files": [
    "lm_lib.c",
    "lm_web.c"
+  ]
+ },
+ "A — tải & cài tất cả game đã chọn (kể cả game này).": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_lib.c"
   ]
  },
  "A — tải về: kiểm tra với máy chủ trước, hỏi xác nhận, rồi cài bằng Nhập game.": {
@@ -4131,6 +4243,14 @@
   ],
   "files": [
    "lm_saves.c"
+  ]
+ },
+ "A — xoá tất cả game đã chọn (kể cả game này), có xem trước và xác nhận.": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_roms.c"
   ]
  },
  "A — xác nhận / bỏ qua BIOS này (xác nhận riêng, không bao giờ ghi đè BIOS có sẵn).": {
@@ -4332,6 +4452,14 @@
   ],
   "files": [
    "lm_home.c"
+  ]
+ },
+ "Archive {}: bấm GIẢI NÉN, nội dung ra Import/ rồi nhập như thường.": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "importer.py"
   ]
  },
  "B trong lúc tải = tạm dừng (tải tiếp được sau).": {
@@ -5322,6 +5450,15 @@
    "lm_ui.c"
   ]
  },
+ "CHỌN TẤT CẢ": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c",
+   "lm_lib.c"
+  ]
+ },
  "CRC header NDS không khớp (ROM bị vá/hỏng?)": {
   "kind": [
    "py"
@@ -5513,6 +5650,14 @@
   ],
   "files": [
    "lm_lib.c"
+  ]
+ },
+ "Chép file .txt đó vào cạnh archive, hoặc ghi mật khẩu vào Import/passwords.txt (mỗi dòng một), rồi giải nén lại.": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
   ]
  },
  "Chép file ROM, .zip hoặc thư mục game vào đó (qua máy tính, USB hoặc pc/import_push.py).": {
@@ -5932,6 +6077,14 @@
    "bios.py"
   ]
  },
+ "Chưa ghi gì: còn bước xem kế hoạch (thẻ đích, trùng tên) và xác nhận.": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
+  ]
+ },
  "Chưa ghi nhận lần agent tự nạp lại sau cập nhật nào — hoặc `agent status` của engine chưa trả mục 'reload' (agent_state.json có thể có).": {
   "kind": [
    "c"
@@ -5954,6 +6107,14 @@
   ],
   "files": [
    "cli_impl.py"
+  ]
+ },
+ "Chưa giải nén được: {}; {}.": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "libsource.py"
   ]
  },
  "Chưa gắn thẻ ở khe 2 — cần cả hai thẻ để chuyển game.": {
@@ -6100,6 +6261,14 @@
    "lm_library.c"
   ]
  },
+ "Chưa tải gì: còn bước xem kế hoạch (dung lượng, thẻ đích) và xác nhận.": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_lib.c"
+  ]
+ },
  "Chưa xác minh được định dạng thẻ SD2": {
   "kind": [
    "py"
@@ -6234,6 +6403,14 @@
   ],
   "files": [
    "lm_lib.c"
+  ]
+ },
+ "Chỉ giải nén archive nằm trong Import/ của thẻ: {}": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "cli_impl.py"
   ]
  },
  "Chỉ gồm các sửa an toàn do Library Doctor đề xuất (vd tạo thư mục thiếu, sửa .cue có ánh xạ rõ ràng).": {
@@ -6412,6 +6589,22 @@
    "lm_library.c"
   ]
  },
+ "Chọn tất cả %d game đang hiện": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_lib.c"
+  ]
+ },
+ "Chọn tất cả %d mục": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
+  ]
+ },
  "Chọn từng game": {
   "kind": [
    "c"
@@ -6483,6 +6676,14 @@
   ],
   "files": [
    "lm_hottabs.c"
+  ]
+ },
+ "CÀI ĐÃ CHỌN…": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_lib.c"
   ]
  },
  "CÓ": {
@@ -6590,6 +6791,14 @@
   ],
   "files": [
    "cli_impl.py"
+  ]
+ },
+ "Các file giải ra hiện trong danh sách Nhập game: chọn rồi nhập như bình thường.": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
   ]
  },
  "Các file xung đột đã được bảo toàn: {}": {
@@ -6758,6 +6967,14 @@
   ],
   "files": [
    "cli_impl.py"
+  ]
+ },
+ "Có mật khẩu: tự thử mật khẩu gợi ý; không ra thì cho chọn hoặc gõ.": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
   ]
  },
  "Có nhật ký và Hoàn tác. Xem kế hoạch từng bước rồi xác nhận.": {
@@ -7001,6 +7218,14 @@
    "cli_impl.py"
   ]
  },
+ "Cần --yes để giải nén.": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "cli_impl.py"
+  ]
+ },
  "Cần LoongMate Agent đã ghi mẫu một thời gian. Chỉ đọc.": {
   "kind": [
    "c"
@@ -7224,6 +7449,14 @@
   ],
   "files": [
    "lm_misc.c"
+  ]
+ },
+ "DANH SÁCH": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_web.c"
   ]
  },
  "DUYỆT": {
@@ -8022,6 +8255,14 @@
    "lm_lib.c"
   ]
  },
+ "GIẢI NÉN": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
+  ]
+ },
  "GIỐNG bản hiện tại": {
   "kind": [
    "c"
@@ -8327,12 +8568,28 @@
    "lm_hello.c"
   ]
  },
+ "Giải nén": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
+  ]
+ },
  "Giải nén an toàn trong thư mục tạm rồi mới chuyển vào Roms/; mất điện giữa chừng không để lại file nửa vời.": {
   "kind": [
    "c"
   ],
   "files": [
    "lm_library.c"
+  ]
+ },
+ "Giải nén {} vào Import/?": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "cli_impl.py"
   ]
  },
  "Giải phóng %s (chuyển sang %s)": {
@@ -8447,6 +8704,14 @@
    "lm_home.c"
   ]
  },
+ "GÕ": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
+  ]
+ },
  "GÕ LẠI": {
   "kind": [
    "c"
@@ -8549,6 +8814,22 @@
   ],
   "files": [
    "update.py"
+  ]
+ },
+ "Gõ mật khẩu archive": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
+  ]
+ },
+ "Gõ mật khẩu…": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
   ]
  },
  "Gõ một phần tên game (bàn phím trên màn hình) để tìm trên cả SD1 và SD2: hệ máy, thẻ, dung lượng, có save/state không.": {
@@ -8784,6 +9065,14 @@
   ],
   "files": [
    "homebrew.py"
+  ]
+ },
+ "Hiện các game có ảnh bìa thành lưới ô (ảnh + tên). Y — chuyển qua lại giữa lưới và danh sách.": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_web.c"
   ]
  },
  "Hiện lại tất cả liên kết.": {
@@ -9814,6 +10103,14 @@
    "lm_lib.c"
   ]
  },
+ "Không có game nào có ảnh (khớp bộ lọc).": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_web.c"
+  ]
+ },
  "Không có game nào khớp bộ lọc": {
   "kind": [
    "c"
@@ -10068,6 +10365,14 @@
   ],
   "files": [
    "cli_impl.py"
+  ]
+ },
+ "Không có ảnh nào chờ tải.": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "web.py"
   ]
  },
  "Không cần khôi phục": {
@@ -10637,6 +10942,14 @@
   ],
   "files": [
    "health.py"
+  ]
+ },
+ "Không tìm thấy mật khẩu gợi ý": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
   ]
  },
  "Không tìm thấy snapshot '{}' trên remote.": {
@@ -11978,6 +12291,14 @@
    "lm_web.c"
   ]
  },
+ "Lưới ảnh bìa (%d)": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_web.c"
+  ]
+ },
  "Lấy mẫu nhiệt độ, pin và trạng thái sạc (sample_seconds=0 => một mẫu tức thời)": {
   "kind": [
    "py"
@@ -12626,12 +12947,44 @@
    "lm_home.c"
   ]
  },
+ "MẬT KHẨU ARCHIVE": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
+  ]
+ },
+ "Mật khẩu gợi ý lấy từ chú thích archive, tên file, file .txt cạnh archive và Import/passwords.txt.": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
+  ]
+ },
+ "Mật khẩu đúng được nhớ để lần sau tự thử trước.": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
+  ]
+ },
  "Mặc định thẻ phụ {}: gắn, ghi được, trống {} MB ≥ cần ~{} MB (dung lượng cần gồm giải nén + staging + dự phòng).": {
   "kind": [
    "py"
   ],
   "files": [
    "importer.py"
+  ]
+ },
+ "Mẹo: Lọc \"chưa có trên máy\" rồi chọn tất cả = nhập hết game mới.": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_lib.c"
   ]
  },
  "Mọi bước ghi vào nhật ký để hoàn tác (mục bên dưới).": {
@@ -12832,6 +13185,14 @@
    "lm_web.c"
   ]
  },
+ "Mở trang kế tiếp của danh sách này (R1 ở bất kỳ đâu trên trang).": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_web.c"
+  ]
+ },
  "Mục kế hoạch không đúng dạng — bỏ qua.": {
   "kind": [
    "py"
@@ -12873,6 +13234,14 @@
   ]
  },
  "NHẬP MỤC NÀY": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
+  ]
+ },
+ "NHẬP ĐÃ CHỌN": {
   "kind": [
    "c"
   ],
@@ -12985,6 +13354,14 @@
   ],
   "files": [
    "lm_home.c"
+  ]
+ },
+ "Người đăng thường ghi mật khẩu ở trang tải, trong chú thích archive hoặc file .txt đi kèm.": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
   ]
  },
  "Ngưỡng màu của LoongMate: từ 80%% xanh, từ 60%% vàng, dưới đó đỏ.": {
@@ -13171,6 +13548,14 @@
   ],
   "files": [
    "lm_library.c"
+  ]
+ },
+ "Nhập mật khẩu bằng bàn phím trên màn hình (chữ không dấu).": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
   ]
  },
  "Nhập địa chỉ trang web": {
@@ -13748,7 +14133,8 @@
   ],
   "files": [
    "lm_misc.c",
-   "lm_ui.c"
+   "lm_ui.c",
+   "lm_web.c"
   ]
  },
  "QUAY VỀ": {
@@ -13775,6 +14161,14 @@
   ],
   "files": [
    "lm_library.c"
+  ]
+ },
+ "Quay lại trang trước của danh sách này (L1 ở bất kỳ đâu trên trang).": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_web.c"
   ]
  },
  "Quay lại và chọn hệ máy.": {
@@ -14196,6 +14590,14 @@
   ],
   "files": [
    "cli_impl.py"
+  ]
+ },
+ "Sai mật khẩu — chọn mật khẩu khác hoặc gõ lại.": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
   ]
  },
  "Sao lưu": {
@@ -14965,6 +15367,14 @@
    "lm_lib.c"
   ]
  },
+ "THỬ": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
+  ]
+ },
  "THỬ PHÍM": {
   "kind": [
    "c"
@@ -15020,6 +15430,14 @@
   ],
   "files": [
    "lm_library.c"
+  ]
+ },
+ "TRƯỚC": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_web.c"
   ]
  },
  "TRỐNG": {
@@ -16539,6 +16957,14 @@
    "lm_web.c"
   ]
  },
+ "TẢI VỀ": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_web.c"
+  ]
+ },
  "Tải & cài": {
   "kind": [
    "c"
@@ -17268,6 +17694,14 @@
    "lm_import.c"
   ]
  },
+ "XEM LƯỚI": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_web.c"
+  ]
+ },
  "XEM LỖI": {
   "kind": [
    "c"
@@ -17837,6 +18271,14 @@
    "lm_lib.c"
   ]
  },
+ "Y: sắp xếp · X: chọn/bỏ chọn · A ở game: tải & cài TẤT CẢ game đã chọn.": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_lib.c"
+  ]
+ },
  "Y: đổi sắp xếp. A ở mục Lọc: đổi lọc. X: chọn nhiều file. A ở game: tải & cài riêng game đó.": {
   "kind": [
    "c"
@@ -17846,6 +18288,22 @@
   ]
  },
  "Y: đổi sắp xếp. A ở mục Lọc: đổi lọc. X: chọn nhiều game để xoá một lần. A ở game: xoá riêng game đó.": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_roms.c"
+  ]
+ },
+ "Y: đổi sắp xếp. X: chọn/bỏ chọn. A ở game: tải & cài TẤT CẢ game đã chọn (kể cả game đó).": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_lib.c"
+  ]
+ },
+ "Y: đổi sắp xếp. X: chọn/bỏ chọn. A ở game: xoá TẤT CẢ game đã chọn (kể cả game đó).": {
   "kind": [
    "c"
   ],
@@ -18197,12 +18655,60 @@
    "patcher.py"
   ]
  },
+ "archive có mật khẩu": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
+  ]
+ },
+ "archive có mật khẩu (mã hoá cả tên file)": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
+  ]
+ },
+ "archive có mật khẩu; đã thử {} mật khẩu gợi ý nhưng không đúng": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
+  ]
+ },
+ "archive không có file nào": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
+  ]
+ },
  "archive lồng nhau '{}' (MVP không giải nén lồng)": {
   "kind": [
    "py"
   ],
   "files": [
    "importer.py"
+  ]
+ },
+ "archive tạo file đặc biệt: {}": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
+  ]
+ },
+ "archive tạo symlink: {}": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
   ]
  },
  "bundle không hợp lệ: {}": {
@@ -18229,12 +18735,28 @@
    "libsource.py"
   ]
  },
+ "bàn phím": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
+  ]
+ },
  "bạn chọn giữ bản ở thẻ {}": {
   "kind": [
    "py"
   ],
   "files": [
    "dedupe.py"
+  ]
+ },
+ "bạn nhập": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
   ]
  },
  "bản cài tay": {
@@ -18406,6 +18928,14 @@
   ],
   "files": [
    "importer.py"
+  ]
+ },
+ "chú thích archive": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
   ]
  },
  "chưa": {
@@ -18802,6 +19332,14 @@
    "lm_misc.c"
   ]
  },
+ "có mật khẩu": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
+  ]
+ },
  "có save": {
   "kind": [
    "c"
@@ -19097,6 +19635,22 @@
    "libsource.py"
   ]
  },
+ "file giải ra quá lớn: {}": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
+  ]
+ },
+ "file giải ra vượt giới hạn dung lượng": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
+  ]
+ },
  "file lớn hơn %d MB, bỏ qua": {
   "kind": [
    "py"
@@ -19142,6 +19696,7 @@
    "py"
   ],
   "files": [
+   "archive.py",
    "importer.py"
   ]
  },
@@ -19225,6 +19780,22 @@
   ],
   "files": [
    "lm_library.c"
+  ]
+ },
+ "giải nén": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
+  ]
+ },
+ "giải ra quá nhiều file ({})": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
   ]
  },
  "giống hiện tại": {
@@ -19595,6 +20166,14 @@
    "lm_library.c"
   ]
  },
+ "không chuyển được vào Import/ ({})": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "libsource.py"
+  ]
+ },
  "không chép": {
   "kind": [
    "c"
@@ -19734,6 +20313,14 @@
   ],
   "files": [
    "web.py"
+  ]
+ },
+ "không giải nén: ": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
   ]
  },
  "không hỏi xác nhận (apply/rollback)": {
@@ -19997,6 +20584,14 @@
    "pocketlock.py"
   ]
  },
+ "không thấy {}": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
+  ]
+ },
  "không tìm thấy Python (LOONGMATE_PYTHON hoặc /userdata/loongmate-runtime)": {
   "kind": [
    "c"
@@ -20011,6 +20606,14 @@
   ],
   "files": [
    "importer.py"
+  ]
+ },
+ "không tìm được tên trống cho {}": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
   ]
  },
  "không tồn tại": {
@@ -20070,6 +20673,14 @@
   ],
   "files": [
    "autoresume.py"
+  ]
+ },
+ "không đọc được tar: {}": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
   ]
  },
  "không đọc được thư mục '{}': {}": {
@@ -20165,6 +20776,7 @@
    "py"
   ],
   "files": [
+   "archive.py",
    "importer.py"
   ]
  },
@@ -20200,6 +20812,14 @@
    "lm_home.c"
   ]
  },
+ "lỗi khi giải nén: {}": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
+  ]
+ },
  "lỗi khi kiểm tra nguồn: {}: {}": {
   "kind": [
    "py"
@@ -20210,9 +20830,11 @@
  },
  "lỗi không rõ": {
   "kind": [
-   "c"
+   "c",
+   "py"
   ],
   "files": [
+   "archive.py",
    "lm_misc.c"
   ]
  },
@@ -20222,6 +20844,14 @@
   ],
   "files": [
    "lm_library.c"
+  ]
+ },
+ "lỗi đọc/ghi: {}": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
   ]
  },
  "lựa chọn '{}' không thuộc ứng viên {}": {
@@ -20408,6 +21038,14 @@
    "libsource.py"
   ]
  },
+ "mã {}": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
+  ]
+ },
  "mạng không tới được": {
   "kind": [
    "py"
@@ -20438,6 +21076,14 @@
   ],
   "files": [
    "lm_leafcfg.c"
+  ]
+ },
+ "mục không phải file thường: {}": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
   ]
  },
  "nguồn đã đổi hoặc không còn kể từ lúc lập kế hoạch — lập lại kế hoạch": {
@@ -20648,6 +21294,14 @@
    "importer.py"
   ]
  },
+ "quá nhiều mục ({} > {})": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
+  ]
+ },
  "remove_paks: có tên lặp": {
   "kind": [
    "py"
@@ -20702,6 +21356,14 @@
   ],
   "files": [
    "lm_library.c"
+  ]
+ },
+ "sai mật khẩu": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
   ]
  },
  "sau cập nhật Leaf {} -> {}": {
@@ -20840,6 +21502,14 @@
    "importer.py"
   ]
  },
+ "thiếu 7-Zip (bin/7zzs) trong LoongMate.pak — cài lại bản phát hành": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
+  ]
+ },
  "thiếu last_pull_ts dạng số": {
   "kind": [
    "py"
@@ -20912,6 +21582,14 @@
    "importer.py"
   ]
  },
+ "thẻ còn {} MB, cần ~{} MB để giải nén": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
+  ]
+ },
  "thẻ không gắn/không truy cập được": {
   "kind": [
    "py"
@@ -20936,7 +21614,39 @@
    "cli_impl.py"
   ]
  },
+ "tiếp": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "web.py"
+  ]
+ },
+ "tiếp theo": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "web.py"
+  ]
+ },
  "trang không có ảnh khớp tên game — bỏ qua (dùng Scrape Artwork của Leaf nếu cần)": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "web.py"
+  ]
+ },
+ "trang tiếp": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "web.py"
+  ]
+ },
+ "trang trước": {
   "kind": [
    "py"
   ],
@@ -20950,6 +21660,14 @@
   ],
   "files": [
    "lm_import.c"
+  ]
+ },
+ "trước": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "web.py"
   ]
  },
  "trước khi khôi phục {}": {
@@ -20992,6 +21710,14 @@
    "importer.py"
   ]
  },
+ "tên file": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
+  ]
+ },
  "tên giống BIOS '{}' nhưng md5 {} không khớp bản hợp lệ trong bios_hashes.json — không nhập (không coi là game)": {
   "kind": [
    "py"
@@ -21021,6 +21747,7 @@
    "py"
   ],
   "files": [
+   "archive.py",
    "importer.py"
   ]
  },
@@ -21078,6 +21805,7 @@
    "py"
   ],
   "files": [
+   "archive.py",
    "importer.py"
   ]
  },
@@ -21118,7 +21846,16 @@
    "py"
   ],
   "files": [
+   "archive.py",
    "importer.py"
+  ]
+ },
+ "tổng giải ra {} MB vượt giới hạn": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
   ]
  },
  "tự động": {
@@ -21135,6 +21872,14 @@
   ],
   "files": [
    "lm_home.c"
+  ]
+ },
+ "vượt giới hạn tổng dung lượng khi giải nén": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
   ]
  },
  "vừa": {
@@ -21223,14 +21968,6 @@
   ],
   "files": [
    "batchfix.py"
-  ]
- },
- "{} chưa hỗ trợ trên máy: giải nén trên PC": {
-  "kind": [
-   "py"
-  ],
-  "files": [
-   "libsource.py"
   ]
  },
  "{} có md5 {} nhưng mong đợi {}. File có thể hỏng hoặc là bản khác nên game có thể không chạy hoặc lỗi âm thanh/đồ hoạ. {}": {
@@ -21797,6 +22534,14 @@
    "lm_lib.c"
   ]
  },
+ "Đang giải nén": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
+  ]
+ },
  "Đang gỡ Hot Tabs": {
   "kind": [
    "c"
@@ -22139,6 +22884,14 @@
    "lm_library.c"
   ]
  },
+ "Đang thử mật khẩu và giải nén": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
+  ]
+ },
  "Đang tìm ROM gốc khớp CRC…": {
   "kind": [
    "c"
@@ -22456,6 +23209,22 @@
    "lm_ui.c"
   ]
  },
+ "Đánh dấu mọi game đang hiện theo bộ lọc (bỏ qua file không cài được).": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_lib.c"
+  ]
+ },
+ "Đánh dấu mọi mục nhập được (bỏ qua mục bị chặn; BIOS luôn chọn riêng).": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_import.c"
+  ]
+ },
  "Đây là mốc để so sánh, không do LoongMate đo.": {
   "kind": [
    "c"
@@ -22721,6 +23490,30 @@
    "doctor.py"
   ]
  },
+ "Đã giải nén {} file vào Import/{}/; archive gốc chuyển vào Import/.done/.{}": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
+  ]
+ },
+ "Đã giải nén {} file vào {}/ (không chuyển được archive gốc vào .done: {}).{}": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
+  ]
+ },
+ "Đã giải nén {} file.{}": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
+  ]
+ },
  "Đã gỡ '{}' (token và cache đã xoá). Token trên agent vẫn còn: thu hồi bằng `token revoke` trên máy agent.": {
   "kind": [
    "py"
@@ -22954,6 +23747,14 @@
   ],
   "files": [
    "remote.py"
+  ]
+ },
+ "Đã tải {} ảnh bìa ({} ảnh không dùng được).": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "web.py"
   ]
  },
  "Đã tắt tự động rescan (--no-rescan). ": {
@@ -23580,6 +24381,14 @@
    "lm_lib.c"
   ]
  },
+ "đang tải ảnh…": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_web.c"
+  ]
+ },
  "đuôi '{}' chỉ thuộc hệ {} trong systems.json": {
   "kind": [
    "py"
@@ -23610,6 +24419,14 @@
   ],
   "files": [
    "importer.py"
+  ]
+ },
+ "đã chuyển vào {}/{} — mở Library → Nhập game → GIẢI NÉN": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "libsource.py"
   ]
  },
  "đã cài": {
@@ -23666,6 +24483,14 @@
   ],
   "files": [
    "web.py"
+  ]
+ },
+ "đã dùng trước đây": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
   ]
  },
  "đã huỷ": {
@@ -23745,6 +24570,7 @@
    "py"
   ],
   "files": [
+   "archive.py",
    "update.py"
   ]
  },
@@ -23770,6 +24596,14 @@
   ],
   "files": [
    "importer.py"
+  ]
+ },
+ "định dạng chưa hỗ trợ": {
+  "kind": [
+   "py"
+  ],
+  "files": [
+   "archive.py"
   ]
  },
  "định dạng không nhận diện — bỏ qua": {
@@ -24163,6 +24997,14 @@
   ],
   "files": [
    "importer.py"
+  ]
+ },
+ "‹ Trang trước": {
+  "kind": [
+   "c"
+  ],
+  "files": [
+   "lm_web.c"
   ]
  }
 }

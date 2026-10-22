@@ -736,6 +736,35 @@ class FetchTests(Base):
         self.assertTrue(r["success"], r)
         self.assertEqual(self.roms(), ["Roms/GBA/Homebrew One.gba", "Roms/SNES/Demo Two.sfc"])
 
+    def test_tar_gz_is_unpacked_then_installed(self):
+        import io, tarfile
+        rom = rnd(50000, 9)
+        buf = io.BytesIO()
+        with tarfile.open(fileobj=buf, mode="w:gz") as t:
+            ti = tarfile.TarInfo("Pack/Homebrew Three.gba")
+            ti.size = len(rom)
+            t.addfile(ti, io.BytesIO(rom))
+        self.agent.files["GBA/pack.tar.gz"] = buf.getvalue()
+        r = self.fetch(["GBA/pack.tar.gz"])
+        self.assertTrue(r["success"], r)
+        self.assertEqual(r["installed"], 1)
+        self.assertEqual((self.sd2 / "Roms" / "GBA" / "Homebrew Three.gba").read_bytes(), rom)
+        self.assertFalse((self.sd2 / "Import").exists())
+        self.assertEqual(LS.list_jobs(self.env)["jobs"], [])
+
+    def test_archive_needing_password_is_moved_to_import(self):
+        self.agent.files["GBA/locked.7z"] = rnd(3000, 10)
+        with mock.patch("engine.archive.seven_zip", return_value="/x/7zz"), \
+                mock.patch("engine.archive.unpack", return_value={"success": False, "needs_password": True,
+                                                                  "message": "archive có mật khẩu"}):
+            r = self.fetch(["GBA/locked.7z"])
+        self.assertFalse(r["success"])
+        self.assertEqual(r["failed"], 1)
+        self.assertIn("GIẢI NÉN", r["message"])
+        self.assertEqual((self.sd2 / "Import" / "locked.7z").read_bytes(), self.agent.files["GBA/locked.7z"])
+        self.assertEqual(self.roms(), [])
+        self.assertEqual(LS.list_jobs(self.env)["jobs"], [])
+
     def test_default_card_is_secondary_and_primary_untouched(self):
         self.fetch(["GBA/Homebrew One.gba"])
         self.assertFalse((self.sd1 / "Roms").exists())
@@ -907,9 +936,11 @@ class FetchTests(Base):
         self.agent.files["GBA/empty.gba"] = b""
         for p in ("tools/run.sh", "GBA/pack.7z", "GBA/empty.gba"):
             self.agent.nohash.discard(p)
-        pl = LS.prepare(self.env, "pi", "roms", ["tools/run.sh", "GBA/pack.7z", "GBA/empty.gba"])
+        with mock.patch("engine.archive.seven_zip", return_value=None):    # máy không có 7-Zip: .7z bị từ chối trước khi tải
+            pl = LS.prepare(self.env, "pi", "roms", ["tools/run.sh", "GBA/pack.7z", "GBA/empty.gba"])
         self.assertFalse(pl["ok"])
         self.assertEqual(len(pl["problems"]), 3, pl["problems"])
+        self.assertIn("7-Zip", " ".join(p["reason"] for p in pl["problems"]))
         self.assertEqual(self.roms(), [])
         self.assertEqual(LS.list_jobs(self.env)["jobs"], [])
 

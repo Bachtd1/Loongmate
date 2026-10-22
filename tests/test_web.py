@@ -710,10 +710,14 @@ class TestPrepare(Base):
     def test_executable_unsupported_archive_empty_and_unknown_size(self):
         self.site.override["/empty.gba"] = (416, {"Content-Range": "bytes */0"}, b"", True)
         self.site.override["/nosize.gba"] = (200, {"Content-Type": "application/octet-stream"}, b"abc", False)
-        pl = WB.prepare(self.env, [self.url(p) for p in ("/tool.exe", "/pack.7z", "/empty.gba", "/nosize.gba")], session=self.sess())
+        with mock.patch("engine.archive.seven_zip", return_value=None):    # máy không có 7-Zip
+            pl = WB.prepare(self.env, [self.url(p) for p in ("/tool.exe", "/pack.7z", "/empty.gba", "/nosize.gba")], session=self.sess())
         probs = {f["name"]: f["problem"] for f in pl["files"]}
         self.assertIn("bị chặn", probs["tool.exe"])
-        self.assertIn(".7z chưa hỗ trợ giải nén", probs["pack.7z"])
+        self.assertIn("thiếu 7-Zip", probs["pack.7z"])
+        with mock.patch("engine.archive.seven_zip", return_value="/x/7zz"):  # có 7-Zip: .7z tải được (tải xong tự giải nén)
+            pl2 = WB.prepare(self.env, [self.url("/pack.7z")], session=self.sess())
+        self.assertIsNone(pl2["files"][0]["problem"])
         self.assertEqual(probs["empty.gba"], "file rỗng")
         self.assertIn("không báo kích thước", probs["nosize.gba"])
         self.assertEqual(len(pl["files"]), 4)                              # file có vấn đề vẫn được liệt kê
@@ -1198,6 +1202,32 @@ class TestCover(Base):
         self.fetch()
         self.assertFalse((self.sd1 / "Images/GBA").exists() and any((self.sd1 / "Images/GBA").iterdir()))
 
+    def test_cover_carried_from_game_page_is_used_when_download_page_has_none(self):
+        self.site.files["/img/game-cover.jpg"] = (jpg(), {})
+        self.site.html("/download/hero", '<a href="/dl/hero-quest.gba">Download Now</a>')          # trang tải cuối: không ảnh
+        r = WB.fetch(self.env, [self.url("/dl/hero-quest.gba")], card_pref="primary", session=self.sess(),
+                     from_page=self.url("/download/hero"), cover_url=self.url("/img/game-cover.jpg").replace("https://", "http://"))
+        self.assertTrue(r["success"], r)
+        self.assertEqual((self.sd1 / "Images/GBA/hero-quest.jpg").read_bytes(), jpg())
+        self.assertTrue(all(q["path"] == "/img/game-cover.jpg" for q in self.site.requests("/img/")))   # http đã nâng lên https
+
+    def test_redownload_of_present_game_without_art_gets_cover(self):
+        self.site.html("/game/hero", '<a href="/dl/hero-quest.gba">x</a>')                       # lần đầu: không có ảnh
+        self.assertTrue(self.fetch()["success"])
+        self.assertFalse((self.sd1 / "Images").exists())
+        self.site.files["/img/game-cover.jpg"] = (jpg(), {})
+        r = WB.fetch(self.env, [self.url("/dl/hero-quest.gba")], card_pref="primary", session=self.sess(),
+                     from_page=self.url("/game/hero"), cover_url=self.url("/img/game-cover.jpg"))
+        self.assertEqual(r["results"][0]["status"], "already_present")
+        self.assertEqual((self.sd1 / "Images/GBA/hero-quest.jpg").read_bytes(), jpg())
+
+    def test_bad_carried_cover_falls_back_to_page_match(self):
+        self.site.files["/img/broken.jpg"] = (b"<html>not image</html>", {})
+        r = WB.fetch(self.env, [self.url("/dl/hero-quest.gba")], card_pref="primary", session=self.sess(),
+                     from_page=self.url("/game/hero"), cover_url=self.url("/img/broken.jpg"))
+        self.assertTrue(r["success"], r)
+        self.assertEqual((self.sd1 / "Images/GBA/hero-quest.png").read_bytes(), png())
+
     def test_existing_art_is_kept(self):
         self.w = self.sd1 / "Images/GBA/hero-quest.jpg"
         self.w.parent.mkdir(parents=True)
@@ -1214,3 +1244,136 @@ class TestCover(Base):
         self.assertEqual(WB._image_kind(png(10, 20)), (".png", 10, 20))
         self.assertEqual(WB._image_kind(jpg(320, 240)), (".jpg", 320, 240))
         self.assertIsNone(WB._image_kind(b"<html>"))
+
+
+# ======================================================================================
+# ảnh bìa cho giao diện lưới
+# ======================================================================================
+def fake_png(w=120, h=90):
+    return b"\x89PNG\r\n\x1a\n" + b"\x00\x00\x00\rIHDR" + w.to_bytes(4, "big") + h.to_bytes(4, "big") + b"\x08\x06\x00\x00\x00" + b"\x00" * 64
+
+
+class TestImgSrc(unittest.TestCase):
+    def test_prefers_lazy_and_mid_srcset_skips_webp_svg_icons(self):
+        self.assertEqual(WB._img_src({"src": "data:image/gif;base64,x", "data-src": "/real.jpg"}), "/real.jpg")
+        self.assertEqual(WB._img_src({"data-lazy_src": "/itch.png"}), "/itch.png")
+        self.assertEqual(WB._img_src({"srcset": "/a-200.jpg 200w, /a-400.jpg 400w, /a-1200.jpg 1200w"}), "/a-400.jpg")
+        self.assertEqual(WB._img_src({"srcset": "/b.webp 400w", "src": "/b.jpg"}), "/b.jpg")
+        self.assertEqual(WB._img_src({"src": "/only.webp"}), "/only.webp")
+        self.assertEqual(WB._img_src({"src": "/logo.svg"}), "")
+        self.assertEqual(WB._img_src({"src": "/icon.png", "width": "16"}), "")
+
+    def test_parse_page_attaches_images_and_og_image(self):
+        p = WB.parse_page('<meta property="og:image" content="/cover.jpg"><a href="/g/1"><img data-src="/c/1.jpg" alt="One"></a>'
+                          '<a href="/g/1">Game One</a><a href="/g/2">Two</a><a href="http://x.test/i"><img src="/c/x.jpg"></a>',
+                          "https://ex.com/list")
+        self.assertEqual(p["image"], "https://ex.com/cover.jpg")
+        imgs = {l["url"]: l["img"] for l in p["links"]}
+        self.assertEqual(imgs["https://ex.com/g/1"], "https://ex.com/c/1.jpg")
+        self.assertEqual(imgs["https://ex.com/g/2"], "")
+
+
+class TestThumbs(Base):
+    def page(self):
+        self.site.files["/c/1.png"] = (fake_png(), {})
+        self.site.files["/c/2.png"] = (b"<html>not an image</html>", {})
+        self.site.html("/list", '<meta property="og:image" content="/c/1.png">'
+                                '<a href="/g/1"><img src="/c/1.png"></a><a href="/g/2"><img src="/c/2.png"></a><a href="/g/3">x</a>')
+
+    def test_open_queues_without_downloading_then_thumbs_fetches_and_marks_bad(self):
+        self.page()
+        r = WB.open_url(self.ud, self.url("/list"), self.sess())
+        self.assertEqual(r["thumbs_queued"], 2)                       # og:image trùng ảnh của link 1: một lần
+        self.assertEqual(self.site.requests("/c/"), [], "mở trang không được tải ảnh")
+        t1 = {l["url"].rsplit("/", 1)[-1]: l["thumb"] for l in r["links"]}
+        self.assertEqual(r["image_thumb"], t1["1"])
+        self.assertEqual(t1["3"], "")
+        out = WB.fetch_thumbs(self.ud, self.sess())
+        self.assertEqual((out["fetched"], out["failed"]), (1, 1))
+        self.assertEqual(Path(t1["1"]).read_bytes(), fake_png())
+        self.assertFalse(Path(t1["2"]).exists())
+        self.assertTrue(Path(t1["2"]).with_suffix(".bad").exists())
+        r2 = WB.open_url(self.ud, self.url("/list"), self.sess())     # lần sau: dùng cache, ảnh hỏng không hiện ô trống
+        self.assertEqual(r2["thumbs_queued"], 0)
+        t2 = {l["url"].rsplit("/", 1)[-1]: l["thumb"] for l in r2["links"]}
+        self.assertEqual((t2["1"], t2["2"]), (t1["1"], ""))
+
+    def test_queue_cannot_write_outside_thumb_dir(self):
+        d = self.ud / WB.THUMB_DIR
+        d.mkdir(parents=True)
+        evil = self.tmp / "evil.img"
+        (d / "queue-evil.json").write_text(json.dumps({"items": [{"url": self.url("/c/1.png"), "path": str(evil)}]}), encoding="utf-8")
+        self.site.files["/c/1.png"] = (fake_png(), {})
+        out = WB.fetch_thumbs(self.ud, self.sess())
+        self.assertEqual(out["fetched"], 0)
+        self.assertFalse(evil.exists())
+        self.assertEqual(self.site.requests("/c/"), [])
+
+    def test_no_queue_is_a_quiet_noop(self):
+        self.assertEqual(WB.fetch_thumbs(self.ud, self.sess())["fetched"], 0)
+
+
+class TestPager(unittest.TestCase):
+    def pg(self, html, url):
+        return WB.parse_page(html, url)["pager"]
+
+    def test_rel_link_and_rel_anchor(self):
+        self.assertEqual(self.pg('<link rel="next" href="/l?page=3"><link rel="prev" href="/l?page=1">', "https://ex.com/l?page=2"),
+                         {"next": "https://ex.com/l?page=3", "prev": "https://ex.com/l?page=1"})
+        self.assertEqual(self.pg('<a rel="next" href="/l/2">x</a>', "https://ex.com/l"), {"next": "https://ex.com/l/2"})
+
+    def test_class_and_text(self):
+        self.assertEqual(self.pg('<a class="next page-numbers" href="/r/page/5/">→</a><a class="prev page-numbers" href="/r/page/3/">←</a>',
+                                 "https://ex.com/r/page/4/"), {"next": "https://ex.com/r/page/5/", "prev": "https://ex.com/r/page/3/"})
+        self.assertEqual(self.pg('<a href="/s?q=a&page=2">Next »</a>', "https://ex.com/s?q=a"), {"next": "https://ex.com/s?q=a&page=2"})
+        self.assertEqual(self.pg('<a href="/s?q=a&page=1">‹</a>', "https://ex.com/s?q=a&page=2"), {"prev": "https://ex.com/s?q=a&page=1"})
+
+    def test_numbered_pagination_only(self):
+        self.assertEqual(self.pg('<a href="/gba/">1</a><a href="/gba/page/2/">2</a><a href="/gba/page/3/">3</a>', "https://ex.com/gba/"),
+                         {"next": "https://ex.com/gba/page/2/"})
+        self.assertEqual(self.pg('<a href="/gba/">1</a><a href="/gba/page/3/">3</a>', "https://ex.com/gba/page/2/"),
+                         {"prev": "https://ex.com/gba/", "next": "https://ex.com/gba/page/3/"})
+        self.assertEqual(self.pg('<a href="/other/page/2/">2</a>', "https://ex.com/gba/"), {})
+
+    def test_no_pager_and_no_http(self):
+        self.assertEqual(self.pg('<a href="/home">Home</a><a href="http://ex.com/l?page=2">Next</a>', "https://ex.com/l"), {})
+
+
+class TestThumbQueues(Base):
+    def test_interrupted_page_queue_survives_and_first_goes_first(self):
+        self.site.files["/c/a.png"] = (fake_png(), {})
+        self.site.files["/c/b.png"] = (fake_png(64, 64), {})
+        self.site.html("/p1", '<a href="/g/a"><img src="/c/a.png"></a>')
+        self.site.html("/p2", '<a href="/g/b"><img src="/c/b.png"></a><a rel="prev" href="/p1">‹</a>')
+        r1 = WB.open_url(self.ud, self.url("/p1"), self.sess())
+        r2 = WB.open_url(self.ud, self.url("/p2"), self.sess())
+        self.assertEqual(r2["prev"], self.url("/p1"))
+        out = WB.fetch_thumbs(self.ud, self.sess(), first=self.url("/p1"))
+        self.assertEqual(out["fetched"], 2)
+        self.assertEqual(self.site.requests("/c/")[0]["path"], "/c/a.png")       # trang được xin trước tải trước
+        self.assertTrue(Path(r1["links"][0]["thumb"]).exists())
+        self.assertEqual(list((self.ud / WB.THUMB_DIR).glob("queue*.json")), [])  # làm xong thì xoá hàng đợi
+
+    def test_budget_exhausted_keeps_queue(self):
+        self.site.files["/c/a.png"] = (fake_png(), {})
+        self.site.html("/p1", '<a href="/g/a"><img src="/c/a.png"></a>')
+        WB.open_url(self.ud, self.url("/p1"), self.sess())
+        out = WB.fetch_thumbs(self.ud, self.sess(), budget_s=-1)
+        self.assertEqual(out["fetched"], 0)
+        self.assertEqual(len(list((self.ud / WB.THUMB_DIR).glob("queue*.json"))), 1)
+        self.assertEqual(WB.fetch_thumbs(self.ud, self.sess())["fetched"], 1)
+
+
+class TestPageImage(unittest.TestCase):
+    def test_http_og_image_is_upgraded_to_https(self):
+        self.assertEqual(WB.parse_page('<meta property="og:image" content="http://ex.com/c.jpg">', "https://ex.com/")["image"],
+                         "https://ex.com/c.jpg")
+
+    def test_first_content_image_when_no_og_image(self):
+        html = ('<img src="/logo.png"><nav><img src="/menu.jpg"></nav><img style="height: 30px" src="/small.jpg">'
+                '<img class="rf-avatar" src="/u.jpg"><a href="/x"><img src="/linked.jpg"></a><img src="/cover.jpg" alt="Game">')
+        self.assertEqual(WB.parse_page(html, "https://ex.com/")["image"], "https://ex.com/cover.jpg")
+
+    def test_og_image_wins_over_content_image(self):
+        self.assertEqual(WB.parse_page('<meta property="og:image" content="/og.jpg"><img src="/c.jpg">', "https://ex.com/")["image"],
+                         "https://ex.com/og.jpg")

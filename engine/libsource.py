@@ -946,6 +946,11 @@ def _catalog():
     return importer, importer.load_catalog()
 
 
+def _archive():
+    from engine import archive
+    return archive
+
+
 def classify(entry: Dict[str, Any], importer, catalog) -> Optional[Dict[str, Any]]:
     """None = không hiện. Hiện khi đuôi thuộc systems.json hoặc có system_hint; luôn ẩn .txt/.md/.license (và file meta của importer)."""
     name = entry["path"].rsplit("/", 1)[-1]
@@ -954,7 +959,7 @@ def classify(entry: Dict[str, Any], importer, catalog) -> Optional[Dict[str, Any
         return None
     hint = entry.get("system_hint")
     known = catalog["ext"]
-    all_exts = set(known) | {".zip", ".7z"}
+    all_exts = set(known) | importer.ARCHIVE_EXTS
     if not hint and ext not in all_exts:
         return None
     if hint:
@@ -965,8 +970,8 @@ def classify(entry: Dict[str, Any], importer, catalog) -> Optional[Dict[str, Any
     problem = None
     if ext in importer.EXEC_EXTS:
         problem = "file thực thi/script — importer chặn"
-    elif ext in importer.UNSUPPORTED_ARCHIVE_EXTS:
-        problem = f"{ext} chưa hỗ trợ trên máy: giải nén trên PC"
+    elif ext in importer.UNSUPPORTED_ARCHIVE_EXTS and _archive().download_problem(name):
+        problem = _archive().download_problem(name)
     elif entry["size"] == 0:
         problem = "file rỗng"
     elif entry["size"] > importer.DEFAULT_LIMITS.max_file_bytes:
@@ -1227,8 +1232,8 @@ def prepare(env: Env, node_id: str, root: str, paths: List[str], card_pref: str 
             reason = None
             if ext in imp.EXEC_EXTS:
                 reason = "file thực thi/script — importer chặn"
-            elif ext in imp.UNSUPPORTED_ARCHIVE_EXTS:
-                reason = f"{ext} chưa hỗ trợ trên máy: giải nén trên PC"
+            elif ext in imp.UNSUPPORTED_ARCHIVE_EXTS and _archive().download_problem(f["name"]):
+                reason = _archive().download_problem(f["name"])
             elif pr["size"] == 0:
                 reason = "file rỗng"
             elif pr["size"] > imp.DEFAULT_LIMITS.max_file_bytes:
@@ -1555,11 +1560,38 @@ def _install(env: Env, job_dir: Path, job: Dict[str, Any], conflict: str) -> Dic
                            "skipped": 0, "changed": False}
     files_dir = job_dir / "files"
     paths: List[Path] = []
+    # Archive .7z/.rar/.tar.*... (engine/archive.py): giải vào job (cùng thẻ, cùng kiểm tra như Nhập game, tự thử mật khẩu gợi ý) rồi giao
+    # thư mục giải ra cho importer. Không giải được (thiếu mật khẩu...) -> chuyển archive vào <thẻ>/Import/ để Nhập game > GIẢI NÉN xử lý.
+    from engine import archive
+    unpacked: Dict[str, str] = {}                         # thư mục giải ra -> hệ máy của archive (gợi ý chọn hệ)
+    held: List[Dict[str, Any]] = []
+    for f in job["files"]:
+        p = files_dir / f["local"]
+        if not p.is_file() or not archive.can_unpack_name(p.name):
+            continue
+        r = archive.unpack(p, auto_password=True, remember_file=Path(env.app_data) / archive.REMEMBERED,
+                           out_dir=job_dir / "unpacked")
+        if r.get("success"):
+            unpacked[r["dest"]] = f["system"]
+            continue
+        try:
+            imp_dir = imp.import_dir(env.cards[job["card"]])
+            imp_dir.mkdir(exist_ok=True)
+            target = archive._unique(imp_dir / p.name)
+            os.replace(p, target)                         # job và Import/ cùng thẻ
+            where = f"đã chuyển vào {imp_dir.name}/{target.name} — mở Library → Nhập game → GIẢI NÉN"
+            if r.get("needs_password"):
+                where += " để chọn hoặc gõ mật khẩu"
+        except OSError as e:
+            where = f"không chuyển được vào Import/ ({e})"
+        held.append({"status": "failed", "name": f["name"], "message": f"Chưa giải nén được: {r.get('message')}; {where}."})
     # Nhiều file CÙNG thư mục (không phải gốc files/) mà có playlist (.cue/.m3u/.gdi) và không có .zip -> giao CẢ THƯ MỤC cho importer
     # (một game nhiều file, giữ layout tương đối). Còn lại giao từng file một.
     groups: Dict[Path, List[Path]] = {}
     for f in job["files"]:
         p = files_dir / f["local"]
+        if archive.can_unpack_name(p.name):               # đã giải ở trên (hoặc đã chuyển vào Import/)
+            continue
         groups.setdefault(p.parent, []).append(p)
     for parent, ps in groups.items():
         if (parent != files_dir and len(ps) > 1 and any(imp._ext(p.name) in imp.PLAYLIST_EXTS for p in ps)
@@ -1567,11 +1599,15 @@ def _install(env: Env, job_dir: Path, job: Dict[str, Any], conflict: str) -> Dic
             paths.append(parent)
         else:
             paths += ps
+    paths += [Path(d) for d in unpacked]
 
     def hints_of(origins) -> set:                         # hệ máy (system_hint/đuôi) của các file tải thuộc một unit
         hs = set()
         for o in origins:
             o = str(o)
+            for d, sysname in unpacked.items():
+                if o == d or o.startswith(d.rstrip("/\\") + os.sep):
+                    hs.add(sysname)
             for f in job["files"]:
                 ap = str(files_dir / f["local"])
                 if ap == o or ap.startswith(o.rstrip("/\\") + os.sep):
@@ -1586,6 +1622,9 @@ def _install(env: Env, job_dir: Path, job: Dict[str, Any], conflict: str) -> Dic
     except Exception:
         hc = None
     try:
+        if not paths:                                    # chỉ có archive và đều chưa giải được: đã chuyển vào Import/
+            out.update(results=held, failed=len(held), message=" ".join(x["message"] for x in held))
+            return out
         plan = imp.build_plan([str(p) for p in paths], cards, env.app_data, card_pref=card_id, hashcache=hc)
         if not plan["ok"]:
             out.update(message=f"Chưa cài được: {plan['message']} Các file đã tải được giữ lại — giải phóng chỗ rồi chạy resume.",
@@ -1613,7 +1652,11 @@ def _install(env: Env, job_dir: Path, job: Dict[str, Any], conflict: str) -> Dic
             if x.get("status") == "skipped" and "BIOS" in (x.get("message") or ""):
                 x["message"] += " (LoongMate không tự xác nhận BIOS từ thư viện riêng: dùng Nhập game)"
         out.update({k: r.get(k) for k in ("results", "installed", "already", "blocked", "failed", "skipped", "changed", "card", "job_id", "message")})
-        out["success"] = bool(r.get("success"))
+        out["success"] = bool(r.get("success")) and not held
+        if held:
+            out["results"] = list(out.get("results") or []) + held
+            out["failed"] = (out.get("failed") or 0) + len(held)
+            out["message"] = ((out.get("message") or "") + " " + " ".join(x["message"] for x in held)).strip()
         if not r.get("installed") and not r.get("already") and "không đủ chỗ" in (r.get("message") or ""):
             out["retry_install"] = True               # thẻ đích hết chỗ lúc cài: giữ file đã tải để thử lại khi đã giải phóng chỗ
         return out

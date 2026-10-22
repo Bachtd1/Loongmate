@@ -34,6 +34,7 @@ struct ui_item {
     char arg[UI_ARGLEN];               /* tham số cho hành động (id snapshot, đường dẫn, ...) */
     char arg2[96];
     int iarg;
+    char img[256];                     /* ảnh (file trong cache) vẽ đầu khung giải thích khi đã có; rỗng = không */
 };
 
 struct ui_screen {
@@ -51,6 +52,7 @@ struct ui_screen {
     cat_footer_item footer[6]; int nfooter;
     void *priv;
     void (*on_free)(ui_screen *s);
+    int gsel, gtop;                    /* chế độ lưới (Tải từ web): ô đang chọn, hàng đầu đang hiện */
 };
 
 ui_screen *ui_screen_new(const char *title, void (*build)(ui_screen *));
@@ -112,6 +114,14 @@ void ui_osk(const char *title, const char *initial, int maxlen, void (*cb)(const
 extern int g_debounce_ms;       /* chống bấm đúp ngay sau khi hộp thoại mở; harness đặt 0 */
 void ui_quit(void);
 int ui_run(lm_harness *h, ui_screen *home);                      /* trả mã thoát */
+
+/* Hàm gọi mỗi vòng lặp khi rảnh (vd. theo dõi job tải ảnh nền); trả 1 nếu còn việc -> giao diện tiếp tục vẽ khung mới. */
+void ui_set_idle_pump(int (*fn)(void));
+
+/* ---- ảnh thu nhỏ (lm_thumb.c): file PNG/JPEG/GIF trong cache của engine; NULL/0 nếu chưa có (thử lại sau, không chặn) ---- */
+SDL_Texture *ui_thumb(const char *path, int *w, int *h);
+int ui_thumb_draw(const char *path, SDL_Rect box);               /* vừa khung, giữ tỉ lệ, căn giữa; 1 nếu đã vẽ */
+int ui_thumb_ready(const char *path);
 
 /* vẽ nền tảng cho màn tuỳ biến */
 int ui_wrap(TTF_Font *f, const char *text, int maxw, lines_t *out);   /* xuống dòng theo từ; trả số dòng thêm */

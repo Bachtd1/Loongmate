@@ -300,12 +300,24 @@ class TestScanSources(Base):
         reasons = {s["reason"] for s in r["skipped"]}
         self.assertTrue(any("save" in x for x in reasons))
 
-    def test_7z_and_rar_unsupported(self):
+    def test_7z_and_rar_need_unpack_when_7zip_bundled(self):
+        """.7z/.rar: có 7-Zip đi kèm pak -> "cần giải nén" (engine/archive.py, theo yêu cầu người dùng); quét vẫn chỉ đọc."""
+        from engine import archive
         self.w(self.imp1 / "a.7z", b"7z\xbc\xaf\x27\x1c" + b"0" * 20)
         self.w(self.imp1 / "b.rar", b"Rar!" + b"0" * 20)
-        r = self.scan()
+        with mock.patch.object(archive, "seven_zip", return_value="/fake/7zzs"):
+            r = self.scan()
+        self.assertEqual({u["status"] for u in r["units"]}, {"needs_unpack"})
+        self.assertTrue((self.imp1 / "a.7z").exists() and (self.imp1 / "b.rar").exists())
+
+    def test_7z_and_rar_unsupported_without_7zip(self):
+        from engine import archive
+        self.w(self.imp1 / "a.7z", b"7z\xbc\xaf\x27\x1c" + b"0" * 20)
+        self.w(self.imp1 / "b.rar", b"Rar!" + b"0" * 20)
+        with mock.patch.object(archive, "seven_zip", return_value=None):
+            r = self.scan()
         self.assertEqual({u["status"] for u in r["units"]}, {"unsupported"})
-        self.assertTrue(all("giải nén trên PC" in u["reasons"][0] for u in r["units"]))
+        self.assertTrue(all("7-Zip" in u["reasons"][0] for u in r["units"]))
 
     def test_zip_multiple_games_each_classified(self):
         mkzip(self.imp1 / "pack.zip", {"a.gba": gba_rom(seed=1), "b.nes": nes_rom(), "c.gb": gb_rom()})

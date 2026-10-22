@@ -369,7 +369,12 @@ static int cmp_entry(const void *pa, const void *pb) {
 
 static void make_plan(const char *pref, int only);
 static void plan_marked(ui_screen *s, ui_item *it) { (void)s; (void)it; make_plan("auto", -1); }
-static void plan_one(ui_screen *s, ui_item *it) { (void)s; make_plan("auto", it->iarg); }
+/* A trên một game: đã có game được chọn (X) thì cài TẤT CẢ game đã chọn, gồm cả game này; chưa chọn gì thì chỉ game này. */
+static void plan_one(ui_screen *s, ui_item *it) {
+    (void)s;
+    if (n_marked(NULL) && it->iarg >= 0 && it->iarg < g_ng) { g_mark[it->iarg] = 1; make_plan("auto", -1); }
+    else make_plan("auto", it->iarg);
+}
 
 static void select_path(ui_screen *s, const char *path) {
     for (int i = 0; i < s->n; i++)
@@ -409,6 +414,20 @@ static void act_clear(ui_screen *s, ui_item *it) {
     select_first_game(s);
 }
 
+static int visible_entry(int i) {
+    int have = jbool_d(entry(i), "present", 0);
+    return !(g_flt == 1 && have) && !(g_flt == 2 && !have);
+}
+/* Chọn hết game đang hiện theo bộ lọc mà cài được (vd Lọc "chưa có trên máy" -> nhập hết game mới). Vẫn qua bước
+ * kế hoạch (kích thước, SHA-256, thẻ đích, dung lượng) và hộp xác nhận như chọn tay. */
+static void act_select_all(ui_screen *s, ui_item *it) {
+    (void)it;
+    for (int i = 0; i < g_ng; i++)
+        if (visible_entry(i) && jbool_d(entry(i), "installable", 0)) g_mark[i] = 1;
+    s->sel = 0;
+    ui_rebuild(s);
+}
+
 static void build_games(ui_screen *s) {
     int *idx = calloc((size_t)(g_ng ? g_ng : 1), sizeof *idx), nidx = 0;
     if (!idx) return;
@@ -431,7 +450,8 @@ static void build_games(ui_screen *s) {
         if (nm > vis) ui_hdr(s, tr("Đã chọn %d file · %s, %d đang bị bộ lọc ẩn."), nm, mbs(mbytes), nm - vis);
         else ui_hdr(s, tr("Đã chọn %d file · %s."), nm, mbs(mbytes));
     } else ui_hdr(s, tr("Đã chọn 0 file."));
-    ui_hdr(s, tr("Y: đổi sắp xếp. A ở mục Lọc: đổi lọc. X: chọn nhiều file. A ở game: tải & cài riêng game đó."));
+    ui_hdr(s, nm ? tr("Y: đổi sắp xếp. X: chọn/bỏ chọn. A ở game: tải & cài TẤT CẢ game đã chọn (kể cả game đó).")
+               : tr("Y: đổi sắp xếp. A ở mục Lọc: đổi lọc. X: chọn nhiều file. A ở game: tải & cài riêng game đó."));
     const char *ylbl = tr("SẮP XẾP");
     ui_item *it;
     if (nm) {
@@ -445,6 +465,23 @@ static void build_games(ui_screen *s) {
         ui_act(it, 0, tr("KIỂM & XEM KẾ HOẠCH"), plan_marked);
         ui_act(it, 1, tr("BỎ CHỌN HẾT"), act_clear);
         ui_act(it, 2, ylbl, act_sort);
+    }
+    {
+        int nfree = 0;
+        double fbytes = 0;
+        for (int k = 0; k < nidx; k++)
+            if (!g_mark[idx[k]] && jbool_d(entry(idx[k]), "installable", 0)) { nfree++; fbytes += jnumd(entry(idx[k]), "size", 0); }
+        if (nfree) {
+            char lab[64];
+            snprintf(lab, sizeof lab, tr("Chọn tất cả %d game đang hiện"), nfree);
+            it = ui_add(s, lab, mbs(fbytes), ST_UNKNOWN);
+            it->iarg = -3;
+            ui_exp(it, tr("Đánh dấu mọi game đang hiện theo bộ lọc (bỏ qua file không cài được)."));
+            ui_exp(it, tr("Mẹo: Lọc \"chưa có trên máy\" rồi chọn tất cả = nhập hết game mới."));
+            ui_exp(it, tr("Chưa tải gì: còn bước xem kế hoạch (dung lượng, thẻ đích) và xác nhận."));
+            ui_act(it, 0, tr("CHỌN TẤT CẢ"), act_select_all);
+            ui_act(it, 2, ylbl, act_sort);
+        }
     }
     {
         char lab[48], tag[24];
@@ -474,10 +511,11 @@ static void build_games(ui_screen *s) {
         ui_exp(it, "SHA-256 server: %s", jstr(e, "sha256") ? jstr(e, "sha256") : tr("chưa băm xong — chưa tải được"));
         ui_exp(it, tr("Trên máy: %s"), have ? tr("ĐÃ CÓ file cùng tên trong Roms/") : tr("chưa có"));
         if (!ok) ui_exp(it, "!! %s", jstrd(e, "problem", tr("không cài được")));
-        ui_exp(it, tr("A — kiểm với server và xem kế hoạch tải & cài game này."));
+        if (nm) ui_exp(it, tr("A — tải & cài tất cả game đã chọn (kể cả game này)."));
+        else ui_exp(it, tr("A — kiểm với server và xem kế hoạch tải & cài game này."));
         ui_exp(it, tr("X — chọn / bỏ chọn để tải nhiều file.  Y — đổi cách sắp xếp."));
         if (ok) {
-            ui_act(it, 0, tr("TẢI & CÀI…"), plan_one);
+            ui_act(it, 0, nm ? tr("CÀI ĐÃ CHỌN…") : tr("TẢI & CÀI…"), plan_one);
             ui_act(it, 1, mk ? tr("BỎ CHỌN") : tr("CHỌN"), act_toggle);
         }
         ui_act(it, 2, ylbl, act_sort);
@@ -811,7 +849,11 @@ static int hb_marked(void) { int n = 0; for (int i = 0; i < g_nhb; i++) if (g_hb
 
 static void hb_make_plan(const char *pref, int only);
 static void hb_plan_marked(ui_screen *s, ui_item *it) { (void)s; (void)it; hb_make_plan("auto", -1); }
-static void hb_plan_one(ui_screen *s, ui_item *it) { (void)s; hb_make_plan("auto", it->iarg); }
+static void hb_plan_one(ui_screen *s, ui_item *it) {      /* như plan_one: có game đã chọn thì cài tất cả đã chọn */
+    (void)s;
+    if (hb_marked() && it->iarg >= 0 && it->iarg < g_nhb) { g_hbmark[it->iarg] = 1; hb_make_plan("auto", -1); }
+    else hb_make_plan("auto", it->iarg);
+}
 static void hb_select(ui_screen *s, const char *slug) {
     for (int i = 0; i < s->n; i++)
         if (!s->items[i]->head && s->items[i]->iarg >= 0 && !strcmp(s->items[i]->arg, slug)) { s->sel = i; s->exp_scroll = 0; return; }
@@ -870,7 +912,8 @@ static void build_hbgames(ui_screen *s) {
         if (nm > vis) ui_hdr(s, tr("Đã chọn %d game, %d đang bị bộ lọc ẩn."), nm, nm - vis);
         else ui_hdr(s, tr("Đã chọn %d game."), nm);
     } else ui_hdr(s, tr("Đã chọn 0 game."));
-    ui_hdr(s, tr("Y: sắp xếp · X: chọn nhiều · A ở mục Lọc: đổi lọc · A ở game: tải & cài."));
+    ui_hdr(s, nm ? tr("Y: sắp xếp · X: chọn/bỏ chọn · A ở game: tải & cài TẤT CẢ game đã chọn.")
+               : tr("Y: sắp xếp · X: chọn nhiều · A ở mục Lọc: đổi lọc · A ở game: tải & cài."));
     const char *ylbl = tr("SẮP XẾP");
     ui_item *it;
     if (nm) {
@@ -916,9 +959,10 @@ static void build_hbgames(ui_screen *s) {
         ui_exp(it, tr("Nguồn: %s"), src);
         ui_exp(it, "File: %s", jstrd(e, "file", "?"));
         ui_exp(it, tr("Trên máy: %s"), have ? tr("ĐÃ CÓ file cùng tên trong Roms/") : tr("chưa có"));
-        ui_exp(it, tr("A — kiểm với máy chủ và xem kế hoạch tải & cài game này."));
+        if (nm) ui_exp(it, tr("A — tải & cài tất cả game đã chọn (kể cả game này)."));
+        else ui_exp(it, tr("A — kiểm với máy chủ và xem kế hoạch tải & cài game này."));
         ui_exp(it, tr("X — chọn / bỏ chọn để tải nhiều game.  Y — đổi cách sắp xếp."));
-        ui_act(it, 0, tr("TẢI & CÀI…"), hb_plan_one);
+        ui_act(it, 0, nm ? tr("CÀI ĐÃ CHỌN…") : tr("TẢI & CÀI…"), hb_plan_one);
         ui_act(it, 1, mk ? tr("BỎ CHỌN") : tr("CHỌN"), hb_act_toggle);
         ui_act(it, 2, ylbl, hb_act_sort);
     }

@@ -37,6 +37,7 @@ if [ "$HOTTABS_DIR" != "none" ]; then
     HOTTABS_DEFAULT="${HOTTABS_DEFAULT:-$(echo "$VERSIONS" | tail -1)}"
 fi
 
+sh "$SCRIPT_DIR/fetch-7zip.sh" || die "không có 7-Zip (bản phát hành phải giải nén được .7z/.rar)"
 echo "[build-all.sh] Dựng LoongMate.pak"
 sh "$SCRIPT_DIR/build.sh" >/dev/null
 
@@ -123,6 +124,7 @@ sed 's/$/\r/' "$STAGE/DOC-TRUOC.txt" > "$STAGE/DOC-TRUOC.tmp" && mv "$STAGE/DOC-
 mkdir -p "$STAGE/GIAY-PHEP"
 cp "$SCRIPT_DIR"/licenses/*.txt "$STAGE/GIAY-PHEP/"
 [ -n "$VERSIONS" ] || rm -f "$STAGE/GIAY-PHEP/Jawaka-LICENSE.txt"   # không kèm Hot Tabs thì không phân phối mã Jawaka
+cp "$SCRIPT_DIR/vendor/7zip/License.txt" "$STAGE/GIAY-PHEP/7-Zip-LICENSE.txt" || die "thiếu giấy phép 7-Zip"
 RT="$STAGE/THE-NHO/Apps/mlp1/LoongMate.pak/loongmate-runtime.tar.gz"
 if [ -f "$RT" ]; then
     tar -xzOf "$RT" loongmate-runtime/python/lib/python3.12/LICENSE.txt > "$STAGE/GIAY-PHEP/CPython-LICENSE.txt" \
@@ -136,6 +138,8 @@ cat > "$STAGE/GIAY-PHEP/README.txt" <<EOF
 Gói này kèm phần mềm bên thứ ba, phân phối theo giấy phép gốc của từng dự án:
 ${JAWAKA_NOTE}- Catastrophe (thư viện giao diện, trong LoongMate.pak/bin/lm-home) - MIT - Catastrophe-LICENSE.txt
 - cJSON (trong lm-home) - MIT - cJSON-LICENSE.txt
+- 7-Zip $(cat "$SCRIPT_DIR/vendor/7zip/VERSION") (LoongMate.pak/bin/7zzs, bản chính thức không sửa đổi, Igor Pavlov) - GNU LGPL
+  + giới hạn unRAR + BSD - 7-Zip-LICENSE.txt; mã nguồn: https://www.7-zip.org/ và https://github.com/ip7z/7zip
 - CPython 3.12 (loongmate-runtime.tar.gz) - PSF License - CPython-LICENSE.txt
   (giấy phép các thư viện đi kèm CPython nằm trong runtime sau khi giải nén)
 EOF

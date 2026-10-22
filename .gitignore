@@ -46,3 +46,6 @@ ctdump.out
 playground/
 native/shots/
 _backup/
+
+# 7-Zip tải bằng pak/fetch-7zip.sh (bản ghim SHA-256), build.sh chép vào gói
+pak/vendor/

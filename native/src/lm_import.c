@@ -125,6 +125,14 @@ static void clear_marks(ui_screen *s, ui_item *it) {
     s->sel = 0;
     ui_rebuild(s);
 }
+/* Chọn mọi mục nhập được (sẵn sàng / cần chọn hệ). BIOS không tự chọn: luôn xác nhận riêng. Vẫn qua kế hoạch + xác nhận. */
+static void select_all(ui_screen *s, ui_item *it) {
+    (void)it;
+    cJSON *units = scan_units();
+    for (int i = 0; i < g_nu; i++) if (is_markable(cJSON_GetArrayItem(units, i))) g_u[i].mark = 1;
+    s->sel = 0;
+    ui_rebuild(s);
+}
 
 /* ---- chọn hệ máy cho mục mơ hồ (không đoán) */
 static void pick_system(ui_screen *s, ui_item *it) {
@@ -161,13 +169,124 @@ static void open_choose(ui_screen *s, ui_item *it) {
 /* ---- danh sách chính */
 static void make_plan(const char *pref, int only);   /* only >= 0: chỉ mục đó; -1: các mục đã chọn */
 static void plan_marked(ui_screen *s, ui_item *it) { (void)s; (void)it; make_plan("auto", -1); }
-static void plan_one(ui_screen *s, ui_item *it) { (void)s; make_plan("auto", it->iarg); }
+/* A trên một mục: đã có mục được chọn (X) thì nhập TẤT CẢ mục đã chọn, gồm cả mục này; chưa chọn gì thì chỉ mục này. */
+static void plan_one(ui_screen *s, ui_item *it) {
+    (void)s;
+    if (n_marked() && it->iarg >= 0 && it->iarg < g_nu && is_markable(unit_at(it->iarg))) {
+        g_u[it->iarg].mark = 1;
+        make_plan("auto", -1);
+    } else make_plan("auto", it->iarg);
+}
+
+/* argv động: chuỗi strdup, giải phóng sau khi tiến trình con đã được tạo */
+typedef struct { char **v; int n, cap; } sv_t;
+static void sv_add(sv_t *a, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
+static void sv_add(sv_t *a, const char *fmt, ...) {
+    if (a->n >= a->cap) {
+        int nc = a->cap ? a->cap * 2 : 32;
+        char **nv = realloc(a->v, (size_t)nc * sizeof *nv);
+        if (!nv) return;
+        a->v = nv; a->cap = nc;
+    }
+    va_list ap;
+    va_start(ap, fmt);
+    char *t = NULL;
+    if (vasprintf(&t, fmt, ap) < 0) t = NULL;
+    va_end(ap);
+    if (t) a->v[a->n++] = t;
+}
+static void sv_free(sv_t *a) { for (int i = 0; i < a->n; i++) free(a->v[i]); free(a->v); *a = (sv_t){0}; }
+
+/* ---- giải nén archive (.7z/.rar/.tar.*...): `import unpack PATH --yes --auto-password` thử các mật khẩu gợi ý (chú thích archive,
+ * tên file, .txt cạnh archive, Import/passwords.txt, mật khẩu đã dùng) — không dò. Không ra thì màn MẬT KHẨU: chọn ứng viên hoặc gõ. */
+static char g_unpack_path[1024];
+static cJSON *g_pw;              /* kết quả `import unpack` báo needs_password (sở hữu): candidates để chọn */
+static void build_password(ui_screen *s);
+static void run_unpack(const char *password);
+
+static void unpack_done(lm_job *j, const char *arg) {
+    cJSON *r = app_json_or_error(j, tr("Giải nén"));
+    if (!r) return;
+    int on_pw_screen = arg[0] == 'p';
+    if (jbool_d(r, "needs_password", 0)) {
+        cJSON_Delete(g_pw);
+        g_pw = r;
+        if (on_pw_screen) {
+            ui_rebuild_all();
+            if (jbool_d(r, "wrong_password", 0)) ui_info1(tr("Giải nén"), "%s", tr("Sai mật khẩu — chọn mật khẩu khác hoặc gõ lại."));
+        } else ui_push(ui_screen_new("MẬT KHẨU ARCHIVE", build_password));
+        return;
+    }
+    int ok = jbool_d(r, "success", 0);
+    lines_t L = {0};
+    lines_add(&L, "%s%s", ok ? "+ " : "!! ", jstrd(r, "message", "?"));
+    if (ok) lines_add(&L, tr("Các file giải ra hiện trong danh sách Nhập game: chọn rồi nhập như bình thường."));
+    cJSON_Delete(r);
+    if (on_pw_screen) { cJSON_Delete(g_pw); g_pw = NULL; ui_pop(); }
+    snprintf(g_pending_title, sizeof g_pending_title, tr("Giải nén"));
+    lines_free(&g_pending);
+    g_pending = L;
+    cli_task(tr("Đang quét lại Import/"), SHORT_TIMEOUT_MS, scan_done, "0", "import", "scan", NULL);
+}
+
+static void run_unpack(const char *password) {
+    sv_t a = {0};
+    sv_add(&a, "import"); sv_add(&a, "unpack"); sv_add(&a, "%s", g_unpack_path); sv_add(&a, "--yes"); sv_add(&a, "--progress");
+    if (password) { sv_add(&a, "--password"); sv_add(&a, "%s", password); }
+    else sv_add(&a, "--auto-password");
+    cli_task_v(password ? tr("Đang thử mật khẩu và giải nén") : tr("Đang giải nén"), LONG_TIMEOUT_MS, unpack_done,
+               g_pw ? "p" : "l", (const char *const *)a.v, a.n);
+    sv_free(&a);
+}
+
+static void do_unpack(ui_screen *s, ui_item *it) {
+    (void)s;
+    cJSON *u = unit_at(it->iarg);
+    if (!u || !jstr(u, "archive")) return;
+    snprintf(g_unpack_path, sizeof g_unpack_path, "%s", jstr(u, "archive"));
+    cJSON_Delete(g_pw);
+    g_pw = NULL;
+    run_unpack(NULL);
+}
+
+static void pw_try(ui_screen *s, ui_item *it) { (void)s; run_unpack(it->arg); }
+static void pw_typed(const char *text, const char *arg) { (void)arg; run_unpack(text); }
+static void pw_type(ui_screen *s, ui_item *it) { (void)s; (void)it; ui_osk(tr("Gõ mật khẩu archive"), "", 128, pw_typed, ""); }
+static void pw_screen_free(ui_screen *s) { (void)s; cJSON_Delete(g_pw); g_pw = NULL; }
+
+static void build_password(ui_screen *s) {
+    cJSON *c;
+    const char *nm = strrchr(g_unpack_path, '/');
+    s->on_free = pw_screen_free;
+    ui_hdr(s, "%s", nm ? nm + 1 : g_unpack_path);
+    ui_hdr(s, "%s", jstrd(g_pw, "message", ""));
+    ui_hdr(s, tr("Mật khẩu gợi ý lấy từ chú thích archive, tên file, file .txt cạnh archive và Import/passwords.txt."));
+    cJSON_ArrayForEach(c, jarr(g_pw, "candidates")) {
+        const char *pw = jstr(c, "password");
+        if (!pw) continue;
+        ui_item *it = ui_add(s, pw, jstrd(c, "source", ""), ST_UNKNOWN);
+        ui_exp(it, tr("Nguồn: %s"), jstrd(c, "source", "?"));
+        ui_exp(it, tr("A — giải nén bằng mật khẩu này (sai thì không ghi gì)."));
+        ui_act(it, 0, tr("THỬ"), pw_try);
+        ui_arg(it, pw);
+    }
+    if (!jarr_n(g_pw, "candidates")) {
+        ui_item *it = ui_add(s, tr("Không tìm thấy mật khẩu gợi ý"), "", ST_UNKNOWN);
+        ui_exp(it, tr("Người đăng thường ghi mật khẩu ở trang tải, trong chú thích archive hoặc file .txt đi kèm."));
+        ui_exp(it, tr("Chép file .txt đó vào cạnh archive, hoặc ghi mật khẩu vào Import/passwords.txt (mỗi dòng một), rồi giải nén lại."));
+    }
+    ui_item *it = ui_add(s, tr("Gõ mật khẩu…"), tr("bàn phím"), ST_GREEN);
+    ui_exp(it, tr("Nhập mật khẩu bằng bàn phím trên màn hình (chữ không dấu)."));
+    ui_exp(it, tr("Mật khẩu đúng được nhớ để lần sau tự thử trước."));
+    ui_act(it, 0, tr("GÕ"), pw_type);
+}
 
 static void unit_tag(const cJSON *u, int i, char *tag, size_t n, int *color) {
     const char *st = jstrd(u, "status", "");
     *color = ST_UNKNOWN;
     if (g_u[i].sys[0]) { snprintf(tag, n, "%s", g_u[i].sys); *color = ST_GREEN; }
     else if (!strcmp(st, "blocked")) { snprintf(tag, n, tr("bị chặn")); *color = ST_RED; }
+    else if (!strcmp(st, "needs_unpack")) { snprintf(tag, n, tr("giải nén")); *color = ST_YELLOW; }
     else if (!strcmp(st, "unsupported")) { snprintf(tag, n, tr("chưa hỗ trợ")); *color = ST_YELLOW; }
     else if (!strcmp(st, "empty")) snprintf(tag, n, tr("trống"));
     else if (!strcmp(jstrd(u, "kind", ""), "bios")) { snprintf(tag, n, "BIOS"); *color = ST_YELLOW; }
@@ -218,6 +337,21 @@ static void build_import(ui_screen *s) {
         ui_act(it, 0, tr("XEM KẾ HOẠCH"), plan_marked);
         ui_act(it, 1, tr("BỎ CHỌN HẾT"), clear_marks);
     }
+    {
+        int nfree = 0;
+        double fbytes = 0;
+        for (int i = 0; i < n; i++)
+            if (!g_u[i].mark && is_markable(cJSON_GetArrayItem(units, i))) { nfree++; fbytes += jnumd(unit_at(i), "bytes", 0); }
+        if (nfree) {
+            char lab[64];
+            snprintf(lab, sizeof lab, tr("Chọn tất cả %d mục"), nfree);
+            it = ui_add(s, lab, mbs(fbytes), ST_UNKNOWN);
+            ui_exp(it, tr("Đánh dấu mọi mục nhập được (bỏ qua mục bị chặn; BIOS luôn chọn riêng)."));
+            ui_exp(it, tr("Chưa ghi gì: còn bước xem kế hoạch (thẻ đích, trùng tên) và xác nhận."));
+            it->iarg = -1;
+            ui_act(it, 0, tr("CHỌN TẤT CẢ"), select_all);
+        }
+    }
     for (int i = 0; i < n; i++) {
         cJSON *u = cJSON_GetArrayItem(units, i);
         char lab[220], tag[24];
@@ -230,7 +364,14 @@ static void build_import(ui_screen *s) {
         ui_arg(it, "u");
         const char *st = jstrd(u, "status", ""), *kind = jstrd(u, "kind", "");
         if (!strcmp(st, "needs_choice")) ui_act(it, 0, tr("CHỌN HỆ"), open_choose);
-        else if (is_markable(u) || !strcmp(kind, "bios")) ui_act(it, 0, tr("NHẬP MỤC NÀY"), plan_one);
+        else if (!strcmp(st, "needs_unpack")) {
+            ui_act(it, 0, tr("GIẢI NÉN"), do_unpack);
+            ui_exp(it, tr("A — kiểm nội dung rồi giải vào Import/<tên>/; archive gốc vào Import/.done/."));
+            ui_exp(it, tr("Có mật khẩu: tự thử mật khẩu gợi ý; không ra thì cho chọn hoặc gõ."));
+        }
+        else if (is_markable(u) || !strcmp(kind, "bios"))
+            ui_act(it, 0, marked && is_markable(u) ? tr("NHẬP ĐÃ CHỌN") : tr("NHẬP MỤC NÀY"), plan_one);
+        if (marked && is_markable(u)) ui_exp(it, tr("A — nhập tất cả mục đã chọn (kể cả mục này)."));
         if (is_markable(u) || !strcmp(kind, "bios")) ui_act(it, 1, g_u[i].mark ? tr("BỎ CHỌN") : tr("CHỌN"), do_toggle);
     }
     if (!n) {
@@ -321,24 +462,6 @@ static void plan_done(lm_job *j, const char *arg) {
 
 static void plan_screen_free(ui_screen *s) { (void)s; drop_plan_data(); plan_remove("import"); }
 
-/* argv động: chuỗi strdup, giải phóng sau khi tiến trình con đã được tạo */
-typedef struct { char **v; int n, cap; } sv_t;
-static void sv_add(sv_t *a, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
-static void sv_add(sv_t *a, const char *fmt, ...) {
-    if (a->n >= a->cap) {
-        int nc = a->cap ? a->cap * 2 : 32;
-        char **nv = realloc(a->v, (size_t)nc * sizeof *nv);
-        if (!nv) return;
-        a->v = nv; a->cap = nc;
-    }
-    va_list ap;
-    va_start(ap, fmt);
-    char *t = NULL;
-    if (vasprintf(&t, fmt, ap) < 0) t = NULL;
-    va_end(ap);
-    if (t) a->v[a->n++] = t;
-}
-static void sv_free(sv_t *a) { for (int i = 0; i < a->n; i++) free(a->v[i]); free(a->v); *a = (sv_t){0}; }
 
 static int g_last_only = -1;   /* lần lập kế hoạch gần nhất: để lập lại đúng các mục đó khi người dùng chọn thẻ Leaf */
 

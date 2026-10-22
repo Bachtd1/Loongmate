@@ -10,6 +10,8 @@
 #define SCROLL_STEP 3
 
 int g_debounce_ms = 400;
+static int (*g_idle_pump)(void);
+void ui_set_idle_pump(int (*fn)(void)) { g_idle_pump = fn; }
 
 /* ============================================================ lines_t */
 void lines_add(lines_t *L, const char *fmt, ...) {
@@ -703,6 +705,17 @@ static void draw_list(ui_screen *s, SDL_Rect a) {
         cat_draw_text(fh, tr("(Không có mục nào)"), tx, ty, th->hint);
         return;
     }
+    if (it->img[0]) {          /* ảnh (vd. ảnh bìa game): trên cùng khung, giữ tỉ lệ, tối đa ~55% chiều cao */
+        int iw = 0, ih = 0;
+        SDL_Texture *tex = ui_thumb(it->img, &iw, &ih);
+        if (tex && iw > 0 && ih > 0) {
+            int maxh = body_h * 55 / 100, dw = tw, dh = ih * tw / iw;
+            if (dh > maxh) { dh = maxh; dw = iw * maxh / ih; }
+            SDL_Rect d = { tx + (tw - dw) / 2, ty, dw, dh };
+            SDL_RenderCopy(cat_get_renderer(), tex, NULL, &d);
+            ty += dh + cat_device_scale(6);
+        }
+    }
     cat_draw_text_ellipsized(fh, tr("Giải thích"), tx, ty, th->hint, tw);
     ty += hlh + cat_device_scale(4);
     wl_t *w = NULL; int nw = 0, cap = 0;
@@ -892,12 +905,13 @@ int ui_run(lm_harness *h, ui_screen *home) {
             if (!s->draw) list_key(s, &ev);
         }
         int busy = task_pump();
+        int bg = g_idle_pump ? g_idle_pump() : 0;     /* việc nền không chặn phím (tải ảnh bìa): vẫn vẽ khung mới để ảnh hiện dần */
         ui_screen *s = ui_top();
         render(s);
-        if (busy || lm_harness_active(h)) cat_request_frame();
+        if (busy || bg || lm_harness_active(h)) cat_request_frame();
         if (lm_harness_frame_end(h, busy)) { rc = h->timed_out ? 1 : 0; break; }
         cat_present();
-        if (busy) SDL_Delay(30);
+        if (busy || bg) SDL_Delay(30);
     }
     return rc;
 }

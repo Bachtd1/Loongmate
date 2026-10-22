@@ -1,5 +1,29 @@
 # Thay đổi
 
+## 0.3.0-beta — 2026-10-22
+
+- **Giải nén .7z, .rar (RAR4/RAR5), .tar.gz/.bz2/.xz, .gz, .zst, .cab...** trong Nhập game: mục archive hiện "giải nén", bấm
+  GIẢI NÉN. Kiểm như zip TRƯỚC khi ghi (đường dẫn, link, kích thước, zip bomb, chỗ trống), giải vào thư mục tạm cùng thẻ rồi
+  mới thành `Import/<tên>/`; archive nhiều phần (`.part1.rar`, `.7z.001`) đi cùng nhau. Kèm 7-Zip 26.04 chính thức (bản tĩnh
+  ARM64, ghim SHA-256, giấy phép trong GIAY-PHEP/).
+- **Archive có mật khẩu** (cả .zip có mật khẩu, trước đây bị chặn): tự thử mật khẩu người đăng/người dùng để lại — chú thích
+  archive, tên file (`[pass xyz]`), file .txt/.nfo cạnh archive, `Import/passwords.txt`, mật khẩu đã dùng thành công. Không dò
+  mật khẩu (tối đa 30 ứng viên). Không ra thì màn MẬT KHẨU ARCHIVE cho chọn hoặc gõ bằng bàn phím.
+- **Tải từ web và Thư viện riêng nhận .7z/.rar/...**: tải xong tự giải nén rồi cài; cần mật khẩu mà không đoán được thì
+  archive được chuyển vào `Import/` để giải ở Nhập game.
+- **Tải từ web, lưới ảnh bìa**: trang có nhiều game hiện thành lưới ô ảnh bìa + tên (Y: danh sách). Ô TẢI (file hoặc link
+  "Download" trong nội dung, đã lọc quảng cáo như danh sách) đứng đầu và được chọn sẵn: các bước tải chỉ cần bấm A; bước tải
+  kế tiếp giữ ảnh bìa của trang game. Ảnh tải nền (không chặn phím), chỉ https, chỉ PNG/JPEG/GIF thật, cache tự dọn.
+- **R1 trang sau, L1 trang trước** khi duyệt danh sách game nhiều trang (dò rel=next/prev, nút Next/›/Tiếp, số trang
+  trong địa chỉ — chung cho mọi trang web).
+- **Game tải từ web được gắn ảnh bìa** của trang game đã đi qua (Leaf hiện ngay sau khi quét lại); tải lại game đã có mà
+  chưa có ảnh cũng được gắn; ảnh có sẵn luôn giữ nguyên.
+- **Chọn tất cả** trong Nhập game và Thư viện riêng; đã chọn (X) nhiều game thì A cài/nhập/xoá TẤT CẢ game đã chọn (Thư
+  viện riêng, Homebrew, Nhập game, Xoá ROM) thay vì chỉ game đang đứng; vẫn qua xem trước + xác nhận.
+- Hiểu các hệ máy do pak cài thêm (Pak Rat, vd J2ME.pak: `Roms/J2ME`, `.jar`/`.kjx`): Library Doctor không còn báo
+  thư mục đó là lạ; Nhập game nhận và cài `.jar` vào đúng thư mục (chỉ khi pak đã cài; không có pak thì `.jar` vẫn bị chặn
+  như file chạy được).
+
 ## 0.2.1-beta — 2026-10-18
 
 - **Sửa: điều hướng tự chạy loạn sau khi mở khoá.** Nút (D-pad) đang giữ đúng lúc khoá bật: app nhận "nhấn" nhưng

@@ -28,4 +28,5 @@ void ui_exec_python_ui(void);
 
 int cli_task_v(const char *label, int timeout_ms, ui_task_cb cb, const char *arg, const char *const *extra, int nextra);
 int cli_task(const char *label, int timeout_ms, ui_task_cb cb, const char *arg, ...);
+lm_job *cli_spawn(int timeout_ms, const char *const *extra, int nextra);   /* chạy nền, không chặn phím; người gọi poll/free */
 #endif

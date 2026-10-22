@@ -84,6 +84,16 @@ chmod +x "$OUT_PAK/bin/lm-home"
 cmp -s "$SRC_PAK/bin/lm-home" "$OUT_PAK/bin/lm-home" || { echo "[build.sh] LỖI: bin/lm-home trong bản dựng khác bản nguồn." >&2; exit 1; }
 echo "  - đã chép bin/lm-home (binary native) và chmod +x"
 
+# 7-Zip (7zzs, tĩnh ARM64) cho Nhập game > GIẢI NÉN .7z/.rar/... — không nằm trong git: pak/fetch-7zip.sh tải bản ghim SHA-256.
+SEVENZ="${LOONGMATE_7ZZS:-$SCRIPT_DIR/vendor/7zip/7zzs}"
+if [ -s "$SEVENZ" ]; then
+    cp "$SEVENZ" "$OUT_PAK/bin/7zzs"
+    chmod +x "$OUT_PAK/bin/7zzs"
+    echo "  - đã kèm bin/7zzs (7-Zip, giải nén .7z/.rar)"
+else
+    echo "[build.sh] CẢNH BÁO: không có $SEVENZ (chạy pak/fetch-7zip.sh) — gói KHÔNG giải nén được .7z/.rar."
+fi
+
 echo "[build.sh] Tạo $ZIP_PATH"
 rm -f "$ZIP_PATH"
 if command -v zip >/dev/null 2>&1; then

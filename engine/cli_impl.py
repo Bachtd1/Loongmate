@@ -102,6 +102,7 @@ update_mod = _LazyMod("engine.update")
 hottabs_mod = _LazyMod("engine.hottabs")
 leafconfig_mod = _LazyMod("engine.leafconfig")
 autoresume_mod = _LazyMod("engine.autoresume")
+archive_mod = _LazyMod("engine.archive")
 pocketlock_mod = _LazyMod("engine.pocketlock")
 importer_mod = _LazyMod("engine.importer")
 libsource_mod = _LazyMod("engine.libsource")
@@ -1683,6 +1684,23 @@ def _cmd_import(args, probe) -> int:
     im = importer_mod
     cards = {"primary": probe.primary_path, "secondary": probe.secondary_path}
     cmd = args.import_command
+    if cmd == "unpack":
+        # Chỉ archive nằm trong Import/ của một thẻ: kết quả ra Import/<tên>/ cạnh nó, archive gốc vào Import/.done/.
+        src = Path(args.path)
+        inside = any(c and src.parent.resolve() == im.import_dir(c).resolve() for c in cards.values())
+        if not inside:
+            return _usage(args, f"Chỉ giải nén archive nằm trong Import/ của thẻ: {src}")
+        if not args.yes and (args.json or not sys.stdin.isatty() or not _confirm(f"Giải nén {src.name} vào Import/?")):
+            return _lib_out(args, {"success": False, "message": "Cần --yes để giải nén."}, False)
+        prog = None
+        if getattr(args, "progress", False):
+            def prog(pct, _n=src.name.replace("\t", " ")):
+                sys.stderr.write("LMPROGRESS unpack %d 100 1 1\t%s\n" % (pct, _n))
+                sys.stderr.flush()
+        remember = Path(probe.userdata_path) / archive_mod.REMEMBERED if probe.userdata_path else None
+        r = archive_mod.unpack(src, progress=prog, password=args.password or None,
+                               auto_password=args.auto_password, remember_file=remember)
+        return _lib_out(args, r, bool(r.get("success")))
     if cmd == "mkdir":
         outs = []
         for cid, c in cards.items():
@@ -1981,6 +1999,9 @@ def _cmd_web(args, probe) -> int:
         if cmd == "open":
             out = wb.open_url(env.app_data, args.url, wb.Session())
             return _lib_out(args, out, True, _web_open_text(out))
+        if cmd == "thumbs":
+            out = wb.fetch_thumbs(env.app_data, first=args.first)
+            return _lib_out(args, out, True, [out["message"]])
         if cmd == "jobs":
             out = {"success": True, "jobs": [j for j in ls.list_jobs(env)["jobs"] if j.get("node") == wb.JOB_NODE]}
             return _lib_out(args, out, True, [f"{j['job_id']}  {j['state']}  {j['percent']}%  {j['files_done']}/{j['files']} file  {', '.join(j['names'][:2])}"
@@ -2009,7 +2030,7 @@ def _cmd_web(args, probe) -> int:
             return _lib_out(args, ls.cancel_job(env, args.job), True)
         if cmd == "fetch":
             res = wb.fetch(env, args.urls, args.card, _lib_progress_cb(args), args.conflict, wb.Session(),
-                           from_page=getattr(args, "from_page", None))
+                           from_page=getattr(args, "from_page", None), cover_url=getattr(args, "cover_url", None))
         else:
             res = ls.resume(env, args.job, _lib_progress_cb(args), args.conflict, wb.Session())
         res["rescan"] = _auto_rescan(args, bool(res.get("changed")))
@@ -2597,6 +2618,15 @@ def build_parser(only: "str | None" = None) -> argparse.ArgumentParser:
                      help="Delete (instead of moving to Import/.done/) the sources in Import/ after a successful install")
     _json_flag(ima)
     _norescan_flag(ima)
+    imu = im_sub.add_parser("unpack", help="Extract a .7z/.rar/.tar.*/.gz... in Import/ to Import/<name>/ (checks paths, size, links first); needs --yes")
+    imu.add_argument("path", metavar="ARCHIVE")
+    imu.add_argument("--yes", action="store_true")
+    imu.add_argument("--progress", action="store_true", help="LMPROGRESS lines on stderr")
+    imu.add_argument("--password", default=None, help="Password for an encrypted .7z/.rar")
+    imu.add_argument("--auto-password", dest="auto_password", action="store_true",
+                     help="Try the password hints (archive comment, file name, .txt next to it, Import/passwords.txt, "
+                          "passwords that worked before); never brute force")
+    _json_flag(imu)
     _json_flag(im_sub.add_parser("jobs", help="Read-only: unfinished import jobs (staging on the cards) and recent finished ones"))
     imr = im_sub.add_parser("recover", help="Clean unfinished jobs: staging removed, half-committed games rolled back")
     imr.add_argument("--yes", action="store_true", help="Skip the confirmation prompt")
@@ -2697,6 +2727,10 @@ def build_parser(only: "str | None" = None) -> argparse.ArgumentParser:
     wbo = wb_sub.add_parser("open", help="Load one https page and list its links/search forms; a non-HTML target is reported as a file (body not read). Records history")
     wbo.add_argument("url", metavar="URL")
     _json_flag(wbo)
+    wbt = wb_sub.add_parser("thumbs", help="Download the cover thumbnails queued by 'web open' into the app cache "
+                                           "(https only, PNG/JPEG/GIF, size-capped); run in the background by the UI")
+    wbt.add_argument("--first", default=None, metavar="PAGE_URL", help="Do this page's covers first")
+    _json_flag(wbt)
     _json_flag(wb_sub.add_parser("jobs", help="Read-only: unfinished web downloads"))
     wbf = wb_sub.add_parser("fetch", help="Download files + install through the Local Importer; --dry-run only checks sizes/types and plans")
     wbf.add_argument("urls", nargs="+", metavar="URL")
@@ -2704,6 +2738,7 @@ def build_parser(only: "str | None" = None) -> argparse.ArgumentParser:
                      help="auto = secondary card if usable, otherwise ASK (never silently falls back to the primary card)")
     wbf.add_argument("--conflict", choices=["keep", "replace", "copy", "cancel"], default="keep")
     wbf.add_argument("--from-page", dest="from_page", help="Page the link came from: attach its matching cover art after install")
+    wbf.add_argument("--cover-url", dest="cover_url", help="Cover image of the game page the user came through (https); tried first")
     wbf.add_argument("--dry-run", action="store_true", dest="dry_run", help="Ask the server for sizes/types and plan; writes nothing")
     wbf.add_argument("--yes", action="store_true", help="Skip the confirmation prompt")
     wbf.add_argument("--progress", action="store_true", help="Print LMPROGRESS lines to stderr")

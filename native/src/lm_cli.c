@@ -87,6 +87,25 @@ int cli_task_v(const char *label, int timeout_ms, ui_task_cb cb, const char *arg
     return rc;
 }
 
+/* Chạy CLI nền KHÔNG chặn giao diện (không màn "Đang..."): người gọi tự lm_job_poll/lm_job_free. NULL nếu không chạy được. */
+lm_job *cli_spawn(int timeout_ms, const char *const *extra, int nextra) {
+    if (!P.python[0] || nextra > MAX_ARGV) return NULL;
+    char *argv[MAX_ARGV + 16];
+    int n = 0;
+    argv[n++] = P.python;
+    argv[n++] = P.cli;
+    if (P.primary[0]) { argv[n++] = "--primary"; argv[n++] = P.primary; }
+    if (P.secondary[0]) { argv[n++] = "--secondary"; argv[n++] = P.secondary; }
+    argv[n++] = "--userdata"; argv[n++] = P.userdata;
+    argv[n++] = "--quiet"; argv[n++] = "--json";
+    for (int i = 0; i < nextra; i++) argv[n++] = (char *)extra[i];
+    argv[n] = NULL;
+    char err[200];
+    lm_job *j = lm_job_start(argv, timeout_ms, err, sizeof err);
+    if (!j) cat_log("lm: cli_spawn: %s", err);
+    return j;
+}
+
 int cli_task(const char *label, int timeout_ms, ui_task_cb cb, const char *arg, ...) {
     const char *ex[MAX_ARGV];
     int n = 0;

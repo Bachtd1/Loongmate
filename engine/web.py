@@ -258,6 +258,35 @@ def _dead_href(href: str) -> bool:
     return h == "" or h.startswith("#") or h.startswith("javascript:")
 
 
+def _img_src(a: Dict[str, str]) -> str:
+    """Ảnh của một <img>: ưu tiên ảnh thật của lazy-load (data-src...) và bản vừa cỡ trong srcset; bỏ data:, .svg, ảnh tí hon
+    (icon) và .webp khi còn lựa chọn khác (SDL_image trên máy không đọc WebP). Rỗng nếu không có."""
+    def small(v: str) -> bool:
+        return v.strip().isdigit() and int(v.strip()) < 40
+    if small(a.get("width", "")) or small(a.get("height", "")):
+        return ""
+    cands: List[Tuple[int, str]] = []
+    for key in ("data-srcset", "srcset"):
+        for part in (a.get(key) or "").split(","):
+            bits = part.strip().split()
+            if not bits:
+                continue
+            w = 0
+            if len(bits) > 1 and bits[1].lower().endswith("w") and bits[1][:-1].isdigit():
+                w = int(bits[1][:-1])
+            cands.append((abs(w - 400) if w else 500, bits[0]))
+    cands.sort(key=lambda c: c[0])
+    named = ("data-src", "data-lazy-src", "data-original", "data-lazy")
+    other = [v for k, v in a.items() if k.startswith("data-") and "src" in k and "srcset" not in k and k not in named]   # vd data-lazy_src
+    srcs = [u for _, u in cands] + [a.get(k, "") for k in named] + other + [a.get("src", "")]
+    good = [u.strip() for u in srcs if u.strip() and not u.strip().lower().startswith("data:")
+            and not urllib.parse.urlsplit(u.strip()).path.lower().endswith(".svg")]
+    for u in good:
+        if not urllib.parse.urlsplit(u).path.lower().endswith(".webp"):
+            return u
+    return good[0] if good else ""
+
+
 class _PageParser(HTMLParser):
     def __init__(self):
         super().__init__(convert_charrefs=True)
@@ -273,6 +302,9 @@ class _PageParser(HTMLParser):
         self.all_a: List[Dict[str, Any]] = []             # mọi <a> (kể cả không href) để dò nút tải "chết"
         self.buttons: List[Dict[str, Any]] = []
         self.btn: Optional[Dict[str, Any]] = None
+        self.rel_pages: Dict[str, str] = {}               # <link rel="next|prev"> trong <head>: trang sau/trước
+        self.og_image: Optional[str] = None
+        self.main_img: Optional[str] = None               # ảnh đầu tiên trong nội dung (không nằm trong link/menu): dự phòng khi thiếu og:image               # ảnh đại diện của trang (og:image) — ảnh bìa trên trang chi tiết game
 
     def _zone(self, own_pag: bool) -> str:
         """"nav" nếu có tổ tiên là vùng điều hướng, trừ khi có phân trang nằm trong (hoặc là chính) vùng đó."""
@@ -304,11 +336,16 @@ class _PageParser(HTMLParser):
             self.in_title = True
         elif tag == "base" and self.base is None and a.get("href"):
             self.base = a["href"]
+        elif tag == "link" and a.get("href", "").strip():
+            for r in a.get("rel", "").lower().split():
+                if r in ("next", "prev", "previous") and r[:4] not in self.rel_pages:
+                    self.rel_pages[r[:4]] = a["href"].strip()
         elif tag == "a":
             toks = [t for t in re.split(r"[\s\-_]+", (a.get("class", "") + " " + a.get("id", "")).lower()) if t]
             self.cur = {"href": a.get("href", ""), "title": a.get("title", ""), "download": "download" in a, "text": [],
                         "rel": a.get("rel", "").lower().split(), "onclick": bool(a.get("onclick", "").strip()),
-                        "zone": self._zone(any(t.startswith("pag") for t in toks))}
+                        "zone": self._zone(any(t.startswith("pag") for t in toks)), "cls": toks,
+                        "aria": (a.get("aria-label") or "").strip()}
             self.all_a.append(self.cur)
             if a.get("href", "").strip():
                 self.anchors.append(self.cur)
@@ -317,6 +354,14 @@ class _PageParser(HTMLParser):
             self.buttons.append(self.btn)
         elif tag == "img" and self.cur is not None:
             self.cur["text"].append(" " + a.get("alt", "") + " ")
+            if not self.cur.get("img"):
+                self.cur["img"] = _img_src(a)
+        elif tag == "img" and self.main_img is None and not self.skip and self._zone(False) == "main":
+            self.main_img = _main_img_ok(a) or None
+        elif tag == "meta" and self.og_image is None:
+            prop = (a.get("property") or a.get("name") or "").strip().lower()
+            if prop in ("og:image", "og:image:url", "og:image:secure_url", "twitter:image") and a.get("content", "").strip():
+                self.og_image = a["content"].strip()
         elif tag == "form" and self.form is None:
             self.form = {"method": (a.get("method") or "get").strip().lower(), "action": a.get("action", ""), "hidden": [],
                          "text": [], "bad": False}
@@ -333,7 +378,7 @@ class _PageParser(HTMLParser):
             self._push(tag, a)
 
     def handle_startendtag(self, tag, attrs):
-        if tag in ("img", "input", "base"):
+        if tag in ("img", "input", "base", "meta", "link"):
             self.handle_starttag(tag, attrs)
 
     def handle_endtag(self, tag):
@@ -382,6 +427,93 @@ def _https_join(base: str, ref: str) -> Optional[str]:
         return None
 
 
+# ---- trang sau / trang trước (phân trang) — chung cho mọi trang, không mã riêng cho trang nào
+_PAGE_NUM = re.compile(r"(?i)(/page/|[?&](?:page|paged|p|pg|pagenum|page_num)=)(\d{1,5})(?=$|[/&#])")
+_NEXT_WORDS = {"next", "next page", "next »", "next ›", "tiếp", "trang sau", "trang tiếp", "sau", "»", "›", "→", ">", ">>", "older posts",
+               "tiếp theo", "next>", "next >", "next>>"}
+_PREV_WORDS = {"prev", "previous", "previous page", "« previous", "‹ prev", "trước", "trang trước", "«", "‹", "←", "<", "<<",
+               "newer posts", "<prev", "< prev"}
+
+
+def _page_key(url: str) -> Tuple[str, int]:
+    """(địa chỉ bỏ số trang, số trang). Không có số trang -> trang 1."""
+    m = None
+    for m in _PAGE_NUM.finditer(url):
+        pass
+    if not m:
+        return url.rstrip("/"), 1
+    stripped = url[:m.start()] + ("" if m.group(1).startswith("/") else m.group(1)[0]) + url[m.end():]
+    stripped = re.sub(r"[?&]$", "", stripped).replace("?&", "?").rstrip("/")
+    return stripped, int(m.group(2))
+
+
+def _pager(p, base: str, page_url: str) -> Dict[str, str]:
+    """{"next": url, "prev": url} (chỉ https). Ưu tiên rel next/prev, rồi class/chữ của link, rồi số trang trong địa chỉ."""
+    out: Dict[str, str] = {}
+
+    def put(kind: str, href: str) -> None:
+        u = _https_join(base, href) if href else None
+        if kind not in out and u and u.lower().startswith("https://") and u != page_url:
+            out[kind] = u
+    for k in ("next", "prev"):
+        put(k, p.rel_pages.get(k, ""))
+    for an in p.anchors:
+        rel = an["rel"]
+        if "next" in rel:
+            put("next", an["href"])
+        if "prev" in rel or "previous" in rel:
+            put("prev", an["href"])
+    for an in p.anchors:
+        text = _collapse("".join(an["text"]), 40).lower().strip(" .")
+        label = (an.get("aria") or an["title"] or "").lower().strip()
+        cls = an.get("cls") or []
+        if text in _NEXT_WORDS or label in ("next", "next page", "trang sau") or "next" in cls:
+            put("next", an["href"])
+        if text in _PREV_WORDS or label in ("previous", "previous page", "prev", "trang trước") or "prev" in cls or "previous" in cls:
+            put("prev", an["href"])
+    if "next" not in out or "prev" not in out:
+        cur_base, cur_n = _page_key(page_url)
+        for an in p.anchors:
+            u = _https_join(base, an["href"])
+            if not u or not u.lower().startswith("https://"):
+                continue
+            b, n = _page_key(u)
+            if b != cur_base:
+                continue
+            if n == cur_n + 1:
+                put("next", u)
+            elif n == cur_n - 1 and cur_n > 1:
+                put("prev", u)
+    return out
+
+
+def _https_img(base: str, ref: str) -> str:
+    """Địa chỉ ảnh tuyệt đối, chỉ https. Ảnh ghi http:// (nhiều trang WordPress ghi og:image như vậy) được nâng lên https —
+    vẫn kiểm chứng thư đầy đủ khi tải; máy chủ không có https thì ảnh đó hỏng, không bao giờ tải qua http."""
+    u = _https_join(base, ref) if ref else None
+    if u and u.lower().startswith("http://"):
+        u = "https://" + u[7:]
+    return u if u and u.lower().startswith("https://") else ""
+
+
+_SMALL_STYLE = re.compile(r"(?i)(?:^|;)\s*(?:max-)?(?:height|width)\s*:\s*(\d{1,3})px")
+
+
+def _main_img_ok(a: Dict[str, str]) -> str:
+    """Ảnh "chính" của trang khi không có og:image: ảnh đầu tiên trong nội dung, không phải logo/icon/avatar."""
+    words = " ".join((a.get(k) or "") for k in ("class", "id", "alt")).lower()
+    if any(w in words for w in ("logo", "avatar", "icon", "emoji", "badge", "banner", "ads", "sponsor")):
+        return ""
+    m = _SMALL_STYLE.search(a.get("style") or "")
+    if m and int(m.group(1)) < 100:
+        return ""
+    src = _img_src(a)
+    low = src.lower()
+    if not src or any(w in low for w in ("logo", "avatar", "icon", "sprite", "pixel", "blank.", "spacer")):
+        return ""
+    return src
+
+
 def parse_page(html_text: str, base_url: str) -> Dict[str, Any]:
     p = _PageParser()
     p.feed(html_text)
@@ -413,11 +545,12 @@ def parse_page(html_text: str, base_url: str) -> Dict[str, Any]:
         old = links.get(url)
         if old is None:
             links[url] = {"text": text, "title": an["title"], "download": an["download"], "sponsored": "sponsored" in an["rel"],
-                          "zone": an["zone"]}
+                          "zone": an["zone"], "img": an.get("img") or ""}
         else:
             old["text"] = old["text"] or text
             old["title"] = old["title"] or an["title"]
             old["download"] = old["download"] or an["download"]
+            old["img"] = old["img"] or an.get("img") or ""
             old["sponsored"] = old["sponsored"] and "sponsored" in an["rel"]    # chỉ rác nếu MỌI lần xuất hiện đều là quảng cáo
             if an["zone"] == "main":
                 old["zone"] = "main"                                             # có lúc nằm ở nội dung chính -> coi là nội dung chính
@@ -434,7 +567,8 @@ def parse_page(html_text: str, base_url: str) -> Dict[str, Any]:
         text = d["text"] or _collapse(urllib.parse.unquote(urllib.parse.urlsplit(url).path.rsplit("/", 1)[-1]), 120) or url[:120]
         out_links.append({"text": text, "url": url, "file": is_file, "ext": ext if is_file and ext in exts else "",
                           "same_site": same_site, "zone": "main" if is_file else d["zone"],
-                          "download_hint": not is_file and _dl_hint(d["text"], d["title"], url)})
+                          "download_hint": not is_file and _dl_hint(d["text"], d["title"], url),
+                          "img": _https_img(base, d["img"])})
     out_links.sort(key=lambda x: (not x["file"], not x["download_hint"]))          # ổn định: file, rồi link "tải", rồi còn lại
     truncated = len(out_links) > MAX_LINKS
 
@@ -462,7 +596,8 @@ def parse_page(html_text: str, base_url: str) -> Dict[str, Any]:
         _dl_text(_collapse("".join(b["text"]), 120)) and (b["onclick"] or b["form"] is None or id(b["form"]) not in kept_forms)
         for b in p.buttons)
     return {"title": title, "links": out_links[:MAX_LINKS], "forms": forms, "truncated": truncated, "dropped_insecure": len(insecure),
-            "hidden_junk": hidden_junk, "js_download": js_download}
+            "hidden_junk": hidden_junk, "js_download": js_download, "image": _https_img(base, p.og_image or "") or _https_img(base, p.main_img or ""),
+            "pager": _pager(p, base, page_url)}
 
 
 def decode_body(data: bytes, content_type: str = "") -> str:
@@ -600,6 +735,168 @@ def resolve_download(sess: Session, page_url: str, html_text: str) -> Optional[D
     return {"url": m.group(1).replace("&amp;", "&").replace("&#038;", "&"), "text": "", "referer": page_url}
 
 
+# ====================================================================================
+# ảnh thu nhỏ cho giao diện (lưới ảnh bìa): open_url chỉ GHI HÀNG ĐỢI, `web thumbs` (chạy nền) mới tải
+# ====================================================================================
+THUMB_DIR = "cache/web-thumbs"
+THUMB_QUEUE = "queue.json"
+THUMB_MAX = 80                    # ảnh mỗi trang
+THUMB_MAX_BYTES = 1536 * 1024
+THUMB_MAX_PX = 4096               # ảnh lớn hơn thì bỏ (giải mã tốn RAM trên máy)
+THUMB_CACHE_BYTES = 48 * 1024 * 1024
+THUMB_CACHE_KEEP = 32 * 1024 * 1024
+
+
+def _thumb_dir(app_data) -> Path:
+    return Path(app_data) / THUMB_DIR
+
+
+def thumb_path(app_data, img_url: str) -> Path:
+    """Tên file theo hash địa chỉ ảnh (đuôi .img: giao diện nhận dạng PNG/JPEG/GIF theo nội dung)."""
+    import hashlib
+    return _thumb_dir(app_data) / (hashlib.sha1(img_url.encode("utf-8")).hexdigest()[:20] + ".img")
+
+
+def _thumb_kind(data: bytes) -> Optional[Tuple[int, int]]:
+    k = _image_kind(data)
+    if k:
+        return k[1], k[2]
+    if data[:6] in (b"GIF87a", b"GIF89a") and len(data) >= 10:
+        return int.from_bytes(data[6:8], "little"), int.from_bytes(data[8:10], "little")
+    return None
+
+
+def _queue_thumbs(app_data, page: Dict[str, Any], referer: str) -> int:
+    """Gắn "thumb" (đường dẫn file sẽ có) vào link có ảnh và vào trang; ghi hàng đợi các ảnh chưa có. Trả số ảnh chờ tải."""
+    todo, seen = [], set()
+
+    def want(img: str) -> str:
+        if not img:
+            return ""
+        p = thumb_path(app_data, img)
+        if p.with_suffix(".bad").exists():
+            return ""                                      # đã thử, không phải ảnh dùng được: không hiện ô trống
+        if img not in seen and len(seen) < THUMB_MAX:
+            seen.add(img)
+            if not p.exists():
+                todo.append({"url": img, "path": str(p)})
+        return str(p) if img in seen else ""
+    page["image_thumb"] = want(page.get("image") or "")
+    for l in page["links"]:
+        l["thumb"] = want(l.get("img") or "")
+    if todo:
+        d = _thumb_dir(app_data)
+        d.mkdir(parents=True, exist_ok=True)
+        q = _queue_file(app_data, referer)
+        tmp = q.with_suffix(".tmp")
+        tmp.write_text(json.dumps({"referer": referer, "items": todo}), encoding="utf-8")
+        os.replace(tmp, q)
+    return len(todo)
+
+
+def _queue_file(app_data, page_url: str) -> Path:
+    """Một hàng đợi mỗi trang: bị dừng giữa chừng (sang trang khác) thì lần chạy sau làm tiếp, không mất."""
+    import hashlib
+    return _thumb_dir(app_data) / ("queue-" + hashlib.sha1(page_url.encode("utf-8")).hexdigest()[:16] + ".json")
+
+
+def _prune_thumbs(d: Path) -> None:
+    try:
+        files = [(p.stat().st_mtime, p.stat().st_size, p) for p in d.iterdir() if p.suffix in (".img", ".bad")]
+    except OSError:
+        return
+    total = sum(s for _, s, _ in files)
+    now = time.time()
+    for m, _, p in files:                                  # ảnh "hỏng" có thể chỉ do mạng chập chờn: cho thử lại sau một ngày
+        if p.suffix == ".bad" and now - m > 86400:
+            try:
+                p.unlink()
+            except OSError:
+                pass
+    for q in d.glob("queue*.json"):                       # hàng đợi bỏ dở quá lâu
+        try:
+            if now - q.stat().st_mtime > 86400:
+                q.unlink()
+        except OSError:
+            pass
+    if total <= THUMB_CACHE_BYTES and len(files) <= 3000:
+        return
+    for _, size, p in sorted(files, key=lambda x: x[0]):
+        if total <= THUMB_CACHE_KEEP and len(files) <= 2000:
+            break
+        try:
+            p.unlink()
+        except OSError:
+            continue
+        total -= size
+        files = files[1:]
+
+
+def fetch_thumbs(app_data, session: Optional[Session] = None, budget_s: float = 120.0, first: Optional[str] = None) -> Dict[str, Any]:
+    """Tải ảnh trong các hàng đợi (mỗi trang một hàng đợi; trang `first` trước, rồi trang mở gần nhất). Chỉ https công khai (Session
+    kiểm mọi bước chuyển hướng), tối đa THUMB_MAX_BYTES, chỉ PNG/JPEG/GIF thật. Ghi tạm rồi đổi tên; ảnh hỏng -> file .bad.
+    Hàng đợi chỉ bị xoá khi đã làm hết, nên bị dừng giữa chừng thì lần sau làm tiếp. Không ném lỗi mạng."""
+    d = _thumb_dir(app_data)
+    try:
+        queues = sorted(d.glob("queue*.json"), key=lambda q: q.stat().st_mtime, reverse=True)
+    except OSError:
+        queues = []
+    if first:
+        fq = _queue_file(app_data, first)
+        queues.sort(key=lambda q: q != fq)
+    if not queues:
+        return {"success": True, "fetched": 0, "failed": 0, "message": "Không có ảnh nào chờ tải."}
+    sess = session or Session(min_interval=0.05)
+    t0, ok, bad = time.monotonic(), 0, 0
+    for q in queues:
+        try:
+            job = json.loads(q.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        referer = job.get("referer") if isinstance(job.get("referer"), str) else None
+        finished = True
+        for it in (job.get("items") or [])[:THUMB_MAX]:
+            if time.monotonic() - t0 > budget_s:
+                finished = False
+                break
+            url, path = it.get("url"), Path(str(it.get("path") or ""))
+            if not isinstance(url, str) or path.parent != d or path.suffix != ".img" or path != thumb_path(app_data, url):
+                continue                                   # hàng đợi chỉ được ghi vào đúng thư mục ảnh, đúng tên theo hash
+            if path.exists() or path.with_suffix(".bad").exists():
+                continue
+            data = None
+            try:
+                headers = {"Accept": "image/jpeg,image/png,image/gif;q=0.9,*/*;q=0.1"}
+                if referer:
+                    headers["Referer"] = referer
+                with sess.request(normalize_url(url), headers) as resp:
+                    if resp.status == 200:
+                        data = resp.read(THUMB_MAX_BYTES + 1)
+            except (LibError, OSError, ValueError, http.client.HTTPException):
+                data = None
+            dims = _thumb_kind(data) if data and len(data) <= THUMB_MAX_BYTES else None
+            try:
+                if dims and 0 < dims[0] <= THUMB_MAX_PX and 0 < dims[1] <= THUMB_MAX_PX:
+                    tmp = path.with_suffix(".part")
+                    tmp.write_bytes(data)
+                    os.replace(tmp, path)
+                    ok += 1
+                else:
+                    path.with_suffix(".bad").write_bytes(b"")
+                    bad += 1
+            except OSError:
+                finished = False                           # thẻ đầy/lỗi ghi: dừng, lần sau thử lại
+                break
+        if not finished:
+            break
+        try:
+            q.unlink()
+        except OSError:
+            pass
+    _prune_thumbs(d)
+    return {"success": True, "fetched": ok, "failed": bad, "message": f"Đã tải {ok} ảnh bìa ({bad} ảnh không dùng được)."}
+
+
 def open_url(app_data, url: str, session: Optional[Session] = None) -> Dict[str, Any]:
     """Trang HTML -> phân tích link/form. Mọi thứ khác -> báo là file (KHÔNG đọc body). Lỗi mạng/TLS/chặn -> LibError."""
     sess = session or Session()
@@ -645,6 +942,10 @@ def open_url(app_data, url: str, session: Optional[Session] = None) -> Dict[str,
         filtered = [l for l in page["links"] if l["url"] != res_url and not (res_name and res_ext and _name_for(l["url"], "") == res_name and l["url"] != res_url)]
         page["links"] = [entry] + filtered
     links = page["links"]
+    try:
+        queued = _queue_thumbs(app_data, page, final)
+    except OSError:
+        queued = 0                                     # không ghi được hàng đợi ảnh: trang vẫn mở, chỉ thiếu ảnh bìa
     files = sum(1 for x in links if x["file"])
     same = sum(1 for x in links if not x["file"] and x["zone"] == "main" and x["same_site"])
     ext_n = sum(1 for x in links if not x["file"] and x["zone"] == "main" and not x["same_site"])
@@ -656,6 +957,8 @@ def open_url(app_data, url: str, session: Optional[Session] = None) -> Dict[str,
     return {"success": True, "kind": "page", "url": final, "host": host, "title": page["title"], "links": links, "forms": page["forms"],
             "truncated": page["truncated"] or over, "dropped_insecure": page["dropped_insecure"],
             "hidden_junk": page["hidden_junk"], "js_download": page["js_download"],
+            "image": page.get("image") or "", "image_thumb": page.get("image_thumb") or "", "thumbs_queued": queued,
+            "next": page["pager"].get("next", ""), "prev": page["pager"].get("prev", ""),
             "counts": {"files": files, "pages": same, "external": ext_n, "nav": nav}}
 
 
@@ -703,8 +1006,11 @@ def _problem(name: str, content_type: str, size: Optional[int]) -> Optional[str]
         return "Liên kết này mở ra trang web, không phải file (thường là trang quảng cáo/đếm ngược). Hãy mở nó như một trang để tìm link tải thật."
     if ext in imp.EXEC_EXTS:
         return "file thực thi/script — bị chặn"
-    if ext in imp.UNSUPPORTED_ARCHIVE_EXTS:
-        return "%s chưa hỗ trợ giải nén trên máy: tải trên PC rồi giải nén" % ext
+    if ext in imp.UNSUPPORTED_ARCHIVE_EXTS:          # .7z/.rar/...: tải xong tự giải nén rồi cài (libsource._install); thiếu 7-Zip mới chặn
+        from engine import archive
+        why = archive.download_problem(name)
+        if why:
+            return why
     if size is None:
         return "máy chủ không báo kích thước file — không tải được an toàn"
     if size == 0:
@@ -882,20 +1188,29 @@ def _rom_of(result: Dict[str, Any]) -> Optional[Path]:
     return next((d for d in dests if d.suffix.lower() != ".bin"), dests[0] if dests else None)
 
 
-def attach_covers(results: List[Dict[str, Any]], page_url: str, session: Optional[Session] = None) -> List[str]:
-    """Gắn ảnh bìa cho game vừa cài từ trang `page_url`. Ghi ra kết quả từng game: "cover" (đường dẫn) hoặc "cover_note"."""
-    todo = [r for r in results if r.get("status") == "installed" and _rom_of(r) is not None]
-    if not todo or not page_url:
+def attach_covers(results: List[Dict[str, Any]], page_url: str, session: Optional[Session] = None,
+                  cover_url: Optional[str] = None) -> List[str]:
+    """Gắn ảnh bìa cho game vừa cài từ trang `page_url`. Ghi ra kết quả từng game: "cover" (đường dẫn) hoặc "cover_note".
+    cover_url: ảnh bìa của trang game mà người dùng đi qua để tới link tải (giao diện mang theo qua các bước tải, vì trang tải cuối
+    thường không có ảnh) — thử TRƯỚC ảnh khớp tên trên trang tải."""
+    # game đã có sẵn (tải lại) cũng được gắn ảnh nếu chưa có ảnh — ảnh có sẵn luôn được giữ nguyên
+    todo = [r for r in results if r.get("status") in ("installed", "already_present") and _rom_of(r) is not None]
+    cover_url = _https_img(cover_url, cover_url) if cover_url else ""
+    if not todo or not (page_url or cover_url):
         return []
     sess = session or Session()
     notes: List[str] = []
-    try:
-        with sess.request(page_url, {"Accept": "text/html,*/*"}) as resp:
-            if resp.status != 200 or _ctype(resp) not in PAGE_TYPES:
-                return [f"Không đọc lại được trang để lấy ảnh bìa (HTTP {resp.status})."]
-            html_text = decode_body(resp.read(MAX_PAGE_BYTES), resp.getheader("Content-Type") or "")
-    except (LibError, OSError, http.client.HTTPException) as e:
-        return [f"Không đọc lại được trang để lấy ảnh bìa: {e}"]
+    html_text = ""
+    if page_url:
+        try:
+            with sess.request(page_url, {"Accept": "text/html,*/*"}) as resp:
+                if resp.status == 200 and _ctype(resp) in PAGE_TYPES:
+                    html_text = decode_body(resp.read(MAX_PAGE_BYTES), resp.getheader("Content-Type") or "")
+                elif not cover_url:
+                    return [f"Không đọc lại được trang để lấy ảnh bìa (HTTP {resp.status})."]
+        except (LibError, OSError, http.client.HTTPException) as e:
+            if not cover_url:
+                return [f"Không đọc lại được trang để lấy ảnh bìa: {e}"]
     for r in todo:
         rom = _rom_of(r)
         parts = rom.parts
@@ -912,7 +1227,7 @@ def attach_covers(results: List[Dict[str, Any]], page_url: str, session: Optiona
         if any((stem + e).lower() in existing for e in _ART_EXTS):
             r["cover_note"] = "đã có ảnh bìa — giữ nguyên"
             continue
-        cands = cover_candidates(html_text, page_url, rom.name)
+        cands = ([(1.0, cover_url)] if cover_url else []) + (cover_candidates(html_text, page_url, rom.name) if html_text else [])
         if not cands:
             r["cover_note"] = "trang không có ảnh khớp tên game — bỏ qua (dùng Scrape Artwork của Leaf nếu cần)"
             continue
@@ -948,7 +1263,7 @@ def attach_covers(results: List[Dict[str, Any]], page_url: str, session: Optiona
 
 
 def fetch(env, urls: List[str], card_pref: str = "auto", progress=None, conflict: str = "keep",
-          session: Optional[Session] = None, from_page: Optional[str] = None) -> Dict[str, Any]:
+          session: Optional[Session] = None, from_page: Optional[str] = None, cover_url: Optional[str] = None) -> Dict[str, Any]:
     """from_page: trang chứa link tải; cài xong thì gắn ảnh bìa khớp đúng game từ trang đó (trước khi Leaf quét lại)."""
     pl = prepare(env, urls, card_pref, session)
     if not pl["ok"]:
@@ -961,9 +1276,9 @@ def fetch(env, urls: List[str], card_pref: str = "auto", progress=None, conflict
     libsource._ledger(env.app_data, "job_created", job=job["job_id"], node=JOB_NODE, root=JOB_ROOT, files=len(urls), bytes=pl["total_bytes"])
     out = libsource.run_job(env, d, progress, conflict, session=session)
     out["started"] = True
-    if from_page and out.get("installed"):
+    if (from_page or cover_url) and (out.get("installed") or out.get("already")):
         try:
-            covers = attach_covers(out.get("results") or [], normalize_url(from_page), session)
+            covers = attach_covers(out.get("results") or [], normalize_url(from_page) if from_page else "", session, cover_url)
         except (LibError, ValueError) as e:
             covers = [f"Bỏ qua ảnh bìa: {e}"]
         if covers:

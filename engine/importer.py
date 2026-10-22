@@ -2,7 +2,8 @@
 Local Importer cho LoongMate (Library Sources, giai đoạn A) — nhập game do NGƯỜI DÙNG TỰ ĐƯA VÀO máy.
 
 PHẠM VI PHÁP LÝ: chỉ nhập file có sẵn trên máy/thẻ (bản dump của chính họ, homebrew). Module này KHÔNG có
-bất kỳ chức năng tải/cào website nào. Không gọi binary ngoài (7z/unrar): .7z/.rar báo "chưa hỗ trợ trên máy".
+bất kỳ chức năng tải/cào website nào. Archive khác .zip (.7z, .rar, .tar.*...): mục "cần giải nén", giải bằng engine/archive.py
+(7-Zip đi kèm pak) theo yêu cầu người dùng, ra Import/<tên>/, rồi nhập như thư mục thường.
 
 Nguồn nhập
   * <thẻ>/Import/ ở gốc MỖI thẻ (file lẻ, .zip, thư mục con) và đường dẫn tuỳ ý (CLI: import scan PATH...).
@@ -48,6 +49,7 @@ NGUỒN HEADER (đối chiếu tài liệu kỹ thuật; không có ROM thương
 """
 
 import hashlib
+import dataclasses
 import json
 import os
 import re
@@ -62,6 +64,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+from engine import archive
 from engine.artwork import _fsync_dir, canon_system, system_dirs
 from engine.doctor import CUE_FILE_LINE_RE, decode_playlist_bytes
 from engine.inventory import compute_sha256, find_systems_catalog, is_safe_relative_path
@@ -86,6 +89,7 @@ class Limits:
     ratio_min_bytes: int = 4 * MB
     reserve_bytes: int = 128 * MB
     max_bios_bytes: int = 16 * MB
+    rom_exec_exts: frozenset = frozenset()     # đuôi trông như file chạy được nhưng là ROM của hệ do pak thêm (J2ME: .jar)
 
 
 DEFAULT_LIMITS = Limits()
@@ -189,6 +193,28 @@ def _pid_alive(pid: Any, boot_id: str) -> bool:
 # ======================================================================================
 # danh mục hệ máy / BIOS
 # ======================================================================================
+def with_leaf_paks(catalog: Dict[str, Any], cards) -> Dict[str, Any]:
+    """Thêm hệ do pak của Leaf khai báo (J2ME.pak: Roms/J2ME, .jar/.kjx) vào danh mục, chỉ khi pak thật sự được cài
+    trên thẻ Leaf. "pak_exts": đuôi của các hệ đó (scan() cho phép .jar khi có hệ nhận nó)."""
+    from engine import leafsys
+    primary = (cards or {}).get("primary")
+    leaf = leafsys.load(primary) if primary else None
+    entries = leafsys.pak_catalog_entries(leaf)
+    if not entries:
+        return catalog
+    cat = {"by_id": dict(catalog["by_id"]), "ext": {k: list(v) for k, v in catalog["ext"].items()},
+           "zip_only": list(catalog["zip_only"]), "pak_exts": set(catalog.get("pak_exts") or ())}
+    for s in entries:
+        if s["id"] in cat["by_id"]:
+            continue
+        cat["by_id"][s["id"]] = s
+        for e in s["extensions"]:
+            if e not in (".zip", ".7z"):
+                cat["ext"].setdefault(e, []).append(s["id"])
+                cat["pak_exts"].add(e)
+    return cat
+
+
 def load_catalog(path: Optional[Path] = None) -> Dict[str, Any]:
     p = Path(path) if path else find_systems_catalog()
     data = json.loads(Path(p).read_text(encoding="utf-8"))
@@ -408,6 +434,7 @@ class Source:
         self.lookup_dir: Optional[Path] = None
         self.skipped: List[Dict[str, str]] = []
         self.unsupported: Optional[str] = None
+        self.unpack = False                  # archive cần giải nén trước (engine/archive.py), theo yêu cầu người dùng
 
     def close(self) -> None:
         if self.zf is not None:
@@ -431,9 +458,9 @@ def _check_member_name(rel_parts: List[str], limits: Limits) -> List[str]:
     return probs
 
 
-def _check_ext(name: str) -> Optional[str]:
+def _check_ext(name: str, limits: Optional["Limits"] = None) -> Optional[str]:
     e = _ext(name)
-    if e in EXEC_EXTS:
+    if e in EXEC_EXTS and not (limits and e in limits.rom_exec_exts):
         return f"file thực thi/script '{name}' (đuôi {e})"
     if e in ARCHIVE_EXTS:
         return f"archive lồng nhau '{name}' (MVP không giải nén lồng)"
@@ -456,7 +483,7 @@ def collect_zip(path: Path, card, in_import, limits: Limits) -> Source:
         arch_size = path.stat().st_size
     except OSError:
         arch_size = 0
-    total, seen, probs = 0, {}, []
+    total, seen, probs, encrypted = 0, {}, [], False
     for zi in infos:
         parts, p = _split_member(zi.filename)
         mode = (zi.external_attr >> 16) & 0xFFFF if zi.create_system == 3 else 0
@@ -465,6 +492,7 @@ def collect_zip(path: Path, card, in_import, limits: Limits) -> Source:
             p.append("symlink/hardlink/device trong archive" if kind == stat.S_IFLNK else "loại file đặc biệt (device/fifo/socket)")
         if zi.flag_bits & 0x1:
             p.append("entry có mật khẩu")
+            encrypted = True
         if zi.is_dir() or kind == stat.S_IFDIR:
             if p:
                 probs += [f"'{zi.filename}': {x}" for x in p]
@@ -478,7 +506,7 @@ def collect_zip(path: Path, card, in_import, limits: Limits) -> Source:
                 zi.compress_size == 0 or zi.file_size / zi.compress_size > limits.max_ratio):
             p.append(f"tỉ lệ nén bất thường (> {limits.max_ratio}:1) — nghi zip bomb")
         if parts:
-            e = _check_ext(parts[-1])
+            e = _check_ext(parts[-1], limits)
             if e:
                 p.append(e)
             key = "/".join(parts).lower()
@@ -494,6 +522,10 @@ def collect_zip(path: Path, card, in_import, limits: Limits) -> Source:
         probs.append(f"tổng giải nén {total // MB} MB > {limits.max_total_bytes // MB} MB")
     if total >= limits.ratio_min_bytes and arch_size and total / arch_size > limits.max_ratio:
         probs.append(f"tỉ lệ nén cả archive bất thường (> {limits.max_ratio}:1) — nghi zip bomb")
+    if encrypted and in_import and archive.supported(path.name)[0]:
+        src.unpack = True            # zip có mật khẩu: giải bằng 7-Zip như .7z/.rar (chọn mật khẩu, kiểm lại toàn bộ khi giải)
+        src.members = []
+        return src
     src.problems += _cap(probs)
     return src
 
@@ -539,7 +571,7 @@ def collect_dir(path: Path, card, in_import, limits: Limits) -> Source:
                 continue
             if st.st_size > limits.max_file_bytes:
                 p.append(f"file quá lớn ({st.st_size // MB} MB)")
-            e = _check_ext(en.name)
+            e = _check_ext(en.name, limits)
             if e:
                 p.append(e)
             total += st.st_size
@@ -577,7 +609,7 @@ def collect_pool(files: List[Path], card, in_import, limits: Limits, lookup_dir:
             m.problems.append("loại file đặc biệt (device/fifo/socket)")
         else:
             m.problems += _check_member_name([f.name], limits)
-            e = _check_ext(f.name)
+            e = _check_ext(f.name, limits)
             if e:
                 m.problems.append(e)
             if st.st_size > limits.max_file_bytes:
@@ -697,6 +729,11 @@ def discover_units(src: Source, catalog, bios, limits: Limits) -> List[Dict[str,
     if src.unsupported:
         u = _base_unit(src, src.path.name, "rom", [])
         u.update(status="unsupported", reasons=[src.unsupported], bytes=_safe_size(src.path))
+        return [u]
+    if src.unpack:
+        u = _base_unit(src, src.path.name, "rom", [])
+        u.update(status="needs_unpack", bytes=_safe_size(src.path), archive=str(src.path),
+                 reasons=[f"Archive {_ext(src.path.name)}: bấm GIẢI NÉN, nội dung ra Import/ rồi nhập như thường."])
         return [u]
     if src.problems:
         u = _base_unit(src, src.path.name, "rom", [])
@@ -949,7 +986,9 @@ def _enumerate(paths, cards, limits: Limits) -> Tuple[List[Source], List[Dict[st
                     out.append(collect_dir(kp, card_of, True, limits))
                 elif _ext(k.name) == ".zip":
                     out.append(collect_zip(kp, card_of, True, limits))
-                elif _ext(k.name) in UNSUPPORTED_ARCHIVE_EXTS:
+                elif archive.is_volume_rest(k.name):
+                    continue                            # phần 2+ của archive nhiều phần: đi kèm phần đầu
+                elif archive.can_unpack_name(k.name) or _ext(k.name) in UNSUPPORTED_ARCHIVE_EXTS:
                     out.append(_unsupported(kp, card_of, True))
                 else:
                     loose.append(kp)
@@ -959,7 +998,7 @@ def _enumerate(paths, cards, limits: Limits) -> Tuple[List[Source], List[Dict[st
             out.append(collect_dir(p, None, False, limits))
         elif _ext(p.name) == ".zip":
             out.append(collect_zip(p, None, False, limits))
-        elif _ext(p.name) in UNSUPPORTED_ARCHIVE_EXTS:
+        elif archive.can_unpack_name(p.name) or _ext(p.name) in UNSUPPORTED_ARCHIVE_EXTS:
             out.append(_unsupported(p, None, False))
         else:
             out.append(collect_pool([p], None, False, limits, p.parent))
@@ -967,8 +1006,13 @@ def _enumerate(paths, cards, limits: Limits) -> Tuple[List[Source], List[Dict[st
 
 
 def _unsupported(p: Path, card, in_import) -> Source:
+    """Archive khác .zip: giải được (7-Zip đi kèm / thư viện chuẩn) và nằm trong Import/ -> "cần giải nén"; không thì báo."""
     s = Source(p, "file", card, in_import)
-    s.unsupported = f"{_ext(p.name)}: {MSG_NO_7Z}"
+    ok, why = archive.supported(p.name)
+    if ok and in_import:
+        s.unpack = True
+    else:
+        s.unsupported = f"{_ext(p.name)}: {why if not ok else MSG_NO_7Z}"
     return s
 
 
@@ -983,8 +1027,11 @@ def _blocked_pool(p: Path, card, why: str) -> Source:
 # ======================================================================================
 def scan(paths: Optional[List[Any]], cards: Dict[str, Optional[Path]], limits: Limits = DEFAULT_LIMITS,
          catalog=None, bios=None) -> Dict[str, Any]:
-    catalog = catalog or load_catalog()
+    catalog = catalog or with_leaf_paks(load_catalog(), cards)
     bios = bios or load_bios_md5()
+    allow = frozenset(set(catalog.get("pak_exts") or ()) & EXEC_EXTS)
+    if allow:
+        limits = dataclasses.replace(limits, rom_exec_exts=limits.rom_exec_exts | allow)
     dirs = [{"card": cid, "path": str(import_dir(c)), "exists": import_dir(c).is_dir()}
             for cid, c in cards.items() if c]
     roots = [Path(p) for p in paths] if paths else default_roots(cards)
@@ -1011,7 +1058,8 @@ def scan(paths: Optional[List[Any]], cards: Dict[str, Optional[Path]], limits: L
     for u in units:
         counts[u["status"]] = counts.get(u["status"], 0) + 1
     return {"import_dirs": dirs, "scan_roots": [str(r) for r in roots], "units": units, "errors": errors,
-            "skipped": skipped, "summary": counts, "limits": asdict(limits)}
+            "skipped": skipped, "summary": counts,
+            "limits": {k: sorted(v) if isinstance(v, frozenset) else v for k, v in asdict(limits).items()}}
 
 
 # ======================================================================================
@@ -1153,7 +1201,7 @@ def _annotate(u: Dict[str, Any], root: Optional[Path], catalog, lib: LibIndex, m
     """Thêm action/dest/conflict vào unit (CHỈ ĐỌC). Hash nội dung mới chỉ tính khi có file cùng kích thước đã tồn tại."""
     u.setdefault("action", "blocked")
     st = u["status"]
-    if st in ("blocked", "unsupported", "empty"):
+    if st in ("blocked", "unsupported", "empty", "needs_unpack"):
         u["action"] = st
         return
     if u["kind"] == "bios":
@@ -1208,7 +1256,7 @@ def build_plan(paths, cards, app_data, card_pref: str = "auto", select: Optional
                limits: Limits = DEFAULT_LIMITS, hashcache=None, catalog=None, bios=None,
                choices: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
     """scan + chọn thẻ + kiểm trùng. CHỈ ĐỌC. `select` = các id unit được duyệt (None = mọi unit)."""
-    catalog = catalog or load_catalog()
+    catalog = catalog or with_leaf_paks(load_catalog(), cards)
     sc = scan(paths, cards, limits, catalog, bios)
     units = sc["units"]
     if select is not None:
@@ -1343,7 +1391,7 @@ def apply_plan(plan: Dict[str, Any], cards, app_data, choices: Optional[Dict[str
                progress: Optional[Callable[[Dict[str, Any]], None]] = None) -> Dict[str, Any]:
     """Thực hiện kế hoạch. `plan` = dict của build_plan (hoặc đọc từ file: cần 'card', 'units', 'scan_roots').
     Không bao giờ tự đổi thẻ: plan['card']['selected'] phải có. Trả kết quả từng unit."""
-    catalog = catalog or load_catalog()
+    catalog = catalog or with_leaf_paks(load_catalog(), cards)
     bios = bios or load_bios_md5()
     choices, conflicts = choices or {}, conflicts or {}
     bios_all = "all" in set(bios_ok)
@@ -1388,7 +1436,7 @@ def apply_plan(plan: Dict[str, Any], cards, app_data, choices: Optional[Dict[str
                 r.update(status="blocked", message="nguồn đã đổi hoặc không còn kể từ lúc lập kế hoạch — lập lại kế hoạch")
                 continue
             s, u = fresh[uid]
-            if u["status"] in ("blocked", "unsupported", "empty"):
+            if u["status"] in ("blocked", "unsupported", "empty", "needs_unpack"):
                 r.update(status="blocked", message="; ".join(u["reasons"]) or u["status"])
                 continue
             if u["kind"] == "bios":
@@ -1530,19 +1578,22 @@ def _do_unit(src: Source, u, r, rec, job, job_dir: Path, root: Path, catalog, co
     folder = catalog["by_id"][system].get("folder") or system
     pairs = [(f, p) for f, (_, p) in zip(rec["files"], _final_paths(root, u, system, catalog))]
     # kiểm trùng bằng hash THẬT của file đã staging (không dùng hash ghi trong kế hoạch)
-    present, conflicts, todo_pairs = 0, [], []
+    present, conflicts, todo_pairs, existing = 0, [], [], []
     for f, dst in pairs:
         ex = _exists_ci(dst)
         if ex is not None and os.path.getsize(ex) == f["size"] and _sha256_path(Path(ex)) == f["sha256"]:
             present += 1                                 # đúng file này đã nằm đúng chỗ: không đụng
+            existing.append(str(ex))
             continue
-        if lib.find_identical(folder, f["size"], f["sha256"]):
+        same = lib.find_identical(folder, f["size"], f["sha256"])
+        if same:
             present += 1                                 # cùng nội dung đã có ở chỗ khác trong thư viện
+            existing.append(str(same))
         todo_pairs.append((f, dst))                      # nếu cả bộ chưa đủ thì file này vẫn được cài cùng bộ
         if ex is not None:
             conflicts.append((f, dst, ex))               # tên đích bị chiếm bởi nội dung KHÁC
     if present == len(pairs):
-        r.update(status="already_present", message="đã có trong thư viện (cùng SHA-256) — không cài lại")
+        r.update(status="already_present", message="đã có trong thư viện (cùng SHA-256) — không cài lại", dest=existing)
         rec["state"] = "skipped"
         _ledger(app_data, "unit_present", job=job["job_id"], unit=uid)
         return

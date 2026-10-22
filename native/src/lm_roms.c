@@ -168,7 +168,8 @@ static void build_games(ui_screen *s) {
             if (nm > vis) ui_hdr(s, tr("Đã chọn %d game · %s, %d đang bị bộ lọc ẩn."), nm, mbs(mbytes), nm - vis);
             else ui_hdr(s, tr("Đã chọn %d game · %s."), nm, mbs(mbytes));
         } else ui_hdr(s, tr("Đã chọn 0 game."));
-        ui_hdr(s, tr("Y: đổi sắp xếp. A ở mục Lọc: đổi lọc. X: chọn nhiều game để xoá một lần. A ở game: xoá riêng game đó."));
+        ui_hdr(s, nm ? tr("Y: đổi sắp xếp. X: chọn/bỏ chọn. A ở game: xoá TẤT CẢ game đã chọn (kể cả game đó).")
+                   : tr("Y: đổi sắp xếp. A ở mục Lọc: đổi lọc. X: chọn nhiều game để xoá một lần. A ở game: xoá riêng game đó."));
     } else {
         ui_hdr(s, tr("Hệ %s. A: xem kế hoạch chuyển rồi mới xác nhận (mặc định Huỷ). Chuyển nhiều game một lần: thiếu CLI (lệnh `move` chỉ nhận MỘT game mỗi kế hoạch)."), s->key);
     }
@@ -228,7 +229,8 @@ static void build_games(ui_screen *s) {
         else if (!strcasecmp(ext, ".png") || !strcasecmp(ext, ".jpg") || !strcasecmp(ext, ".jpeg") || !strcasecmp(ext, ".bmp"))
             ui_exp(it, tr("! Đây là file ảnh nằm trong Roms/ (thường là Imgs/), không phải ROM — `roms --json` liệt kê mọi file trong Roms/."));
         else if (!strcasecmp(ext, ".bin")) ui_exp(it, tr("! File .bin lẻ (không thấy .cue cùng tên): engine có thể từ chối nếu nó là track của game khác."));
-        ui_act(it, 0, mode == RB_DELETE ? tr("XOÁ…") : tr("CHUYỂN…"), act_game);
+        if (mode == RB_DELETE && nm) ui_exp(it, tr("A — xoá tất cả game đã chọn (kể cả game này), có xem trước và xác nhận."));
+        ui_act(it, 0, mode == RB_DELETE ? (nm ? tr("XOÁ ĐÃ CHỌN…") : tr("XOÁ…")) : tr("CHUYỂN…"), act_game);
         if (mode == RB_DELETE) {
             ui_act(it, 1, mk ? tr("BỎ CHỌN") : tr("CHỌN"), act_toggle);
             ui_act(it, 2, ylbl, act_toggle_sort);
@@ -337,6 +339,12 @@ static void start_preview(char **paths, int n) {
 static void act_game(ui_screen *s, ui_item *it) {
     int mode = s->ia / 10;
     if (mode == RB_DELETE) {
+        /* đã chọn (X) game khác: A xoá TẤT CẢ game đã chọn, gồm cả game này (vẫn qua xem trước + xác nhận) */
+        if (g_mark && it->iarg >= 0 && it->iarg < g_n && marked_count(s, NULL)) {
+            g_mark[it->iarg] = 1;
+            act_delete_marked(s, it);
+            return;
+        }
         char *p = it->arg;
         start_preview(&p, 1);
     } else {

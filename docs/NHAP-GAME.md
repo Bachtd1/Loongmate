@@ -43,7 +43,7 @@ của Leaf (`SDCARD_PATH`, `UMRK_SECONDARY_SDCARD_PATH`), không ghi cứng `/mn
 | File thực thi/script | đuôi `.sh .exe .bat .cmd .com .msi .apk .elf .so .dll .dylib .py .pyc .js .jar .ps1 .vbs .scr .pl .rb .php`, magic ELF, PE (`MZ`→`PE\0\0`), shebang `#!/` (chỉ khi không phải ROM nhận diện được) |
 | Archive lồng nhau | `.zip .7z .rar .gz .tar .bz2 .xz .zst .cab...` bên trong archive/thư mục: chặn |
 | Zip bomb | giới hạn (bảng dưới) + tỉ lệ nén theo entry **và** cả archive; đếm byte THẬT khi giải nén, không tin kích thước khai báo |
-| Zip hỏng / có mật khẩu / nén lạ | CRC kiểm từng entry khi giải nén; entry mật khẩu và phương pháp nén lạ bị chặn |
+| Zip hỏng / có mật khẩu / nén lạ | CRC kiểm từng entry khi giải nén; phương pháp nén lạ bị chặn; zip có mật khẩu đi qua GIẢI NÉN (dưới) |
 | Tên trùng không phân biệt hoa/thường, ký tự FAT32 cấm | trùng: chặn; ký tự cấm: đổi `_` với file lẻ, **chặn** với game nhiều file (đổi tên sẽ làm hỏng tham chiếu `.cue`) |
 | Ghi đè save/state/BIOS | đích luôn là `Roms/<hệ>/…` (kiểm canonical); save/state trong gói bị bỏ qua; BIOS đã có không bao giờ bị ghi đè |
 | Mất điện / reboot giữa chừng | staging cùng thẻ + nhật ký `job.json` ghi TRƯỚC khi đụng `Roms/`; xem "Phục hồi" |
@@ -65,8 +65,17 @@ của Leaf (`SDCARD_PATH`, `UMRK_SECONDARY_SDCARD_PATH`), không ghi cứng `/mn
 
 ## Định dạng hỗ trợ và phân loại
 
-- File ROM đơn, `.zip` (thư viện chuẩn `zipfile`), thư mục. **`.7z`/`.rar` (và `.gz .tar ...`) chưa hỗ trợ trên máy**: báo "giải nén trên PC rồi
-  đưa file ROM (hoặc .zip) vào Import/". Không gọi binary ngoài (máy không có `7z`/`unrar`).
+- File ROM đơn, `.zip` (thư viện chuẩn `zipfile`), thư mục.
+- **`.7z`, `.rar` (RAR4/RAR5), `.tar(.gz/.bz2/.xz)`, `.gz`, `.bz2`, `.xz`, `.zst`, `.cab`, `.lzh`, `.arj`** (và `.zip` có mật khẩu): mục hiện
+  trạng thái "giải nén", bấm **GIẢI NÉN** (`import unpack PATH --yes`, `engine/archive.py`). Liệt kê nội dung và kiểm như zip TRƯỚC khi ghi
+  (đường dẫn, link/thiết bị, kích thước, tỉ lệ nén, chỗ trống), giải vào `<thẻ>/.loongmate-import/.unpack-*/` cùng thẻ, kiểm lại cây đã giải,
+  rồi đổi tên thành `Import/<tên>/`; archive gốc (cả các phần `.partN.rar`/`.r00`/`.7z.002`) vào `Import/.done/`. Lỗi thì không để lại gì.
+  tar/gz/bz2/xz dùng thư viện chuẩn (tự ghi từng file, không bao giờ tạo link); còn lại dùng 7-Zip chính thức đi kèm
+  (`LoongMate.pak/bin/7zzs`, 26.04 tĩnh ARM64, `pak/fetch-7zip.sh` tải theo SHA-256 ghim), gọi bằng danh sách tham số, không shell.
+- **Mật khẩu**: không dò. Thử tối đa 30 ứng viên lấy từ chú thích archive, tên file (`[pass xyz]`), file `.txt/.nfo` cạnh archive
+  (dòng `pass:`/`mật khẩu:`, hoặc mọi dòng của `password*.txt`), `Import/passwords.txt` (người dùng ghi, mỗi dòng một) và mật khẩu đã giải
+  thành công (`<userdata>/archive-passwords.txt`). Mỗi lần thử chỉ đọc danh sách hoặc kiểm một file nhỏ. Không ra thì màn MẬT KHẨU ARCHIVE
+  cho chọn ứng viên hoặc gõ bằng bàn phím (`import unpack --password ...`).
 - Phân loại theo thứ tự: **header** (GB/GBC, GBA, NDS, NES/FDS, SNES, N64, Genesis/32X, SMS/GG, đĩa PSX/Saturn/Mega-CD/Dreamcast/PSP) →
   **phần mở rộng duy nhất** trong `systems.json` → **mơ hồ = hỏi** (`needs_choice`, liệt kê hệ ứng viên). Nguồn từng header ghi trong đầu `engine/importer.py`.
   Header thắng phần mở rộng (kèm cảnh báo nếu lệch).
@@ -105,7 +114,7 @@ Mã thoát: 0 ok · 1 có mục lỗi/bị chặn/chưa cài hoặc thiếu `--y
 **scan** → `{success, import_dirs:[{card,path,exists}], scan_roots, units:[Unit], errors:[{path,message}], skipped:[{source,rel,reason}], summary:{status:count}, limits}`
 
 **Unit**: `id` (ổn định theo nội dung + dấu thời gian nguồn), `source`, `source_kind` (`zip|dir|pool|file`), `card` (`primary|secondary|null`), `in_import`, `origin[]`,
-`name`, `kind` (`rom|multi|bios|archive`), `status` (`ready|needs_choice|blocked|unsupported|empty`), `system`, `folder`, `candidates[]`, `by` (`header|extension|user|null`),
+`name`, `kind` (`rom|multi|bios|archive`), `status` (`ready|needs_choice|blocked|unsupported|empty|needs_unpack`), `system`, `folder`, `candidates[]`, `by` (`header|extension|user|null`),
 `evidence`, `files:[{member,dest_rel,size,role}]`, `bytes`, `reasons[]` (lý do chặn), `warnings[]`, `bios:{name,md5,systems,dest}|null`.
 
 **plan** → như scan cộng `ok`, `message`, `card:{selected,root,reason,needs_choice,options:[{card,root,free_bytes,usable,note}],needed_bytes}`, `needs_card_choice`, `needed_bytes`,
