@@ -610,7 +610,8 @@ class TestArchiveSafety(Base):
             off = i + (6 if sig == b"PK\x03\x04" else 8)
             raw[off] |= 1
         z.write_bytes(bytes(raw))
-        self.attack(z)
+        with mock.patch("engine.archive.seven_zip", return_value=None):    # có 7-Zip thì zip mật khẩu đi đường GIẢI NÉN (test_archive)
+            self.attack(z)
 
     def test_duplicate_names_case_insensitive(self):
         z = self.imp1 / "dup.zip"
@@ -1225,7 +1226,8 @@ class TestCli(Base):
 
     def test_7z_reported_unsupported_via_cli(self):
         self.w(self.imp1 / "a.7z", b"7z" + b"0" * 20)
-        _, out = self.run_cli("import", "scan")
+        with mock.patch("engine.archive.seven_zip", return_value=None):    # máy CI có thể có 7z trong PATH
+            _, out = self.run_cli("import", "scan")
         self.assertEqual(out["units"][0]["status"], "unsupported")
 
 
