@@ -1,0 +1,40 @@
+LoongMate — Điều khoản sử dụng phần mềm miễn phí (Freeware License)
+Copyright (c) 2026 BACHTD. Mọi quyền được bảo lưu.
+
+TIẾNG VIỆT
+
+1. Được phép: tải về, cài đặt và sử dụng LoongMate miễn phí cho mục đích cá nhân, phi thương mại, trên thiết bị của bạn.
+2. Được chia sẻ nguyên vẹn gói phát hành chính thức (đúng file tải từ trang Releases của dự án), miễn phí, kèm điều khoản này.
+3. Không được:
+   a. bán, cho thuê, thu phí, đòi donate, gắn quảng cáo hoặc trục lợi dưới bất kỳ hình thức nào từ LoongMate hoặc từ nội dung
+      LoongMate tạo ra (kể cả bản Việt hoá cá nhân);
+   b. dịch ngược, giải mã, tháo rời, sửa đổi, hoặc tạo sản phẩm phái sinh từ LoongMate, trừ khi luật áp dụng cho phép rõ ràng;
+   c. phát hành lại LoongMate đã bị sửa, hoặc gộp vào gói/firmware khác mà không có sự đồng ý bằng văn bản của tác giả.
+4. LoongMate không cung cấp game, ROM hay BIOS. Bạn tự chịu trách nhiệm có quyền hợp pháp với nội dung mình dùng. Hãy tôn trọng
+   quyền sở hữu trí tuệ của nhà phát triển và nhà phát hành game.
+5. Phần mềm được cung cấp "NGUYÊN TRẠNG", không có bất kỳ bảo đảm nào. Tác giả không chịu trách nhiệm cho mọi thiệt hại phát sinh
+   từ việc sử dụng phần mềm (kể cả mất dữ liệu, save game). Hãy giữ bản sao lưu dữ liệu quan trọng.
+6. Thành phần của bên thứ ba đi kèm gói (CPython, 7-Zip, Catastrophe, cJSON...) tuân theo giấy phép gốc của từng dự án, xem thư
+   mục GIAY-PHEP trong gói phát hành. Điều khoản này không thay đổi các giấy phép đó.
+7. Các bản phát hành cũ đã công bố trước 0.4.0-beta theo giấy phép MIT vẫn theo giấy phép đó đối với bản sao đã nhận; từ 0.4.0-beta
+   áp dụng điều khoản này.
+
+ENGLISH
+
+1. You may download, install and use LoongMate free of charge for personal, non-commercial purposes on your own device.
+2. You may share the unmodified official release package (as downloaded from the project's Releases page), free of charge,
+   together with these terms.
+3. You may not:
+   a. sell, rent, charge for, request donations for, add advertising to, or otherwise profit from LoongMate or content it
+      produces (including personal Vietnamese translations);
+   b. reverse engineer, decompile, disassemble, modify or create derivative works of LoongMate, except where expressly permitted
+      by applicable law;
+   c. redistribute a modified LoongMate, or bundle it into other packages or firmware, without the author's written permission.
+4. LoongMate does not provide games, ROMs or BIOS files. You are responsible for having the legal right to the content you use.
+   Respect the intellectual property of game developers and publishers.
+5. The software is provided "AS IS", without warranty of any kind. The author is not liable for any damages arising from its use
+   (including loss of data or save games). Keep backups of important data.
+6. Third-party components shipped in the package (CPython, 7-Zip, Catastrophe, cJSON, ...) are governed by their own licenses,
+   see the GIAY-PHEP folder in the release package. These terms do not change those licenses.
+7. Earlier releases published before 0.4.0-beta under the MIT license remain under that license for copies already received;
+   these terms apply from 0.4.0-beta onwards.
