@@ -65,6 +65,7 @@ Mở [GitHub Issues](https://github.com/Bachtd1/Loongmate/issues) hoặc nhắn 
 
 | Tài liệu | Nội dung |
 | --- | --- |
+| [docs/GIOI-THIEU-DICH-GAME.md](docs/GIOI-THIEU-DICH-GAME.md) | Giới thiệu Dịch game: cách dùng chi tiết, hạn chế, hướng sắp tới |
 | [docs/DICH-GAME.md](docs/DICH-GAME.md) | Dịch game, Việt hoá cá nhân, API key |
 | [docs/MA-LOI.md](docs/MA-LOI.md) | Mã lỗi `LM-…` và cách xử lý |
 | [COMPATIBILITY.md](COMPATIBILITY.md) | Phiên bản Leaf và tính năng đã kiểm |
