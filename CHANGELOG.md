@@ -1,5 +1,31 @@
 # Thay đổi
 
+## 0.4.2-beta — 2026-10-28
+
+Việt hoá cá nhân (GB/GBC/GBA, thử nghiệm):
+
+- **Core tách chữ mới**: bước tự chọn core; bảng chữ không theo abc (FF IV–VI Advance), DTE (cặp chữ, game GB/GBC hãng Nhật),
+  Huffman (kiểu Fire Emblem GBA), chữ 16 bit (FF I&II, Sword of Mana, FFTA), tệp kịch bản kiểu Tales of Phantasia, kịch bản lệnh
+  kiểu Lufia.
+- **Câu dài hơn bản gốc ghi được ở nhiều game hơn**: GB dời câu sang bank khác, dùng lại chỗ của câu đã dời; bản ghi cố định /
+  khối RLE / bảng chỉ mục tương đối dùng hết ô chữ; câu một dòng dời được (menu, nhãn) dài thêm ~25% tới bề rộng màn GBA.
+- Nhận thêm chữ menu, tên đồ, hội thoại nhiều mã điều khiển (đối chiếu từ điển tiếng Anh).
+- **Ít lần gọi AI hơn nhiều**: gom câu theo số ký tự, câu lặp dịch một lần, chỉ gửi thuật ngữ có trong lô (Dragon Warrior I & II:
+  ~220 → 31 lần gọi). ROM châu Âu nhiều thứ tiếng: không gửi câu Pháp/Đức/Tây Ban Nha/Ý đi dịch (chỉ dịch phần tiếng Anh).
+- **6 bước có trạng thái** (Bước K/6), dịch tiếp khi dừng giữa chừng; màn **HẾT HẠN MỨC** (dịch tiếp bằng Google/offline hay để
+  mai); **Dịch lại bằng AI** các trang đã dịch bằng Google/offline.
+- **Kiểm từng byte** mỗi lần dựng bản chơi: có byte ghi ngoài vùng chữ là không cho dùng bản đó (game gốc vẫn chơi bình thường).
+- Sửa: Dragon Warrior I & II hết hạn mức nhanh rồi báo "JSON không hợp lệ" / bản Việt hoá không dùng được; 5 lỗi có thể ghi hỏng
+  ROM khi dời câu; nhiều lỗi quy trình dịch và core tách (kiểm toán).
+- Đo trên 208 game tiếng Anh có chữ: "Việt hoá tốt" 50% → 58% (đo tự động trên PC, chưa chơi thử từng game). Chi tiết, giới hạn
+  kiểm thử và hạn chế: xem ghi chú phát hành v0.4.2-beta.
+
+## 0.4.1-beta — 2026-10-25
+
+- **Dấu phủ (thử nghiệm)**: game chưa có dấu trong ROM vẫn hiện chữ không dấu, lớp phủ vẽ thêm dấu lên đúng chữ trên màn hình.
+- Việt hoá nhận thêm game ít chữ, game chỉ chữ HOA, bản Nhật đã có fan dịch tiếng Anh; sửa chỗ có thể làm hỏng game khi vá chữ
+  và lỗi cấu hình RetroArch của Dịch game.
+
 ## 0.4.0-beta — 2026-10-25
 
 LoongMate từ bản này là **phần mềm miễn phí (freeware)**: chỉ phát hành bản dựng sẵn, không kèm mã nguồn. Xem LICENSE.
