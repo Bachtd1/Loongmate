@@ -4,7 +4,7 @@ Duyệt, tải và cài game từ **thư mục ROM trên máy của chính bạn
 Pocket 1 — trong nhà qua Wi-Fi, ở xa qua **Tailscale**. LoongMate là phía Pocket 1 (màn **Thư viện riêng**); phía máy chứa
 ROM là **PocketBridge Agent**.
 
-Tải PocketBridge: **https://github.com/Bachtd1/pocketbridge/releases** (chọn bản mới nhất).
+Tải PocketBridge: **https://github.com/Bachtd1/pocket-bridge/releases** (chọn bản mới nhất).
 
 | Gói | Dùng cho |
 |---|---|

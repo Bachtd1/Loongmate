@@ -14,7 +14,7 @@ Bản sửa lỗi cho Việt hoá GB/GBC/GBA. Các phần khác (Tua nhanh, dấ
 
 - **Leaf Hot Tabs** (tự tiếp tục game từ Games/Favorites) cho Leaf v0.12.1 và v0.11.0 — xem [HOT-TABS.md](HOT-TABS.md).
 - Hướng dẫn **Thư viện game riêng qua PocketBridge + Tailscale** (cài agent trên PC/Mac/Pi, ghép đôi, đường dẫn) — xem
-  [POCKETBRIDGE.md](POCKETBRIDGE.md). PocketBridge tải ở https://github.com/Bachtd1/pocketbridge/releases.
+  [POCKETBRIDGE.md](POCKETBRIDGE.md). PocketBridge tải ở https://github.com/Bachtd1/pocket-bridge/releases.
 
 ## Số đo (kiểm tự động)
 
