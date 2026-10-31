@@ -64,9 +64,9 @@ lớp phủ dịch.
   **Không có API key**: tự dùng **Google Dịch** (miễn phí, không cần key; dịch từng câu nên kém ngữ cảnh hơn AI). Chữ có dấu vẽ
   như nhau với cả hai.
 - **Mở lần đầu**: Máy → Dịch game → (game) → **▶ Chơi bản Việt hoá** → đọc trang điều khoản → A "Đồng ý và chơi".
-- **Tự động** (sau khi đồng ý một lần): mở game từ Leaf (Games, Recents, Favorites) là ra tiếng Việt — LoongMate Agent chuẩn bị
-  sẵn bản Việt hoá trong RAM khi bạn không chơi, gỡ ngay khi game đã nạp xong, thoát game thì chuẩn bị lại. Cần bật LoongMate
-  Agent. Tắt: dòng ▶ Chơi bản Việt hoá → X "TẮT TỰ ĐỘNG".
+- **Nạp một lần**: mỗi lần muốn chơi tiếng Việt, vào LoongMate → ▶ Chơi bản Việt hoá rồi mở game từ Leaf. LoongMate Agent gỡ
+  bản Việt hoá khỏi RAM ngay khi game đã nạp xong; thoát game là về bản gốc (chơi lại tiếng Việt thì nạp lại). Không giữ bản
+  Việt hoá che ROM khi không chơi nên tắt máy không làm thẻ bị báo lỗi. Cần bật LoongMate Agent.
 - **Dịch đủ, không sót**:
   - Câu dịch dài hơn câu gốc được dời sang chỗ trống của ROM, khi tìm được con trỏ của game (kể cả bảng chỉ mục tương đối kiểu
     Boktai).

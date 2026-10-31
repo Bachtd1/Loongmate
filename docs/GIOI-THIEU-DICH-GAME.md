@@ -66,8 +66,8 @@ cho game nhận ra font như Advance Wars 1/2, Heroes of Might and Magic II, Moo
    lại là dịch tiếp phần còn thiếu.
 3. Dòng **▶ Chơi bản Việt hoá (thử nghiệm)** cho biết: có dấu / có dấu X% / **KHÔNG DẤU** (kèm lý do).
 4. Bấm **A** → đọc trang điều khoản → **Đồng ý và chơi**. LoongMate đóng lại, game mở bằng tiếng Việt.
-5. Từ đó mở game từ Leaf (Games, Recents, Favorites) là **tự động** ra tiếng Việt. Muốn chơi bản gốc: dòng ▶ Chơi bản Việt hoá →
-   **X — TẮT TỰ ĐỘNG**.
+5. Bản Việt hoá dùng **một lần**: thoát game là về bản gốc. Muốn chơi tiếng Việt lần nữa thì vào LoongMate bấm lại
+   **▶ Chơi bản Việt hoá** (bản đã dịch được giữ, chỉ dựng lại trong RAM).
 6. Dùng chung file save với game gốc. Bản Việt hoá chỉ dùng được trên máy đã dịch, game gốc trên thẻ không bị sửa.
 
 ## Hạn chế hiện tại (đọc trước khi dùng)

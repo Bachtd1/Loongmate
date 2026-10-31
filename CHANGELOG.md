@@ -1,5 +1,17 @@
 # Thay đổi
 
+## 0.5.0-beta — 2026-10-31
+
+- **Việt hoá GB/GBC/GBA**: quét 573 bản ROM — 560 chạy được với bản Việt hoá; sửa 12 game trước đây treo / màn đen (ký hiệu là
+  mã của game trong chữ, dòng trống cuối câu, game chỉ có chữ HOA, chữ canh giữa ở màn tiêu đề, con trỏ giả). 7 game còn trục
+  trặc được nhận ra tự động và không Việt hoá ROM (xem [docs/DANH-SACH-GAME.md](docs/DANH-SACH-GAME.md)).
+- **Dấu phủ**: core `mgba_vh` vẽ dấu tiếng Việt lên chữ trên màn hình; lớp phủ thêm khoảng 1% thời gian mỗi khung hình.
+- **Câu dài**: GB/GBC ~96–97% chữ Việt hoá trọn vẹn khi dùng AI (dời câu, ngắt dòng theo khung, AI rút gọn câu quá khung).
+- **Việt hoá nạp một lần**: chơi xong gỡ khỏi RAM, chơi lại thì nạp lại trong LoongMate. Sửa lỗi tắt máy Leaf báo chưa lưu /
+  đòi sửa thẻ.
+- **Tua nhanh** (mới): Máy → Tua nhanh, Menu + R1/L1, 2x/3x/4x/tối đa.
+- Chi tiết, giới hạn và miễn trừ trách nhiệm: [docs/PHAT-HANH-0.5.0.md](docs/PHAT-HANH-0.5.0.md).
+
 ## 0.4.2-beta — 2026-10-28
 
 Việt hoá cá nhân (GB/GBC/GBA, thử nghiệm):
