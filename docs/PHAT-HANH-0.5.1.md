@@ -10,10 +10,19 @@ Bản sửa lỗi cho Việt hoá GB/GBC/GBA. Các phần khác (Tua nhanh, dấ
 - Các bản sửa là luật chung, áp cho mọi game: giữ byte tham số dính vào chữ, giữ đúng ô chữ cố định, bỏ nhận nhầm mã máy / bảng
   dữ liệu là con trỏ câu, chừa chỗ an toàn ở cuối vùng trống, câu được mã máy trỏ thẳng chỉ dời trong cỡ ROM gốc.
 
-## Số đo (kiểm tự động trên PC)
+## Đi kèm
 
-- Quét 573 bản ROM GB/GBC/GBA: **569 bản chạy được** với bản Việt hoá; 4 bản chưa kiểm được (chính bản gốc không chạy trong bộ
-  kiểm). Danh sách: [DANH-SACH-GAME.md](DANH-SACH-GAME.md).
+- **Leaf Hot Tabs** (tự tiếp tục game từ Games/Favorites) cho Leaf v0.12.1 và v0.11.0 — xem [HOT-TABS.md](HOT-TABS.md).
+- Hướng dẫn **Thư viện game riêng qua PocketBridge + Tailscale** (cài agent trên PC/Mac/Pi, ghép đôi, đường dẫn) — xem
+  [POCKETBRIDGE.md](POCKETBRIDGE.md). PocketBridge tải ở https://github.com/Bachtd1/pocketbridge/releases.
+
+## Số đo (kiểm tự động)
+
+- Quét 573 bản ROM GB/GBC/GBA: **cả 573 bản chạy được** với bản Việt hoá — 569 bản kiểm trên PC; 4 bản dùng mạch MBC2 (Ultima:
+  Runes of Virtue I/II, Lazlos' Leap, Doraemon Kart) kiểm trên Pocket 1 bằng lõi gambatte của Leaf. Danh sách:
+  [DANH-SACH-GAME.md](DANH-SACH-GAME.md).
+- Game MBC2: Việt hoá dùng lõi mặc định của Leaf (lõi mGBA có dấu phủ không chạy được mạch này) — có chữ Việt, không có dấu phủ
+  trong lõi.
 - Lớp phủ dấu phủ: không game nào có khung hình vượt 2 ms (trung bình dưới 0,1 ms mỗi khung).
 - Đổi lấy an toàn, số trang được Việt hoá giảm khoảng 1,3% (chủ yếu ở các game vừa sửa).
 

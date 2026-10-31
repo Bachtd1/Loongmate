@@ -23,14 +23,14 @@ LoongMate là **phần mềm miễn phí (freeware)**: chỉ phát hành bản d
   (ví dụ CPS1/2/3 ngoài thư mục ARCADE), ảnh bìa lệch tên, `.cue` hỏng, đĩa thiếu `.m3u`, ROM trùng giữa hai thẻ, BIOS.
   Sửa có xem trước và **Hoàn tác**.
 - **Thêm game an toàn**: Nhập game từ `Import/` (cả .zip/.7z/.rar), Tải từ web (https, tải tiếp khi mất mạng, gắn ảnh bìa),
-  Homebrew Hub (chỉ game có giấy phép rõ), thư viện riêng trên PC/NAS. Hỏi lưu vào SD1 hay SD2.
+  Homebrew Hub (chỉ game có giấy phép rõ), thư viện riêng trên PC/NAS qua [PocketBridge](docs/POCKETBRIDGE.md). Hỏi lưu vào SD1 hay SD2.
 - **Cấu hình Leaf**: sao lưu `retroarch.cfg`, override, remap, core option; so từng khoá trước/sau cập nhật Leaf.
 - **Dịch game** (thử nghiệm): lớp phủ tiếng Việt khi chơi (AI bằng API key của bạn, hoặc gói offline), và **Việt hoá cá nhân**
   cho game GB/GBC/GBA (dịch AI hoặc Google, dời / ngắt dòng / rút gọn câu dài, dấu phủ tiếng Việt): chữ Việt nằm ngay trong game,
   dựng trong RAM, chỉ dùng được trên máy của bạn. Xem [docs/DICH-GAME.md](docs/DICH-GAME.md) và
   [danh sách game đã kiểm](docs/DANH-SACH-GAME.md).
 - **Tua nhanh**: gán Menu + R1 (hoặc L1) bật/tắt tua nhanh trong game, tốc độ 2x/3x/4x/tối đa.
-- **Tự tiếp tục** chỗ đang chơi khi mở game từ Games/Favorites, không vá file nào của Leaf.
+- **Tự tiếp tục** chỗ đang chơi khi mở game từ Games/Favorites, không vá file nào của Leaf; kèm [Leaf Hot Tabs](docs/HOT-TABS.md).
 - **Khoá khi thức dậy**: để máy trong túi không tự lướt menu, mở game; giữ Select + Start 1 giây để mở.
 
 ## Cài đặt
@@ -77,7 +77,9 @@ Mở [GitHub Issues](https://github.com/Bachtd1/Loongmate/issues) hoặc nhắn 
 
 | Tài liệu | Nội dung |
 | --- | --- |
-| [docs/PHAT-HANH-0.5.1.md](docs/PHAT-HANH-0.5.1.md) | Ghi chú phát hành 0.5.1-beta: sửa 7 game Việt hoá, 569/573 ROM chạy |
+| [docs/PHAT-HANH-0.5.1.md](docs/PHAT-HANH-0.5.1.md) | Ghi chú phát hành 0.5.1-beta: sửa 7 game Việt hoá, 573/573 ROM chạy |
+| [docs/POCKETBRIDGE.md](docs/POCKETBRIDGE.md) | Thư viện game riêng qua PocketBridge + Tailscale: cài agent, ghép đôi, đường dẫn |
+| [docs/HOT-TABS.md](docs/HOT-TABS.md) | Leaf Hot Tabs (tự tiếp tục game): chọn đúng bản theo phiên bản Leaf |
 | [docs/PHAT-HANH-0.5.0.md](docs/PHAT-HANH-0.5.0.md) | Ghi chú phát hành 0.5.0-beta: đã làm được, còn chờ nâng cấp, miễn trừ |
 | [docs/DANH-SACH-GAME.md](docs/DANH-SACH-GAME.md) | Game đã kiểm Việt hoá: chạy tốt / kiểm tự động / còn lỗi |
 | [docs/GIOI-THIEU-DICH-GAME.md](docs/GIOI-THIEU-DICH-GAME.md) | Giới thiệu Dịch game: cách dùng chi tiết, hạn chế, hướng sắp tới |

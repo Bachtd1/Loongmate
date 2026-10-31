@@ -1,4 +1,4 @@
-# Danh sách game đã kiểm (LoongMate 0.5.1-beta)
+# Danh sách game đã kiểm (LoongMate 0.5.1-beta) — 573/573 bản ROM chạy
 
 Kết quả kiểm tự động trên PC (giả lập mGBA, 2026-10-31) cho phần **Việt hoá ROM** GB/GBC/GBA: dựng bản Việt hoá bằng bản
 dịch thử, chạy game ~65 giây có bấm phím, kiểm không treo / không màn đen / không crash, và đo thời gian lớp phủ dấu phủ.
@@ -596,9 +596,10 @@ Không còn game nào trong danh sách đã kiểm. Giới hạn đã biết:
 - **Sigma Star Saga**, **Star Wars: Flight of the Falcon** (GBA): game không đọc được chữ đặt ngoài cỡ ROM gốc và ROM gần như
   không còn chỗ trống, nên chỉ câu vừa chỗ cũ được Việt hoá (phần lớn giữ tiếng Anh). Game chạy bình thường.
 
-## Chưa kiểm được
+## Kiểm trên máy bằng lõi gambatte (mạch MBC2)
 
-Bản gốc của các game này không chạy được trong bộ kiểm tự động nên chưa có kết luận:
+Lõi mGBA của bộ kiểm PC không chạy được mạch MBC2 (cả bản gốc); 4 game này kiểm trực tiếp trên Pocket 1 bằng lõi gambatte của
+Leaf, cả bản gốc lẫn bản Việt hoá đều chạy:
 
 - Doraemon Kart (Japan) (Translated En) (GB)
 - Lazlos' Leap (USA) (GB)

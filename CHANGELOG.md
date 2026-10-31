@@ -4,7 +4,8 @@
 
 - Sửa 7 game trước đây bị chặn Việt hoá (treo / màn đen): Pokémon Ruby, Pokémon Sapphire, Mega Man & Bass, Dragon Warrior
   Monsters, The Adventures of Elmo in Grouchland, Sigma Star Saga, Star Wars: Flight of the Falcon.
-- Quét 573 bản ROM: 569 chạy được với bản Việt hoá, không còn game nào trong danh sách trục trặc. Chi tiết:
+- Quét 573 bản ROM: cả 573 chạy được với bản Việt hoá (4 bản MBC2 kiểm trên máy bằng gambatte). Kèm Hot Tabs (Leaf v0.12.1/v0.11.0)
+  và hướng dẫn Thư viện riêng qua PocketBridge. Chi tiết:
   [docs/PHAT-HANH-0.5.1.md](docs/PHAT-HANH-0.5.1.md).
 
 ## 0.5.0-beta — 2026-10-31
