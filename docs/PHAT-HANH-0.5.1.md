@@ -31,6 +31,9 @@ Bản sửa lỗi cho Việt hoá GB/GBC/GBA. Các phần khác (Tua nhanh, dấ
 - **Sigma Star Saga**, **Star Wars: Flight of the Falcon**: game không đọc được chữ đặt ngoài cỡ ROM gốc, ROM gần như hết chỗ trống
   — chỉ câu vừa chỗ cũ được Việt hoá, phần lớn giữ tiếng Anh.
 - Google Dịch không rút gọn được câu: câu dài quá khung giữ tiếng Anh. Chất lượng câu dịch do máy tạo, chưa kiểm hết.
+- Dấu phủ (lõi tự vẽ dấu) học hình chữ ngay trên màn hình: ở vài màn đầu của game (ví dụ trang hướng dẫn đầu tiên của Pokémon
+  LeafGreen) dấu có thể chưa hiện; các trang sau hiện đủ dấu. Đã chơi thử trên máy: Pokémon Yellow, Pokémon LeafGreen,
+  Dragon Warrior I & II.
 - Kiểm tự động không thay cho chơi thử; mục "Đã test trên máy" trong danh sách game sẽ cập nhật khi được xác nhận.
 
 Miễn trừ trách nhiệm: xem [PHAT-HANH-0.5.0.md](PHAT-HANH-0.5.0.md#d-tuyên-bố-miễn-trừ-trách-nhiệm) và README.
