@@ -77,6 +77,7 @@ Mở [GitHub Issues](https://github.com/Bachtd1/Loongmate/issues) hoặc nhắn 
 
 | Tài liệu | Nội dung |
 | --- | --- |
+| [docs/PHAT-HANH-0.5.1.md](docs/PHAT-HANH-0.5.1.md) | Ghi chú phát hành 0.5.1-beta: sửa 7 game Việt hoá, 569/573 ROM chạy |
 | [docs/PHAT-HANH-0.5.0.md](docs/PHAT-HANH-0.5.0.md) | Ghi chú phát hành 0.5.0-beta: đã làm được, còn chờ nâng cấp, miễn trừ |
 | [docs/DANH-SACH-GAME.md](docs/DANH-SACH-GAME.md) | Game đã kiểm Việt hoá: chạy tốt / kiểm tự động / còn lỗi |
 | [docs/GIOI-THIEU-DICH-GAME.md](docs/GIOI-THIEU-DICH-GAME.md) | Giới thiệu Dịch game: cách dùng chi tiết, hạn chế, hướng sắp tới |

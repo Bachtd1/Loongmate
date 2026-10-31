@@ -1,5 +1,12 @@
 # Thay đổi
 
+## 0.5.1-beta — 2026-10-31
+
+- Sửa 7 game trước đây bị chặn Việt hoá (treo / màn đen): Pokémon Ruby, Pokémon Sapphire, Mega Man & Bass, Dragon Warrior
+  Monsters, The Adventures of Elmo in Grouchland, Sigma Star Saga, Star Wars: Flight of the Falcon.
+- Quét 573 bản ROM: 569 chạy được với bản Việt hoá, không còn game nào trong danh sách trục trặc. Chi tiết:
+  [docs/PHAT-HANH-0.5.1.md](docs/PHAT-HANH-0.5.1.md).
+
 ## 0.5.0-beta — 2026-10-31
 
 - **Việt hoá GB/GBC/GBA**: quét 573 bản ROM — 560 chạy được với bản Việt hoá; sửa 12 game trước đây treo / màn đen (ký hiệu là

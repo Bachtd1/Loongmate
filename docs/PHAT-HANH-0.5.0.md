@@ -1,5 +1,7 @@
 # LoongMate 0.5.0-beta — Ghi chú phát hành
 
+> Đã có bản sửa **0.5.1-beta**: 7 game trong danh sách lỗi dưới đây đã chạy được — xem [PHAT-HANH-0.5.1.md](PHAT-HANH-0.5.1.md).
+
 Bản này tập trung vào **Việt hoá game GB/GBC/GBA** (dịch AI hoặc Google, câu dài, dấu tiếng Việt), độ ổn định khi tắt máy,
 và thêm **Tua nhanh**. Việt hoá vẫn là tính năng **thử nghiệm**.
 

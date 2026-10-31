@@ -1,4 +1,4 @@
-# Danh sách game đã kiểm (LoongMate 0.5.0-beta)
+# Danh sách game đã kiểm (LoongMate 0.5.1-beta)
 
 Kết quả kiểm tự động trên PC (giả lập mGBA, 2026-10-31) cho phần **Việt hoá ROM** GB/GBC/GBA: dựng bản Việt hoá bằng bản
 dịch thử, chạy game ~65 giây có bấm phím, kiểm không treo / không màn đen / không crash, và đo thời gian lớp phủ dấu phủ.
@@ -7,9 +7,9 @@ Tên dưới đây là tên game (bản dump tiếng Anh dùng để kiểm); Lo
 
 ## Đã test trên máy, chạy tốt
 
-_Chưa có game nào được xác nhận bằng chơi thử ở bản này — sẽ cập nhật khi người dùng/tác giả xác nhận._
+_Chưa có game nào được xác nhận bằng chơi thử ở bản này — sẽ cập nhật khi được xác nhận._
 
-## Chạy được trên giả lập kiểm tự động, chưa test tay (560 bản)
+## Chạy được trên giả lập kiểm tự động, chưa test tay (569 bản)
 
 ### GB (132)
 
@@ -146,8 +146,9 @@ _Chưa có game nào được xác nhận bằng chơi thử ở bản này — 
 - XVII Olympic Winter Games, The - Lillehammer 1994 (USA)
 - Zen - Intergalactic Ninja (USA)
 
-### GBC (212)
+### GBC (214)
 
+- Adventures of Elmo in Grouchland, The (USA)
 - Adventures of the Smurfs, The (Europe)
 - AirForce Delta (USA)
 - Aladdin (USA)
@@ -184,6 +185,7 @@ _Chưa có game nào được xác nhận bằng chơi thử ở bản này — 
 - Dragon Tales - Dragon Wings (USA)
 - Dragon Warrior I & II (USA)
 - Dragon Warrior III (USA)
+- Dragon Warrior Monsters (USA)
 - Dragon Warrior Monsters 2 - Cobi's Journey (USA)
 - Dragon Warrior Monsters 2 - Tara's Adventure (USA)
 - Driver - You are the Wheelman (USA)
@@ -361,7 +363,7 @@ _Chưa có game nào được xác nhận bằng chơi thử ở bản này — 
 - Yu-Gi-Oh! - Dark Duel Stories (USA)
 - Zoboomafoo - Playtime in Zobooland (USA)
 
-### GBA (216)
+### GBA (223)
 
 - Activision Anthology (USA)
 - Advance Guardian Heroes (USA)
@@ -454,6 +456,7 @@ _Chưa có game nào được xác nhận bằng chơi thử ở bản này — 
 - Masters of the Universe He-Man - Power of Grayskull (USA)
 - Medal of Honor - Infiltrator (USA, Europe) (En,Fr,De)
 - Medal of Honor - Underground (USA)
+- Mega Man & Bass (USA)
 - Mega Man Battle Network (USA)
 - Mega Man Battle Network 2 (USA)
 - Mega Man Battle Network 3 - Blue Version (USA)
@@ -495,10 +498,14 @@ _Chưa có game nào được xác nhận bằng chơi thử ở bản này — 
 - Pitfall - The Lost Expedition (USA)
 - Pokemon - Emerald Version (USA, Europe)
 - Pokemon - LeafGreen Version (USA)
+- Pokemon - Ruby Version (USA)
+- Pokemon - Sapphire Version (USA)
 - Pokemon Emerald
 - Pokemon Fire Red
 - Pokemon Leaf Green
 - Pokemon Mystery Dungeon Red
+- Pokemon Ruby
+- Pokemon Sapphire
 - Popeye - Rush for Spinach (USA, Europe) (En,Fr,De,Es,It)
 - Power Rangers - Dino Thunder (USA, Europe)
 - Power Rangers - Ninja Storm (USA)
@@ -516,6 +523,7 @@ _Chưa có game nào được xác nhận bằng chơi thử ở bản này — 
 - Shining Force - Resurrection of the Dark Dragon (USA)
 - Shining Soul (USA)
 - Shining Soul II (USA)
+- Sigma Star Saga (USA, Europe)
 - Sim City 2000 (USA)
 - Simpsons, The - Road Rage (USA, Europe)
 - Sonic Advance (USA) (En,Ja)
@@ -534,6 +542,7 @@ _Chưa có game nào được xác nhận bằng chơi thử ở bản này — 
 - SSX Tricky (USA, Europe) (En,Fr,De)
 - Star Wars - Episode II - Attack of the Clones (USA)
 - Star Wars - Episode III - Revenge of the Sith (USA) (En,Fr,Es)
+- Star Wars - Flight of the Falcon (USA)
 - Star Wars - The New Droid Army (USA)
 - Star Wars Trilogy - Apprentice of the Force (USA) (En,Fr,Es)
 - Stuntman (USA) (En,Fr,Es)
@@ -582,17 +591,10 @@ _Chưa có game nào được xác nhận bằng chơi thử ở bản này — 
 
 ## Còn lỗi / chưa hỗ trợ Việt hoá ROM
 
-LoongMate tự nhận ra các game này (theo mã game trong ROM) và không Việt hoá ROM; game gốc vẫn chơi bình thường, lớp phủ dịch
-vẫn dùng được.
+Không còn game nào trong danh sách đã kiểm. Giới hạn đã biết:
 
-| Game | Lỗi |
-| --- | --- |
-| Pokémon Ruby / Sapphire (GBA) | Bản Việt hoá treo / màn đen khi khởi động (bảng chữ nhiều đoạn, đang tìm nguyên nhân) |
-| Sigma Star Saga (GBA) | Treo ở đoạn hội thoại đầu (mã điều khiển lẫn trong chữ) |
-| Star Wars: Flight of the Falcon (GBA) | Treo khi câu dời ra ngoài cỡ ROM gốc |
-| Mega Man & Bass (GBA) | Crash khi mở hội thoại (mã có tham số dính vào chữ) |
-| Dragon Warrior Monsters (GBC) | Màn đen (bảng tên quái vật đặc biệt) |
-| The Adventures of Elmo in Grouchland (GBC) | Đứng hình sau màn đầu |
+- **Sigma Star Saga**, **Star Wars: Flight of the Falcon** (GBA): game không đọc được chữ đặt ngoài cỡ ROM gốc và ROM gần như
+  không còn chỗ trống, nên chỉ câu vừa chỗ cũ được Việt hoá (phần lớn giữ tiếng Anh). Game chạy bình thường.
 
 ## Chưa kiểm được
 
