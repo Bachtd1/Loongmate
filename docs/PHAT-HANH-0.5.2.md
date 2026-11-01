@@ -17,6 +17,38 @@ PocketBridge, miễn trừ trách nhiệm) giữ như [0.5.1-beta](PHAT-HANH-0.5
   từ **135 lên 1319/1408 trang** tiếng Việt, ROM vẫn 8 MB. Sửa luôn lỗi bản cũ dời riêng câu đầu mỗi chương (game có thể đọc
   nhầm vào vùng rác khi tới lời thoại chương).
 
+## Đi kèm và hướng dẫn
+
+**Leaf Hot Tabs** (mở game từ Games / Favorites là vào thẳng chỗ đang chơi dở) — có sẵn trong `LoongMate-AllInOne.zip`, phải
+đúng phiên bản Leaf (Menu → Info → Device):
+
+| Leaf | Thư mục trong gói | Làm gì |
+|---|---|---|
+| **v0.12.1** | `THE-NHO/hottabs/` | đã đi kèm khi chép `THE-NHO` vào gốc thẻ |
+| v0.11.0 | `HotTabs-ban-khac/v0.11.0/hottabs/` | xoá `hottabs/` cũ trên thẻ, chép thư mục này vào gốc thẻ |
+| bản khác | — | không dùng Hot Tabs (LoongMate báo không khớp, không cho cài) |
+
+Cài: **LoongMate → Máy → Tự tiếp tục game → Cài lại Hot Tabs** → xác nhận → **khởi động lại máy**. Gỡ ở cùng màn đó. Chi tiết:
+[docs/HOT-TABS.md](HOT-TABS.md).
+
+**Thư viện game riêng qua PocketBridge (+ Tailscale)** — duyệt và cài game từ thư mục ROM trên PC / Mac / Linux / Raspberry Pi
+của bạn, ngay trên Pocket 1:
+
+1. Tải PocketBridge Agent cho máy chứa ROM: https://github.com/Bachtd1/pocket-bridge/releases (Windows / macOS / Linux-Pi).
+2. Cài agent (thay `<IP>` bằng IP LAN hoặc IP Tailscale `100.x.y.z`):
+   - Windows (PowerShell Administrator): `.\install.ps1 -Listen <IP> -Id pocket1 -Scopes library:read`
+   - Linux / Pi: `sudo sh linux/install.sh --listen <IP> --id pocket1 --scopes library:read`
+   - macOS: `sudo sh macos/install.sh --listen <IP> --id pocket1 --scopes library:read`
+3. Khai báo thư mục ROM trong `config.yaml` của agent (mục `library: roots:`), thư mục con đặt tên theo hệ máy Leaf
+   (`GB`, `GBC`, `GBA`, `SNES`, `PSX`…), rồi khởi động lại agent.
+4. Chép file ghép đôi (`pairing-bundle-pocket1.json`) vào `<thẻ>/PocketBridge-import/` (dùng một lần, hết hạn sau 15 phút).
+5. Trên Pocket 1: **LoongMate → Thư viện → Thư viện riêng → Ghép đôi**, chọn file, xác nhận. Sau đó duyệt thư mục → hệ máy →
+   game, A "Tải & cài".
+6. Ở xa nhà: cài **Tailscale** trên máy chứa ROM và Pocket 1, cùng một tailnet, dùng IP `100.x.y.z` ở bước 2.
+
+Chi tiết (đường dẫn cấu hình từng hệ điều hành, tải tiếp khi mất Wi-Fi, an toàn):
+[docs/POCKETBRIDGE.md](POCKETBRIDGE.md).
+
 ## Số đo
 
 - Dragon Warrior I & II (dịch AI trên Pocket 1): 1626/1752 đoạn Việt hoá; cảnh nhà vua đầu game hiện tiếng Việt, dấu phủ vẽ trên
