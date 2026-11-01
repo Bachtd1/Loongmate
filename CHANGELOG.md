@@ -1,5 +1,13 @@
 # Thay đổi
 
+## 0.5.2-beta — 2026-11-01
+
+- Bản dịch mất hết dấu được nhận ra và dịch lại (Sửa câu lỗi); bỏ dấu câu lạ chen giữa câu ở Dragon Warrior I–III, Dragon Warrior
+  Monsters, Harvest Moon GB; câu một từ được dịch, tên người nói vẫn giữ.
+- Dấu phủ vẽ được trên dòng có tên người nói dính liền câu ("King:Chào nhé").
+- Sigma Star Saga: dời lời thoại theo cả khối chương — 135 lên 1319/1408 trang tiếng Việt.
+- Chi tiết và giới hạn: [docs/PHAT-HANH-0.5.2.md](docs/PHAT-HANH-0.5.2.md).
+
 ## 0.5.1-beta — 2026-10-31
 
 - Sửa 7 game trước đây bị chặn Việt hoá (treo / màn đen): Pokémon Ruby, Pokémon Sapphire, Mega Man & Bass, Dragon Warrior

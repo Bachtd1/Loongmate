@@ -77,6 +77,7 @@ Mở [GitHub Issues](https://github.com/Bachtd1/Loongmate/issues) hoặc nhắn 
 
 | Tài liệu | Nội dung |
 | --- | --- |
+| [docs/PHAT-HANH-0.5.2.md](docs/PHAT-HANH-0.5.2.md) | Ghi chú phát hành 0.5.2-beta: sửa dấu/dấu câu Việt hoá, Sigma Star Saga 1319/1408 trang |
 | [docs/PHAT-HANH-0.5.1.md](docs/PHAT-HANH-0.5.1.md) | Ghi chú phát hành 0.5.1-beta: sửa 7 game Việt hoá, 573/573 ROM chạy |
 | [docs/POCKETBRIDGE.md](docs/POCKETBRIDGE.md) | Thư viện game riêng qua PocketBridge + Tailscale: cài agent, ghép đôi, đường dẫn |
 | [docs/HOT-TABS.md](docs/HOT-TABS.md) | Leaf Hot Tabs (tự tiếp tục game): chọn đúng bản theo phiên bản Leaf |
