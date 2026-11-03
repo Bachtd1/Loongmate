@@ -1,5 +1,13 @@
 # Thay đổi
 
+## 0.5.3-beta — 2026-11-03
+
+- **Bản riêng cho TrimUI Smart Pro S** (beta, `LoongMate-TrimUI-0.5.3-beta.zip`): giao diện, Agent, Việt hoá GB/GBC/GBA với lõi
+  dấu phủ, Tailscale; chức năng chỉ có trên Leaf được ẩn. Hướng dẫn: [docs/TRIMUI.md](docs/TRIMUI.md).
+- Vào tailnet bằng QR ngay trên máy.
+- Core dịch: câu dài sang khung mới (bấm A) thay vì tràn khung; sửa font rác Sword of Mana, đứng hình Dragon Warrior Monsters.
+- Chi tiết và giới hạn: [docs/PHAT-HANH-0.5.3.md](docs/PHAT-HANH-0.5.3.md).
+
 ## 0.5.2-beta — 2026-11-01
 
 - Bản dịch mất hết dấu được nhận ra và dịch lại (Sửa câu lỗi); bỏ dấu câu lạ chen giữa câu ở Dragon Warrior I–III, Dragon Warrior

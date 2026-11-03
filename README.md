@@ -5,7 +5,8 @@
 [![Release](https://img.shields.io/github/v/release/Bachtd1/Loongmate?include_prereleases)](https://github.com/Bachtd1/Loongmate/releases)
 [![Freeware](https://img.shields.io/badge/license-freeware-blue.svg)](LICENSE)
 
-Ứng dụng bảo vệ, chẩn đoán và phục hồi cho **Miniloong Pocket 1** chạy **Leaf**: giữ save an toàn, tìm và sửa lỗi thư viện
+Ứng dụng bảo vệ, chẩn đoán và phục hồi cho **Miniloong Pocket 1** chạy **Leaf** (và bản riêng, beta, cho **TrimUI Smart Pro S** —
+xem [docs/TRIMUI.md](docs/TRIMUI.md)): giữ save an toàn, tìm và sửa lỗi thư viện
 (kể cả game Leaf không hiện), giữ cấu hình RetroArch qua các lần cập nhật Leaf, dịch game sang tiếng Việt. Chạy ngay trên máy,
 điều khiển bằng nút, không cần máy tính hay dòng lệnh.
 
@@ -34,6 +35,17 @@ LoongMate là **phần mềm miễn phí (freeware)**: chỉ phát hành bản d
 - **Khoá khi thức dậy**: để máy trong túi không tự lướt menu, mở game; giữ Select + Start 1 giây để mở.
 
 ## Cài đặt
+
+Hai bản tách riêng, tải đúng gói cho máy của bạn ở mục [Releases](../../releases):
+
+| Máy | Gói | Hướng dẫn |
+|---|---|---|
+| Miniloong Pocket 1 (Leaf) | `LoongMate-AllInOne.zip` | các bước bên dưới |
+| TrimUI Smart Pro S (TrimUI OS gốc) | `LoongMate-TrimUI-<phiên bản>.zip` | [docs/TRIMUI.md](docs/TRIMUI.md) |
+
+Bản TrimUI không có Hot Tabs, Tự tiếp tục game, Khoá khi thức dậy, Tua nhanh, Cấu hình Leaf (các chức năng dựa vào Leaf).
+
+**Pocket 1 (Leaf):**
 
 1. Tải `LoongMate-AllInOne.zip` ở mục [Releases](../../releases).
 2. Tắt máy, cắm thẻ chứa Leaf vào máy tính, chép **nội dung** thư mục `THE-NHO` vào gốc thẻ (gộp với `Apps` có sẵn).
@@ -77,6 +89,8 @@ Mở [GitHub Issues](https://github.com/Bachtd1/Loongmate/issues) hoặc nhắn 
 
 | Tài liệu | Nội dung |
 | --- | --- |
+| [docs/TRIMUI.md](docs/TRIMUI.md) | Hướng dẫn bản TrimUI Smart Pro S: cài đặt, Việt hoá, Tailscale bằng QR, khác bản Leaf |
+| [docs/PHAT-HANH-0.5.3.md](docs/PHAT-HANH-0.5.3.md) | Ghi chú phát hành 0.5.3-beta: bản TrimUI, câu dài sang khung mới, sửa Sword of Mana / DWM |
 | [docs/PHAT-HANH-0.5.2.md](docs/PHAT-HANH-0.5.2.md) | Ghi chú phát hành 0.5.2-beta: sửa dấu/dấu câu Việt hoá, Sigma Star Saga 1319/1408 trang |
 | [docs/PHAT-HANH-0.5.1.md](docs/PHAT-HANH-0.5.1.md) | Ghi chú phát hành 0.5.1-beta: sửa 7 game Việt hoá, 573/573 ROM chạy |
 | [docs/POCKETBRIDGE.md](docs/POCKETBRIDGE.md) | Thư viện game riêng qua PocketBridge + Tailscale: cài agent, ghép đôi, đường dẫn |
